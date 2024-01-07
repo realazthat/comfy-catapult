@@ -24,7 +24,7 @@ setup(
     long_description_content_type='text/markdown',
     author='AYF',
     author_email='realazthat@example.com',
-    url='https://github.com/realazthat/ComfyCatapult',
+    url='https://github.com/realazthat/comfy-catapult',
     install_requires=requirements,
     classifiers=[
         # Choose your license and programming language/version here. For example:
