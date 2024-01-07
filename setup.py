@@ -19,7 +19,7 @@ setup(
     name='comfy_catapult',
     version='0.1',
     packages=find_packages(),
-    description='Programmatically scheduling ComfyUI workflows',
+    description='Programmatically schedule ComfyUI workflows',
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='AYF',
