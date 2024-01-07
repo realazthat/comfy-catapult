@@ -48,11 +48,15 @@ wget https://github.com/comfyanonymous/ComfyUI_examples/raw/master/sdturbo/sdxlt
 # their default values are, etc.
 ```
 
-### Install dependencies and run the examples
+### Install as a library from git and run the examples
 
 ```bash
-# Install dependencies:
-pip install -r requirements.txt
+# Inside your environment:
+pip install https://github.com/realazthat/comfy-catapult.git
+# Or
+git clone https://github.com/realazthat/comfy-catapult.git
+pip install .
+
 
 
 # If you set this environment variable, you don't have to specify it as an
@@ -63,31 +67,42 @@ export COMFY_API_URL=http://127.0.0.1:8188
 export COMFY_API_URL=http://host.docker.internal:8188
 
 
-# Run the workflow:
-PYTHONPATH=$PYTHONPATH:$PWD python comfy_catapult/examples/sdxlturbo_example_catapulter.py \
-#  --api_workflow_json_path "$PWD/sdxlturbo_example_api.json"
+python -m comfy_catapult.examples.sdxlturbo_example_catapulter \
+  --api_workflow_json_path "$PWD/sdxlturbo_example_api.json"
   --tmp_path "$PWD/.deleteme/tmp/" \
   --output_path "$PWD/.deleteme/output.png" \
   --positive_prompt "amazing cloudscape, towering clouds, thunderstorm, awe" \
   --negative_prompt "dull, blurry, nsfw"
+
+python -m comfy_catapult.examples.simple_example_catapult
+python -m comfy_catapult.examples.sdxlturbo_example_easy_catapult
 
 # Optional arguments:
 #   --comfy_api_url "..."
 
 # Now $PWD/.deleteme/output.png should contain the output image.
 
+# Examine comfy_catapult/examples/sdxlturbo_example_catapulter.py to see how to
+# use the library.
 ```
 
-### Install as a library from git and run the examples
+### Install dependencies and run the examples
 
 ```bash
-pip install https+git://github.com/realazthat/ComfyCatapult.git
-# Or
-git clone https+git://github.com/realazthat/ComfyCatapult.git
-pip install .
+# Install dependencies:
+pip install -r requirements.txt
 
-python -m comfy_catapult.examples.simple_example_catapult
-python -m comfy_catapult.examples.sdxlturbo_example_easy_catapult
+
+
+# Run the workflow:
+PYTHONPATH=$PYTHONPATH:$PWD python comfy_catapult/examples/sdxlturbo_example_catapulter.py \
+  --api_workflow_json_path "$PWD/sdxlturbo_example_api.json"
+  --tmp_path "$PWD/.deleteme/tmp/" \
+  --output_path "$PWD/.deleteme/output.png" \
+  --positive_prompt "amazing cloudscape, towering clouds, thunderstorm, awe" \
+  --negative_prompt "dull, blurry, nsfw"
+
+
 ```
 
 ### Parsing the API format into the Pydantic models schema for easier navigation
@@ -121,13 +136,6 @@ From `comfy_catapult/examples/add_a_node.py`:
 - [ ]  ETA Estimator.
 - [ ]  Make sure the schema can parse the formats even if the format adds new
   fields.
-
-### Tour of the code
-
-**comfy_catapult_base.py**
-
-- `ComfyCatapult` This is the workhorse of the catapult. You can create one of
-  these schedule a workflow, and then run it and return when the job is done.
 
 ## Comitting
 
