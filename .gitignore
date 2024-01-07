@@ -1,0 +1,7 @@
+.venv
+.vscode
+__pycache__
+.deleteme
+.cache
+NOTES.md
+.logs/

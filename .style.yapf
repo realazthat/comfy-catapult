@@ -1,0 +1,12 @@
+[style]
+based_on_style = pep8
+spaces_before_comment = 2
+split_before_logical_operator = true
+INDENT_WIDTH = 2
+column_limit = 80
+SPLIT_COMPLEX_COMPREHENSION = true
+# SPLIT_BEFORE_FIRST_ARGUMENT = true
+# SPLIT_BEFORE_LOGICAL_OPERATOR = true
+SPLIT_BEFORE_NAMED_ASSIGNS = true
+SPLIT_ARGUMENTS_WHEN_COMMA_TERMINATED = true
+ALLOW_SPLIT_BEFORE_DEFAULT_OR_NAMED_ASSIGNS = true

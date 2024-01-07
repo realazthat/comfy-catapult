@@ -1,0 +1,6 @@
+# possible values: {"keep", "no", INTEGER}
+wrap = 80
+# possible values: {false, true}
+number = true
+# possible values: {"lf", "crlf", "keep"}
+end_of_line = "lf"

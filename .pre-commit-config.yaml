@@ -1,0 +1,132 @@
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.5.0
+  hooks:
+  - id: check-case-conflict
+  - id: check-merge-conflict
+  - id: check-yaml
+    args: [--allow-multiple-documents]
+  - id: check-json
+  - id: check-shebang-scripts-are-executable
+  - id: check-symlinks
+  - id: check-vcs-permalinks
+  - id: check-ast
+  - id: check-executables-have-shebangs
+  - id: debug-statements
+  - id: destroyed-symlinks
+  # - id: detect-aws-credentials
+  - id: detect-private-key
+  - id: double-quote-string-fixer
+  - id: end-of-file-fixer
+    exclude: ^README.md$
+  - id: fix-byte-order-marker
+  - id: fix-encoding-pragma
+  - id: mixed-line-ending
+  - id: name-tests-test
+  - id: requirements-txt-fixer
+  - id: trailing-whitespace
+  - id: check-byte-order-marker
+- repo: https://github.com/jlebar/pre-commit-hooks
+  rev: f2d115a052860b09b2888b4f104be614bf3b4779
+  hooks:
+  - id: do-not-submit
+
+# - repo: https://github.com/sirwart/ripsecrets
+#   rev: v0.1.7 # Use latest tag on GitHub
+#   hooks:
+#   - id: ripsecrets
+#     args:
+#     - --additional-pattern '/mnt/'
+# - repo: https://github.com/crate-ci/typos
+#   rev: v1.17.0
+#   hooks:
+#   - id: typos
+#     args: ['--force-exclude', 'test_data/']
+
+- repo: https://github.com/dannysepler/rm_unneeded_f_str
+  rev: v0.2.0
+  hooks:
+  - id: rm-unneeded-f-str
+- repo: https://github.com/scop/pre-commit-shfmt
+  rev: v3.7.0-4
+  hooks:
+  - id: shfmt
+    args: ['-i', '2']
+# - repo: local
+#   hooks:
+#   - id: ci-checks
+#     name: CI Checks
+#     entry: ./scripts/run-outside-ci.sh
+#     language: script
+#     pass_filenames: false
+#     always_run: true
+- repo: https://github.com/Lucas-C/pre-commit-hooks
+  rev: v1.5.4
+  hooks:
+  - id: forbid-crlf
+  # - id: remove-crlf
+  # - id: forbid-tabs
+  # - id: remove-tabs
+  #   args: [--whitespaces-count, '2'] # defaults to: 4
+  # - id: chmod
+  #   args: ['444']
+  #   files: ^README.md$
+  - id: insert-license
+    args: [--license-filepath, .github/license-header.md]
+    files: \.py$
+# From https://github.com/Lucas-C/pre-commit-hooks#useful-local-hooks
+- repo: local
+  hooks:
+  - id: forbid-unicode-non-breaking-spaces
+    name: Detect unicode non-breaking space character U+00A0 aka M-BM-
+    language: system
+    entry: perl -ne 'print if $m = /\xc2\xa0/; $t ||= $m; END{{exit $t}}'
+    files: ''
+  - id: remove-unicode-non-breaking-spaces
+    name: Remove unicode non-breaking space character U+00A0 aka M-BM-
+    language: system
+    entry: perl -pi* -e 's/\xc2\xa0/ /g && ($t = 1) && print STDERR $_; END{{exit $t}}'
+    files: ''
+  - id: forbid-en-dashes
+    name: Detect the EXTREMELY confusing unicode character U+2013
+    language: system
+    entry: perl -ne 'print if $m = /\xe2\x80\x93/; $t ||= $m; END{{exit $t}}'
+    files: ''
+  - id: remove-en-dashes
+    name: Remove the EXTREMELY confusing unicode character U+2013
+    language: system
+    entry: perl -pi* -e 's/\xe2\x80\x93/-/g && ($t = 1) && print STDERR $_; END{{exit $t}}'
+    files: ''
+# From https://github.com/Lucas-C/pre-commit-hooks#useful-local-hooks
+- repo: local
+  hooks:
+  - id: check-bash-syntax
+    name: Check Shell scripts syntax correctness
+    language: system
+    entry: bash -n
+    files: \.sh$
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.1.11
+  hooks:
+  - id: ruff
+- repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+  rev: v1.3.2
+  hooks:
+  - id: python-safety-dependencies-check
+    files: requirements.txt
+
+# - repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+#   rev: v2.12.0
+#   hooks:
+#   - id: pretty-format-yaml
+#     args: [--autofix, --indent, '2']
+# - repo: https://github.com/pre-commit/mirrors-mypy
+#   rev: v1.8.0
+#   hooks:
+#   - id: mypy
+#     args: [--strict, --ignore-missing-imports]
+#     additional_dependencies: [tokenize-rt==3.2.0]
+# - repo: https://github.com/jendrikseipp/vulture
+#   rev: v2.10
+#   hooks:
+#   - id: vulture

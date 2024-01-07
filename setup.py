@@ -1,0 +1,35 @@
+# -*- coding: utf-8 -*-
+# SPDX-License-Identifier: MIT
+#
+# The Catapult require contributions made to this file be licensed under the MIT
+# license or a compatible open source license. See LICENSE.md for the license
+# text.
+
+from setuptools import setup, find_packages
+
+with open('README.md') as f:
+  long_description = f.read()
+with open('requirements.txt') as f:
+  requirements = f.read().splitlines()
+  requirements = [r.strip() for r in requirements]
+  requirements = [r for r in requirements if len(r) > 0]
+  requirements = [r for r in requirements if not r.startswith('#')]
+
+setup(
+    name='comfy_catapult',
+    version='0.1',
+    packages=find_packages(),
+    description='Programmatically scheduling ComfyUI workflows',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
+    author='AYF',
+    author_email='realazthat@example.com',
+    url='https://github.com/realazthat/ComfyCatapult',
+    install_requires=requirements,
+    classifiers=[
+        # Choose your license and programming language/version here. For example:
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.11',
+    ],
+)
