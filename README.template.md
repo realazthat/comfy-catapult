@@ -105,6 +105,14 @@ PYTHONPATH=$PYTHONPATH:$PWD python comfy_catapult/examples/sdxlturbo_example_cat
 
 ```
 
+### Scheduling a job
+
+From `comfy_catapult/examples/sdxlturbo_example_catapulter.py`:
+
+```py
+{% include 'comfy_catapult/examples/sdxlturbo_example_catapulter.py' %}
+```
+
 ### Parsing the API format into the Pydantic models schema for easier navigation
 
 From `comfy_catapult/examples/using_pydantic.py`:
