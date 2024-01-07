@@ -144,95 +144,6 @@ from comfy_catapult.remote_file_api_local import LocalRemoteFileAPI
 from comfy_catapult.url_utils import ToParseResult
 
 
-async def PrepareWorkflow(*, client: ComfyAPIClientBase, workflow: APIWorkflow,
-                          args: Args, important: List[NodeID]):
-  # Connect the inputs to `workflow` here.
-
-  # Get nodes by title.
-
-  _, load_checkpoint = GetNodeByTitle(workflow=workflow,
-                                      title='Load Checkpoint')
-
-  # Unfortunately, two nodes 'CLIP Text Encode (Prompt)' are same title.
-  # So instead, we'll find 'SamplerCustom' and work backwards.
-  _, sampler_custom = GetNodeByTitle(workflow=workflow, title='SamplerCustom')
-
-  in_conn = sampler_custom.inputs['positive']
-  assert isinstance(in_conn, APIWorkflowInConnection)
-  positive_prompt_id = in_conn.output_node_id
-  positive_prompt = workflow.root[positive_prompt_id]
-
-  in_conn = sampler_custom.inputs['negative']
-  assert isinstance(in_conn, APIWorkflowInConnection)
-  negative_prompt_id = in_conn.output_node_id
-  negative_prompt = workflow.root[negative_prompt_id]
-
-  preview_image_id, _ = GetNodeByTitle(workflow=workflow, title='Preview Image')
-  ############################################################################
-
-  # Get the /object_info, because we sometimes need to correct the model name,
-  # because the model name is inconsistent between windows and linux if it is in
-  # a directory, depending on the ComfyUI's system. E.g 'sd_xl_turbo_1.0_fp16'
-  # vs 'SDXL-TURBO\sd_xl_turbo_1.0_fp16.safetensors' vs
-  # 'SDXL-TURBO/sd_xl_turbo_1.0_fp16.safetensors'.
-  object_info: APIObjectInfo = await client.GetObjectInfo()
-
-  object_info_entry = object_info.root[load_checkpoint.class_type]
-
-  assert isinstance(object_info_entry.input.required, dict)
-  # Inputs are stored as a list/tuple of two things: the type (usually a string)
-  # and a dictionary like {default: ..., min: ..., max: ...}.
-  chpt_name_entry = object_info_entry.input.required['ckpt_name']
-  assert isinstance(chpt_name_entry, APIObjectInputTuple), type(chpt_name_entry)
-
-  # Combo type is a weird type that isn't a string, but rather a list of actual
-  # values that are valid to choose from, usually strings.
-  assert isinstance(chpt_name_entry.type, list), type(chpt_name_entry.type)
-
-  load_checkpoint_valid_models = []
-  for item in chpt_name_entry.type:
-    assert isinstance(item, str), (f'item must be str, but is {type(item)}')
-    load_checkpoint_valid_models.append(item)
-  ############################################################################
-  # Set some stuff in the workflow api json.
-
-  assert (
-      'sd_xl_turbo_1.0_fp16.safetensors' == load_checkpoint.inputs['ckpt_name']
-  ), ('sanity check, this is just what is in the workflow already.')
-
-  if args.ckpt_name is not None:
-    assert args.ckpt_name in load_checkpoint_valid_models, (
-        f'ckpt_name must be one of {load_checkpoint_valid_models}, but is {args.ckpt_name}'
-    )
-    load_checkpoint.inputs['ckpt_name'] = args.ckpt_name
-
-  positive_prompt.inputs['text'] = args.positive_prompt
-  negative_prompt.inputs['text'] = args.negative_prompt
-  negative_prompt.inputs['text'] = args.negative_prompt
-  ############################################################################
-  # Mark some nodes as required to be executed, in order for us to consider
-  # the job done.
-  important.append(preview_image_id)
-  ############################################################################
-
-
-async def FinishWorkflow(*, config: RemoteComfyConfig,
-                         remote: RemoteFileAPIBase, workflow: APIWorkflow,
-                         args: Args, job_history: APIHistoryEntry):
-  print('job_history:', file=sys.stderr)
-  print(YamlDump(job_history.model_dump()), file=sys.stderr)
-
-  preview_image_id, _ = GetNodeByTitle(workflow=workflow, title='Preview Image')
-
-  # You are gonna want to look at how this function works.
-  await DownloadImageLike(node_id=preview_image_id,
-                          job_history=job_history,
-                          field_path='images[0]',
-                          config=config,
-                          remote=remote,
-                          local_dst_path=args.output_path)
-
-
 async def amain():
   args = await ParseArgs()
 
@@ -328,6 +239,95 @@ async def amain():
                            workflow=workflow,
                            args=args,
                            job_history=job_history)
+
+
+async def PrepareWorkflow(*, client: ComfyAPIClientBase, workflow: APIWorkflow,
+                          args: Args, important: List[NodeID]):
+  # Connect the inputs to `workflow` here.
+
+  # Get nodes by title.
+
+  _, load_checkpoint = GetNodeByTitle(workflow=workflow,
+                                      title='Load Checkpoint')
+
+  # Unfortunately, two nodes 'CLIP Text Encode (Prompt)' are same title.
+  # So instead, we'll find 'SamplerCustom' and work backwards.
+  _, sampler_custom = GetNodeByTitle(workflow=workflow, title='SamplerCustom')
+
+  in_conn = sampler_custom.inputs['positive']
+  assert isinstance(in_conn, APIWorkflowInConnection)
+  positive_prompt_id = in_conn.output_node_id
+  positive_prompt = workflow.root[positive_prompt_id]
+
+  in_conn = sampler_custom.inputs['negative']
+  assert isinstance(in_conn, APIWorkflowInConnection)
+  negative_prompt_id = in_conn.output_node_id
+  negative_prompt = workflow.root[negative_prompt_id]
+
+  preview_image_id, _ = GetNodeByTitle(workflow=workflow, title='Preview Image')
+  ############################################################################
+
+  # Get the /object_info, because we sometimes need to correct the model name,
+  # because the model name is inconsistent between windows and linux if it is in
+  # a directory, depending on the ComfyUI's system. E.g 'sd_xl_turbo_1.0_fp16'
+  # vs 'SDXL-TURBO\sd_xl_turbo_1.0_fp16.safetensors' vs
+  # 'SDXL-TURBO/sd_xl_turbo_1.0_fp16.safetensors'.
+  object_info: APIObjectInfo = await client.GetObjectInfo()
+
+  object_info_entry = object_info.root[load_checkpoint.class_type]
+
+  assert isinstance(object_info_entry.input.required, dict)
+  # Inputs are stored as a list/tuple of two things: the type (usually a string)
+  # and a dictionary like {default: ..., min: ..., max: ...}.
+  chpt_name_entry = object_info_entry.input.required['ckpt_name']
+  assert isinstance(chpt_name_entry, APIObjectInputTuple), type(chpt_name_entry)
+
+  # Combo type is a weird type that isn't a string, but rather a list of actual
+  # values that are valid to choose from, usually strings.
+  assert isinstance(chpt_name_entry.type, list), type(chpt_name_entry.type)
+
+  load_checkpoint_valid_models = []
+  for item in chpt_name_entry.type:
+    assert isinstance(item, str), (f'item must be str, but is {type(item)}')
+    load_checkpoint_valid_models.append(item)
+  ############################################################################
+  # Set some stuff in the workflow api json.
+
+  assert (
+      'sd_xl_turbo_1.0_fp16.safetensors' == load_checkpoint.inputs['ckpt_name']
+  ), ('sanity check, this is just what is in the workflow already.')
+
+  if args.ckpt_name is not None:
+    assert args.ckpt_name in load_checkpoint_valid_models, (
+        f'ckpt_name must be one of {load_checkpoint_valid_models}, but is {args.ckpt_name}'
+    )
+    load_checkpoint.inputs['ckpt_name'] = args.ckpt_name
+
+  positive_prompt.inputs['text'] = args.positive_prompt
+  negative_prompt.inputs['text'] = args.negative_prompt
+  negative_prompt.inputs['text'] = args.negative_prompt
+  ############################################################################
+  # Mark some nodes as required to be executed, in order for us to consider
+  # the job done.
+  important.append(preview_image_id)
+  ############################################################################
+
+
+async def FinishWorkflow(*, config: RemoteComfyConfig,
+                         remote: RemoteFileAPIBase, workflow: APIWorkflow,
+                         args: Args, job_history: APIHistoryEntry):
+  print('job_history:', file=sys.stderr)
+  print(YamlDump(job_history.model_dump()), file=sys.stderr)
+
+  preview_image_id, _ = GetNodeByTitle(workflow=workflow, title='Preview Image')
+
+  # You are gonna want to look at how this function works.
+  await DownloadImageLike(node_id=preview_image_id,
+                          job_history=job_history,
+                          field_path='images[0]',
+                          config=config,
+                          remote=remote,
+                          local_dst_path=args.output_path)
 
 
 asyncio.run(amain(), debug=True)
