@@ -211,11 +211,9 @@ class ComfyCatapult(ComfyCatapultBase):
       def _GetTitles(node_ids: List[NodeID]) -> List[str | None]:
         titles = []
         for node_id in node_ids:
-          node_info = prepared_workflow[node_id]
-          title = None
-          if node_info['_meta'] is not None and node_info['_meta'][
-              'title'] is not None:
-            title = node_info.meta.title
+          node_info: dict = prepared_workflow.get(node_id, {})
+          meta: dict = node_info.get('_meta', {})
+          title: str | None = meta.get('title', None)
           titles.append(title)
         return titles
 
