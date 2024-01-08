@@ -74,13 +74,14 @@ python -m comfy_catapult.examples.sdxlturbo_example_catapulter \
   --positive_prompt "amazing cloudscape, towering clouds, thunderstorm, awe" \
   --negative_prompt "dull, blurry, nsfw"
 
+# Optional if you don't want to set the environment variable:
+#   --comfy_api_url "..."
+
 # Now $PWD/.deleteme/output.png should contain the output image.
 
 python -m comfy_catapult.examples.simple_example_catapult
 python -m comfy_catapult.examples.sdxlturbo_example_easy_catapult
 
-# Optional arguments:
-#   --comfy_api_url "..."
 
 
 # Examine comfy_catapult/examples/sdxlturbo_example_catapulter.py to see how to
