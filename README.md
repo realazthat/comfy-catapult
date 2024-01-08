@@ -127,13 +127,13 @@ from pprint import pprint
 from typing import List
 
 from comfy_catapult.api_client import ComfyAPIClient, ComfyAPIClientBase
-from comfy_catapult.catapult import ComfyCatapultGeneric, JobStatus
+from comfy_catapult.catapult import ComfyCatapult, JobStatus
 from comfy_catapult.comfy_config import RemoteComfyConfig
 from comfy_catapult.comfy_schema import (APIHistoryEntry, APIObjectInfo,
                                          APIObjectInputTuple, APISystemStats,
                                          APIWorkflow, APIWorkflowInConnection,
                                          NodeID)
-from comfy_catapult.comfy_utils import (DownloadImageLike, GetNodeByTitle,
+from comfy_catapult.comfy_utils import (DownloadPreviewImage, GetNodeByTitle,
                                         YamlDump)
 from comfy_catapult.examples.utilities.sdxlturbo_parse_args import (Args,
                                                                     ParseArgs)
@@ -153,6 +153,7 @@ async def amain():
          indent=2,
          width=120,
          sort_dicts=False)
+  comfy_api_url = args.comfy_api_url
 
   # These are used to insure that files are not written/read outside of the
   # comfy_input_url and comfy_output_url directories.
@@ -211,7 +212,7 @@ async def amain():
     print('system_stats:', file=sys.stderr)
     print(YamlDump(system_stats.model_dump()), file=sys.stderr)
 
-    async with ComfyCatapultGeneric(comfy_client=comfy_client) as catapult:
+    async with ComfyCatapult(comfy_client=comfy_client) as catapult:
       job_id = str(uuid.uuid4())
 
       # Launch the job.
@@ -234,7 +235,7 @@ async def amain():
       print(YamlDump(job_history.model_dump()), file=sys.stderr)
 
       # Download Preview Image.
-      await FinishWorkflow(config=comfy_config,
+      await FinishWorkflow(comfy_api_url=comfy_api_url,
                            remote=remote,
                            workflow=workflow,
                            args=args,
@@ -313,21 +314,21 @@ async def PrepareWorkflow(*, client: ComfyAPIClientBase, workflow: APIWorkflow,
   ############################################################################
 
 
-async def FinishWorkflow(*, config: RemoteComfyConfig,
-                         remote: RemoteFileAPIBase, workflow: APIWorkflow,
-                         args: Args, job_history: APIHistoryEntry):
+async def FinishWorkflow(*, comfy_api_url: str, remote: RemoteFileAPIBase,
+                         workflow: APIWorkflow, args: Args,
+                         job_history: APIHistoryEntry):
   print('job_history:', file=sys.stderr)
   print(YamlDump(job_history.model_dump()), file=sys.stderr)
 
   preview_image_id, _ = GetNodeByTitle(workflow=workflow, title='Preview Image')
 
   # You are gonna want to look at how this function works.
-  await DownloadImageLike(node_id=preview_image_id,
-                          job_history=job_history,
-                          field_path='images[0]',
-                          config=config,
-                          remote=remote,
-                          local_dst_path=args.output_path)
+  await DownloadPreviewImage(node_id=preview_image_id,
+                             job_history=job_history,
+                             field_path='images[0]',
+                             comfy_api_url=comfy_api_url,
+                             remote=remote,
+                             local_dst_path=args.output_path)
 
 
 asyncio.run(amain(), debug=True)
@@ -461,7 +462,7 @@ api_workflow.root[new_node_id] = APIWorkflowNodeInfo(
 print(api_workflow.model_dump_json())
 ```
 
-## Known to work on:
+## Known to work on
 
 - **Python 3.11.4**, WSL2/Windows11, Ubuntu 22.04.2 LTS
 

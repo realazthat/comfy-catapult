@@ -130,7 +130,7 @@ From `comfy_catapult/examples/add_a_node.py`:
 {% include 'comfy_catapult/examples/add_a_node.py' %}
 ```
 
-## Known to work on:
+## Known to work on
 
 - **Python 3.11.4**, WSL2/Windows11, Ubuntu 22.04.2 LTS
 
