@@ -15,7 +15,7 @@ import pydantic
 from anyio import Path
 
 from comfy_catapult.remote_file_api_comfy import (ComfySchemeRemoteFileAPI,
-                                                  _TripletToComfySchemeURL)
+                                                  TripletToComfySchemeURL)
 from comfy_catapult.url_utils import (VALID_FOLDER_TYPES, ComfyFolderType,
                                       ComfyUIPathTriplet, SmartURLJoin)
 from comfy_catapult.url_utils_test import VALID_SUBFOLDER_EDGES
@@ -42,7 +42,7 @@ class TestRemoteFileApiComfy(IsolatedAsyncioTestCase):
       contents = 'hello world'
       await path.write_text(contents)
 
-      input_url = _TripletToComfySchemeURL(triplet=triplet)
+      input_url = TripletToComfySchemeURL(triplet=triplet)
 
       uploaded_url = await self._remote.UploadFile(src_path=path,
                                                    untrusted_dst_url=input_url)
@@ -99,7 +99,7 @@ class TestRemoteFileApiComfy(IsolatedAsyncioTestCase):
     comfy_scheme_url = 'comfy+http://comfy_host:23534/'
 
     self.assertEqual(
-        _TripletToComfySchemeURL(
+        TripletToComfySchemeURL(
             triplet=ComfyUIPathTriplet(comfy_api_url=comfy_api_url,
                                        folder_type='input',
                                        subfolder='',
@@ -112,7 +112,7 @@ class TestRemoteFileApiComfy(IsolatedAsyncioTestCase):
                              filename='remote-file.txt')
 
     self.assertEqual(
-        _TripletToComfySchemeURL(
+        TripletToComfySchemeURL(
             triplet=ComfyUIPathTriplet(comfy_api_url=comfy_api_url,
                                        folder_type='input',
                                        subfolder='subfolder',
@@ -129,7 +129,7 @@ class TestRemoteFileApiComfy(IsolatedAsyncioTestCase):
                              subfolder='/subfolder/',
                              filename='remote-file.txt')
     self.assertEqual(
-        _TripletToComfySchemeURL(
+        TripletToComfySchemeURL(
             triplet=ComfyUIPathTriplet(comfy_api_url=comfy_api_url,
                                        folder_type='input',
                                        subfolder='subfolder/subsubfolder',
@@ -144,21 +144,21 @@ class TestRemoteFileApiComfy(IsolatedAsyncioTestCase):
       for folder_type in VALID_FOLDER_TYPES:
         with self.subTest(folder_type=folder_type):
           self.assertEqual(
-              _TripletToComfySchemeURL(
+              TripletToComfySchemeURL(
                   triplet=ComfyUIPathTriplet(comfy_api_url=comfy_api_url,
                                              folder_type=folder_type,
                                              subfolder='',
                                              filename='remote-file.txt')),
               f'comfy+{comfy_api_url}/{folder_type}/remote-file.txt')
           self.assertEqual(
-              _TripletToComfySchemeURL(
+              TripletToComfySchemeURL(
                   triplet=ComfyUIPathTriplet(comfy_api_url=comfy_api_url,
                                              folder_type=folder_type,
                                              subfolder='subfolder',
                                              filename='remote-file.txt')),
               f'comfy+{comfy_api_url}/{folder_type}/subfolder/remote-file.txt')
           self.assertEqual(
-              _TripletToComfySchemeURL(
+              TripletToComfySchemeURL(
                   triplet=ComfyUIPathTriplet(comfy_api_url=comfy_api_url,
                                              folder_type=folder_type,
                                              subfolder='subfolder/subsubfolder',
@@ -166,7 +166,7 @@ class TestRemoteFileApiComfy(IsolatedAsyncioTestCase):
               f'comfy+{comfy_api_url}/{folder_type}/subfolder/subsubfolder/remote-file.txt'
           )
           self.assertEqual(
-              _TripletToComfySchemeURL(triplet=ComfyUIPathTriplet(
+              TripletToComfySchemeURL(triplet=ComfyUIPathTriplet(
                   comfy_api_url=comfy_api_url,
                   folder_type=folder_type,
                   subfolder='subfolder/subsubfolder/',

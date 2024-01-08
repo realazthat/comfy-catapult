@@ -46,7 +46,7 @@ class _Guess(Generic[T]):
   updated: datetime.datetime
 
 
-class ComfyCatapultGeneric(ComfyCatapultBase):
+class ComfyCatapult(ComfyCatapultBase):
 
   def __init__(self, *, comfy_client: ComfyAPIClientBase):
 

@@ -21,7 +21,6 @@ from anyio import Path
 from pydantic import BaseModel
 from pydash import slugify
 
-from comfy_catapult.comfy_config import RemoteComfyConfig
 from comfy_catapult.comfy_schema import (APIHistoryEntry, APIOutputUI,
                                          APIWorkflow, APIWorkflowNodeInfo,
                                          NodeID)
@@ -33,29 +32,29 @@ MAX_DUMP_LINES: int | None = 200
 DUMP_DIR: Path = Path('.logs/dumps')
 
 
-class NodeAndNodeID(NamedTuple):
+class NodeIDAndNode(NamedTuple):
   node_id: NodeID
   node_info: APIWorkflowNodeInfo
 
 
 def FindNodesByTitle(*, workflow: APIWorkflow,
-                     title: str) -> Generator[NodeAndNodeID, None, None]:
+                     title: str) -> Generator[NodeIDAndNode, None, None]:
   node_id: NodeID
   node_info: APIWorkflowNodeInfo
   for node_id, node_info in workflow.root.items():
     if node_info.meta is not None and node_info.meta.title == title:
-      yield NodeAndNodeID(node_id=node_id, node_info=node_info)
+      yield NodeIDAndNode(node_id=node_id, node_info=node_info)
 
 
 def FindNodeByTitle(*, workflow: APIWorkflow,
-                    title: str) -> NodeAndNodeID | None:
+                    title: str) -> NodeIDAndNode | None:
   for (node_id, node_info) in FindNodesByTitle(workflow=workflow, title=title):
-    return NodeAndNodeID(node_id=node_id, node_info=node_info)
+    return NodeIDAndNode(node_id=node_id, node_info=node_info)
   return None
 
 
-def GetNodeByTitle(*, workflow: APIWorkflow, title: str) -> NodeAndNodeID:
-  nodes: List[NodeAndNodeID] = list(
+def GetNodeByTitle(*, workflow: APIWorkflow, title: str) -> NodeIDAndNode:
+  nodes: List[NodeIDAndNode] = list(
       FindNodesByTitle(workflow=workflow, title=title))
 
   if len(nodes) == 0:
@@ -68,11 +67,11 @@ def GetNodeByTitle(*, workflow: APIWorkflow, title: str) -> NodeAndNodeID:
                              found_nodes=[node_id for node_id, _ in nodes])
   node_id, node_info = nodes[0]
 
-  return NodeAndNodeID(node_id=node_id, node_info=node_info)
+  return NodeIDAndNode(node_id=node_id, node_info=node_info)
 
 
 def FindNode(*, workflow: APIWorkflow,
-             id_or_title: str) -> NodeAndNodeID | None:
+             id_or_title: str) -> NodeIDAndNode | None:
   id_node_id: NodeID | None = None
   # id_node_error: Exception | None = None
 
@@ -101,15 +100,15 @@ def FindNode(*, workflow: APIWorkflow,
                              found_titles=[id_or_title],
                              found_nodes=[id_node_id])
   elif title_node_id is not None:
-    return NodeAndNodeID(node_id=title_node_id,
+    return NodeIDAndNode(node_id=title_node_id,
                          node_info=workflow.root[title_node_id])
   else:
     assert id_node_id is not None
-    return NodeAndNodeID(node_id=id_node_id,
+    return NodeIDAndNode(node_id=id_node_id,
                          node_info=workflow.root[id_node_id])
 
 
-def GetNode(*, workflow: APIWorkflow, id_or_title: str) -> NodeAndNodeID:
+def GetNode(*, workflow: APIWorkflow, id_or_title: str) -> NodeIDAndNode:
   node = FindNode(workflow=workflow, id_or_title=id_or_title)
   if node is None:
     raise NodeNotFound(title=id_or_title, node_id=id_or_title)
@@ -130,10 +129,10 @@ def GenerateNewNodeID(*, workflow: APIWorkflow) -> NodeID:
   return NodeID(str(max_integer + 1))
 
 
-async def DownloadImageLike(*, node_id: NodeID, job_history: APIHistoryEntry,
-                            field_path: Hashable | List[Hashable],
-                            config: RemoteComfyConfig,
-                            remote: RemoteFileAPIBase, local_dst_path: Path):
+async def DownloadPreviewImage(*, node_id: NodeID, job_history: APIHistoryEntry,
+                               field_path: Hashable | List[Hashable],
+                               comfy_api_url: str, remote: RemoteFileAPIBase,
+                               local_dst_path: Path):
   """Downloads something that looks like an Preview Image node's outputs.
 
   * field_path=='gifs[0]' works for Video Combine
@@ -144,17 +143,24 @@ async def DownloadImageLike(*, node_id: NodeID, job_history: APIHistoryEntry,
       job_history: The job_history.
       field_path: A pydash field path, for the pydash.get() and pydash.set_()
         functions.
-      config: The RemoteComfyConfig.
+      comfy_api_url: e.g http://127.0.0.1:8188.
       remote: A RemoteFileAPI instance.
       local_dst_path: Path to the local destination file.
   """
+
+  # Example Preview Image node output:
+  #
+  # TODO: Put an example here.
+
+  # Example Video Combine node output:
+  #
+  # TODO: Put an example here.
+
   assert job_history.outputs is not None
 
   if node_id not in job_history.outputs:
     raise Exception(f'{node_id} not in job_history.outputs')
 
-  if node_id not in job_history.outputs:
-    raise Exception('Preview Image not in job_history.outputs')
   node_outputs: APIOutputUI = job_history.outputs[node_id]
 
   file_dict: dict = pydash.get(node_outputs.root, field_path)
@@ -170,7 +176,7 @@ async def DownloadImageLike(*, node_id: NodeID, job_history: APIHistoryEntry,
   assert isinstance(folder_type, str)
   assert folder_type in ['temp', 'output']
 
-  triplet = ComfyUIPathTriplet(comfy_api_url=config.comfy_api_url,
+  triplet = ComfyUIPathTriplet(comfy_api_url=comfy_api_url,
                                folder_type=folder_type,
                                subfolder=subfolder,
                                filename=filename)

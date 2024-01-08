@@ -51,7 +51,7 @@ repos:
   rev: v3.7.0-4
   hooks:
   - id: shfmt
-    args: ['-i', '2']
+    args: [-i, '2']
 # - repo: local
 #   hooks:
 #   - id: ci-checks
