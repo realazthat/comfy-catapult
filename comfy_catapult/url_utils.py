@@ -164,6 +164,20 @@ class ComfyUIPathTriplet(BaseModel):
       raise ValueError(f'filename {repr(v)} must not be empty')
     return v
 
+  def ToLocalPathStr(self, *, include_folder_type: bool) -> str:
+    """Converts this triplet to something like `input/subfolder/filename`.
+    """
+    subfolder = self.subfolder
+    if subfolder == '':
+      subfolder = '.'
+    if not subfolder.endswith('/'):
+      subfolder += '/'
+
+    local_path = urljoin(subfolder, self.filename)
+    if include_folder_type:
+      local_path = urljoin(f'{self.folder_type}/', local_path)
+    return local_path
+
   # def Normalized(self) -> 'ComfyUIPathTriplet':
   #   subfolder_url = ToParseResult(url=self.subfolder)
   #   subfolder = subfolder_url.path
