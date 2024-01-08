@@ -114,14 +114,19 @@ def TripletToComfySchemeURL(triplet: ComfyUIPathTriplet,
   comfy_api_url_pr = ToParseResult(comfy_api_url)
   api_scheme = comfy_api_url_pr.scheme
   # ComfyUIPathTriplet validation should have already caught this.
+  # trunk-ignore(bandit/B101)
   assert api_scheme in VALID_COMFY_API_SCHEMES
   # ComfyUIPathTriplet validation should have already caught this.
+  # trunk-ignore(bandit/B101)
   assert triplet.folder_type in VALID_FOLDER_TYPES
   # ComfyUIPathTriplet validation should have already caught this.
+  # trunk-ignore(bandit/B101)
   assert '/' not in triplet.filename
   # ComfyUIPathTriplet validation should have already caught this.
+  # trunk-ignore(bandit/B101)
   assert triplet.filename != ''
   # ComfyUIPathTriplet validation should have already caught this.
+  # trunk-ignore(bandit/B101)
   assert not triplet.subfolder.startswith('/')
 
   path = f'{triplet.folder_type}/{triplet.subfolder}'
@@ -130,6 +135,9 @@ def TripletToComfySchemeURL(triplet: ComfyUIPathTriplet,
 
   path = SmartURLJoin(path, triplet.filename)
   comfy_scheme = f'comfy+{ToParseResult(triplet.comfy_api_url).scheme}'
+  # Sanity check, since api_scheme is in VALID_COMFY_API_SCHEMES, this should
+  # always be true.
+  # trunk-ignore(bandit/B101)
   assert comfy_scheme in VALID_COMFY_SCHEME_SCHEMES
 
   url_pr = comfy_api_url_pr._replace(scheme=comfy_scheme,
