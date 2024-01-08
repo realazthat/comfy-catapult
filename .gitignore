@@ -5,3 +5,7 @@ __pycache__
 .cache
 NOTES.md
 .logs/
+build/
+comfy_catapult.egg-info/
+.deleteme
+**/.deleteme*
