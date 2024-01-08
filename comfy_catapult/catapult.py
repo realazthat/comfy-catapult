@@ -17,6 +17,7 @@ from dataclasses import dataclass
 from typing import Dict, Generic, List, Sequence, Tuple, TypeVar
 from urllib.parse import ParseResult, urlparse, urlunparse
 
+from slugify import slugify
 from websockets import WebSocketClientProtocol, connect
 
 from comfy_catapult.api_client import ComfyAPIClientBase, YamlDump
@@ -110,6 +111,7 @@ class ComfyCatapult(ComfyCatapultBase):
       important: Sequence[NodeID],
   ) -> dict:
     assert job_id not in self._jobs, f'User job id {job_id} already exists'
+    assert slugify(job_id) == job_id, f'User job id {job_id} is not slugified'
 
     print('self._client.PostPrompt()', file=sys.stderr)
 
