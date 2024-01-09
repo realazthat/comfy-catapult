@@ -26,6 +26,7 @@ class Args(NamedTuple):
   comfy_output_file_url: str
   tmp_path: Path
   output_path: Path
+  debug_path: Path
 
   ckpt_name: str | None
   positive_prompt: str
@@ -83,6 +84,7 @@ async def ParseArgs() -> Args:
           'output/'))
   parser.add_argument('--tmp_path', type=Path, required=True)
   parser.add_argument('--output_path', type=Path, required=True)
+  parser.add_argument('--debug_path', type=Path, default=None)
 
   parser.add_argument('--ckpt_name', type=str, default=None)
   parser.add_argument('--positive_prompt', type=str, required=True)
@@ -143,6 +145,9 @@ async def ParseArgs() -> Args:
   ##############################################################################
   output_path: Path = args.output_path
   ##############################################################################
+  debug_path: Path | None = args.debug_path
+  if debug_path is None:
+    debug_path = tmp_path / 'debug'
 
   return Args(
       comfy_api_url=comfy_api_url,
@@ -153,6 +158,7 @@ async def ParseArgs() -> Args:
       comfy_temp_file_url=comfy_temp_file_url,
       tmp_path=tmp_path,
       output_path=output_path,
+      debug_path=debug_path,
       ckpt_name=args.ckpt_name,
       positive_prompt=args.positive_prompt,
       negative_prompt=args.negative_prompt,

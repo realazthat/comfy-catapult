@@ -214,7 +214,8 @@ async def amain():
     print('system_stats:', file=sys.stderr)
     print(YamlDump(system_stats.model_dump()), file=sys.stderr)
 
-    async with ComfyCatapult(comfy_client=comfy_client) as catapult:
+    async with ComfyCatapult(comfy_client=comfy_client,
+                             debug_path=args.debug_path) as catapult:
       job_id = str(uuid.uuid4())
 
       # Launch the job.
