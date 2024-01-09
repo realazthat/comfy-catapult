@@ -55,8 +55,9 @@ wget https://github.com/comfyanonymous/ComfyUI_examples/raw/master/sdturbo/sdxlt
 ```bash
 # Inside your environment:
 pip install https://github.com/realazthat/comfy-catapult.git
-# Or
+# Or (inside your environment):
 git clone https://github.com/realazthat/comfy-catapult.git
+cd comfy-catapult
 pip install .
 
 
@@ -70,7 +71,7 @@ export COMFY_API_URL=http://host.docker.internal:8188
 
 
 python -m comfy_catapult.examples.sdxlturbo_example_catapulter \
-  --api_workflow_json_path "$PWD/sdxlturbo_example_api.json"
+  --api_workflow_json_path "$PWD/sdxlturbo_example_api.json" \
   --tmp_path "$PWD/.deleteme/tmp/" \
   --output_path "$PWD/.deleteme/output.png" \
   --positive_prompt "amazing cloudscape, towering clouds, thunderstorm, awe" \
