@@ -85,7 +85,7 @@ class TestRemoteFileApiComfy(IsolatedAsyncioTestCase):
     folder_type: ComfyFolderType
     folder_types: List[ComfyFolderType] = ['input']
     for folder_type in folder_types:
-      for subfolder, expected in VALID_SUBFOLDER_EDGES:
+      for subfolder, _ in VALID_SUBFOLDER_EDGES:
         with self.subTest(folder_type=folder_type, subfolder=subfolder):
 
           await self._test_UploadToTriplet(

@@ -44,7 +44,7 @@ def ToParseResult(url: str) -> ParseResult:
   try:
     return urlparse(url)
   except ValueError as e:
-    raise URLValidationError(f'URL {repr(url)} is not valid: {e}')
+    raise URLValidationError(f'URL {repr(url)} is not valid: {e}') from e
 
 
 def ValidateIsURL(url: str) -> str:

@@ -19,7 +19,7 @@ class TestComfySchema(IsolatedAsyncioTestCase):
 
   async def test_comfy_schema(self):
     async with aiofiles.open('test_data/object_info.yml') as f:
-      content = yaml.load(await f.read(), Loader=yaml.FullLoader)
+      content = yaml.safe_load(await f.read())
     await TryParseAsModel(content=content,
                           model_type=APIObjectInfo,
                           strict='yes')

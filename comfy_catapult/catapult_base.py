@@ -31,6 +31,7 @@ class JobStatus(NamedTuple):
 
 class ComfyCatapultBase(ABC):
 
+  @abstractmethod
   def __init__(self):
     pass
 
