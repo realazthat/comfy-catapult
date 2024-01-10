@@ -118,9 +118,9 @@ From `comfy_catapult/examples/sdxlturbo_example_catapulter.py`:
 # -*- coding: utf-8 -*-
 # SPDX-License-Identifier: MIT
 #
-# The Catapult require contributions made to this file be licensed under the MIT
-# license or a compatible open source license. See LICENSE.md for the license
-# text.
+# The Comfy Catapult project require contributions made to this file be licensed
+# under the MIT license or a compatible open source license. See LICENSE.md for
+# the license text.
 
 import asyncio
 import sys
@@ -345,9 +345,9 @@ From `comfy_catapult/examples/using_pydantic.py`:
 # -*- coding: utf-8 -*-
 # SPDX-License-Identifier: MIT
 #
-# The Catapult require contributions made to this file be licensed under the MIT
-# license or a compatible open source license. See LICENSE.md for the license
-# text.
+# The Comfy Catapult project require contributions made to this file be licensed
+# under the MIT license or a compatible open source license. See LICENSE.md for
+# the license text.
 
 from pathlib import Path
 
@@ -409,9 +409,9 @@ From `comfy_catapult/examples/add_a_node.py`:
 # -*- coding: utf-8 -*-
 # SPDX-License-Identifier: MIT
 #
-# The Catapult require contributions made to this file be licensed under the MIT
-# license or a compatible open source license. See LICENSE.md for the license
-# text.
+# The Comfy Catapult project require contributions made to this file be licensed
+# under the MIT license or a compatible open source license. See LICENSE.md for
+# the license text.
 
 from pathlib import Path
 

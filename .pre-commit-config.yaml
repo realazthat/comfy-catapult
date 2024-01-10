@@ -21,6 +21,7 @@ repos:
     exclude: ^README.md$
   - id: fix-byte-order-marker
   - id: fix-encoding-pragma
+    exclude: ^.*__init__.py$
   - id: mixed-line-ending
   - id: name-tests-test
   - id: requirements-txt-fixer
@@ -74,6 +75,7 @@ repos:
   - id: insert-license
     args: [--license-filepath, .github/license-header.md]
     files: \.py$
+    exclude: .*__init__.py$
 # From https://github.com/Lucas-C/pre-commit-hooks#useful-local-hooks
 - repo: local
   hooks:
