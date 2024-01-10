@@ -212,8 +212,6 @@ class ComfyCatapult(ComfyCatapultBase):
           node_id for node_id in outputs_to_execute
           if node_id not in outputs_with_data
       ]
-      print('bad_dataless_outputs:', file=sys.stderr)
-      print(YamlDump(bad_dataless_outputs), file=sys.stderr)
 
       def _GetTitles(node_ids: List[NodeID]) -> List[str | None]:
         titles = []
