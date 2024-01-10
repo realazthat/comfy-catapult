@@ -160,7 +160,8 @@ class ComfyCatapult(ComfyCatapultBase):
   async def GetStatus(self, *,
                       job_id: str) -> Tuple[JobStatus, asyncio.Future[dict]]:
     with self._lock:
-      assert job_id in self._jobs
+      if job_id not in self._jobs:
+        raise KeyError(f'Job id {job_id} not found')
       job = self._jobs[job_id]
       return deepcopy(job.status), job.future
 
