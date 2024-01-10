@@ -259,14 +259,13 @@ class ComfyCatapult(ComfyCatapultBase):
                                          errored=now,
                                          errors=job.status.errors + [str(e)])
         debug_path = self._debug_path
-        job_history: dict | None = job.status.job_history
-      # Save the job history to a file
-      if debug_path is not None and job_history is not None:
+      # Save the job status to a file
+      if debug_path is not None:
         job_history_path = debug_path / f'{job_id}.status.yaml'
         await job_history_path.parent.mkdir(parents=True, exist_ok=True)
         async with aiofiles.open(job_history_path, 'w') as f:
           await f.write(YamlDump(job.status))
-        print(f'Wrote job history to {job_history_path}', file=sys.stderr)
+        print(f'Wrote job status to {job_history_path}', file=sys.stderr)
 
   async def _Poll(self):
     # TODO: Use locks properly in this function
