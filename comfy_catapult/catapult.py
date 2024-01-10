@@ -7,6 +7,7 @@
 
 import asyncio
 import datetime
+import json
 import sys
 import textwrap
 import threading
@@ -27,6 +28,7 @@ from comfy_catapult.catapult_base import ComfyCatapultBase, JobStatus, Progress
 from comfy_catapult.comfy_schema import (APIHistory, APIHistoryEntry,
                                          APIQueueInfo, APISystemStats,
                                          APIWorkflowTicket, NodeID, WSMessage)
+from comfy_catapult.comfy_utils import TryParseAsModel
 from comfy_catapult.errors import NodesNotExecuted, WorkflowSubmissionError
 
 
@@ -374,113 +376,123 @@ class ComfyCatapult(ComfyCatapultBase):
 
   async def _LoopWS(self, *, ws: WebSocketClientProtocol):
     while True:
-      out = await ws.recv()
-      if not isinstance(out, str):
-        continue
-      message = WSMessage.model_validate_json(out)
-      print('websocket message:', file=sys.stderr)
-      print(YamlDump(message.__dict__), file=sys.stderr)
+      try:
+        print('websocket recv', file=sys.stderr)
+        out = await ws.recv()
+        if not isinstance(out, str):
+          print('websocket type(out):', type(out), file=sys.stderr)
+          continue
+        print('websocket raw:', file=sys.stderr)
+        print(YamlDump(out), file=sys.stderr)
+        message = await TryParseAsModel(content=json.loads(out),
+                                        model_type=WSMessage)
+        print('websocket message:', file=sys.stderr)
+        print(YamlDump(message.__dict__), file=sys.stderr)
 
-      if message.type == 'executing' and 'last_node_id' in message.data:
-        last_node_id = message.data['last_node_id']
+        if message.type == 'executing' and 'last_node_id' in message.data:
+          last_node_id = message.data['last_node_id']
 
-        self._guess_currently_running_node_id = _Guess(value=last_node_id,
-                                                       updated=self._Now())
-        await self._Record()
-      elif message.type == 'executing' and 'node' in message.data and 'prompt_id' in message.data:
-        prompt_id = message.data.get('prompt_id', None)
-        node_id: str | None = message.data.get('node', None)
-        with self._lock:
-          job_id = self._prompt_id_index.get(
-              prompt_id, None) if prompt_id is not None else None
-          if job_id is not None:
-            job = self._jobs[job_id]
-            if job.status.running is None:
-              job.status = job.status._replace(running=self._Now())
-          self._guess_currently_running_job_id = _Guess(value=job_id,
-                                                        updated=self._Now())
-          self._guess_currently_running_node_id = _Guess(value=node_id,
+          self._guess_currently_running_node_id = _Guess(value=last_node_id,
                                                          updated=self._Now())
-          self._guess_currently_running_node_progress = _Guess(
-              value=None, updated=self._Now())
-        await self._Record()
-      elif message.type == 'execution_start' and 'prompt_id' in message.data:
-        prompt_id = message.data['prompt_id']
-        with self._lock:
-          job_id = self._prompt_id_index.get(
-              prompt_id, None) if prompt_id is not None else None
-          if job_id is not None:
-            job = self._jobs[job_id]
-            if job.status.running is None:
-              job.status = job.status._replace(running=self._Now())
-          self._guess_currently_running_job_id = _Guess(value=job_id,
-                                                        updated=self._Now())
-          self._guess_currently_running_node_id = _Guess(value=None,
-                                                         updated=self._Now())
-          self._guess_currently_running_node_progress = _Guess(
-              value=None, updated=self._Now())
-        await self._Record()
-
-      elif message.type == 'executed' and 'node' in message.data and 'output_ui' in message.data and 'prompt_id' in message.data:
-        # Finished a single node?
-        prompt_id: str | None = message.data.get('prompt_id', None)
-        node_id: str | None = message.data.get('node', None)
-        # output_ui = message.data['output_ui']
-
-        with self._lock:
-          job_id = self._prompt_id_index.get(
-              prompt_id, None) if prompt_id is not None else None
-          if job_id is not None:
-            job = self._jobs[job_id]
-            if job.status.running is None:
-              job.status = job.status._replace(running=self._Now())
-          else:
-            node_id = None
-
-          self._guess_currently_running_job_id = _Guess(value=job_id,
-                                                        updated=self._Now())
-          self._guess_currently_running_node_id = _Guess(value=node_id,
-                                                         updated=self._Now())
-          self._guess_currently_running_node_progress = _Guess(
-              value=None, updated=self._Now())
-        await self._Record()
-      elif message.type in ['execution_interrupted', 'execution_error']:
-        prompt_id: str | None = message.data.get('prompt_id', None)
-        node_id: str | None = message.data.get('node_id', None)
-        node_type: str | None = message.data.get('node_type', None)
-        # executed: list | None = message.data.get('executed', None)
-
-        with self._lock:
-          job_id = self._prompt_id_index.get(
-              prompt_id, None) if prompt_id is not None else None
-          if job_id is not None:
-            job = self._jobs[job_id]
-            if job.status.errored is None and job.status.done is None:
-              now = self._Now()
-              job.status = job.status._replace(
-                  errored=now,
-                  done=now,
-                  errors=job.status.errors + [
-                      Exception(
-                          f'Node {node_id} of type {node_type} errored: {message.data}'
-                      )
-                  ])
-          self._guess_currently_running_job_id = _Guess(value=None,
-                                                        updated=self._Now())
-          self._guess_currently_running_node_id = _Guess(value=None,
-                                                         updated=self._Now())
-          self._guess_currently_running_node_progress = _Guess(
-              value=None, updated=self._Now())
-        await self._Record()
-      elif message.type == 'progress':
-        value = message.data.get('value', None)
-        max_value = message.data.get('max_value', None)
-        if isinstance(value, int) and isinstance(max_value, int):
-          with self._lock:
-            self._guess_currently_running_node_progress = _Guess(
-                value=Progress(value=value, max_value=max_value),
-                updated=self._Now())
           await self._Record()
+        elif message.type == 'executing' and 'node' in message.data and 'prompt_id' in message.data:
+          prompt_id = message.data.get('prompt_id', None)
+          node_id: str | None = message.data.get('node', None)
+          with self._lock:
+            job_id = self._prompt_id_index.get(
+                prompt_id, None) if prompt_id is not None else None
+            if job_id is not None:
+              job = self._jobs[job_id]
+              if job.status.running is None:
+                job.status = job.status._replace(running=self._Now())
+            self._guess_currently_running_job_id = _Guess(value=job_id,
+                                                          updated=self._Now())
+            self._guess_currently_running_node_id = _Guess(value=node_id,
+                                                           updated=self._Now())
+            self._guess_currently_running_node_progress = _Guess(
+                value=None, updated=self._Now())
+          await self._Record()
+        elif message.type == 'execution_start' and 'prompt_id' in message.data:
+          prompt_id = message.data['prompt_id']
+          with self._lock:
+            job_id = self._prompt_id_index.get(
+                prompt_id, None) if prompt_id is not None else None
+            if job_id is not None:
+              job = self._jobs[job_id]
+              if job.status.running is None:
+                job.status = job.status._replace(running=self._Now())
+            self._guess_currently_running_job_id = _Guess(value=job_id,
+                                                          updated=self._Now())
+            self._guess_currently_running_node_id = _Guess(value=None,
+                                                           updated=self._Now())
+            self._guess_currently_running_node_progress = _Guess(
+                value=None, updated=self._Now())
+          await self._Record()
+
+        elif message.type == 'executed' and 'node' in message.data and 'output_ui' in message.data and 'prompt_id' in message.data:
+          # Finished a single node?
+          prompt_id: str | None = message.data.get('prompt_id', None)
+          node_id: str | None = message.data.get('node', None)
+          # output_ui = message.data['output_ui']
+
+          with self._lock:
+            job_id = self._prompt_id_index.get(
+                prompt_id, None) if prompt_id is not None else None
+            if job_id is not None:
+              job = self._jobs[job_id]
+              if job.status.running is None:
+                job.status = job.status._replace(running=self._Now())
+            else:
+              node_id = None
+
+            self._guess_currently_running_job_id = _Guess(value=job_id,
+                                                          updated=self._Now())
+            self._guess_currently_running_node_id = _Guess(value=node_id,
+                                                           updated=self._Now())
+            self._guess_currently_running_node_progress = _Guess(
+                value=None, updated=self._Now())
+          await self._Record()
+        elif message.type in ['execution_interrupted', 'execution_error']:
+          prompt_id: str | None = message.data.get('prompt_id', None)
+          node_id: str | None = message.data.get('node_id', None)
+          node_type: str | None = message.data.get('node_type', None)
+          # executed: list | None = message.data.get('executed', None)
+
+          with self._lock:
+            job_id = self._prompt_id_index.get(
+                prompt_id, None) if prompt_id is not None else None
+            if job_id is not None:
+              job = self._jobs[job_id]
+              if job.status.errored is None and job.status.done is None:
+                now = self._Now()
+                job.status = job.status._replace(
+                    errored=now,
+                    done=now,
+                    errors=job.status.errors + [
+                        Exception(
+                            f'Node {node_id} of type {node_type} errored: {message.data}'
+                        )
+                    ])
+            self._guess_currently_running_job_id = _Guess(value=None,
+                                                          updated=self._Now())
+            self._guess_currently_running_node_id = _Guess(value=None,
+                                                           updated=self._Now())
+            self._guess_currently_running_node_progress = _Guess(
+                value=None, updated=self._Now())
+          await self._Record()
+        elif message.type == 'progress':
+          value = message.data.get('value', None)
+          max_value = message.data.get('max_value', None)
+          if isinstance(value, int) and isinstance(max_value, int):
+            with self._lock:
+              self._guess_currently_running_node_progress = _Guess(
+                  value=Progress(value=value, max_value=max_value),
+                  updated=self._Now())
+            await self._Record()
+      except asyncio.CancelledError:
+        raise
+      except Exception:
+        traceback.print_exc(file=sys.stderr)
 
   async def _PollLoop(self):
     while not self._stop_event.is_set():
