@@ -18,10 +18,19 @@ a program.
 
 ## Getting Started
 
-The following assumes you are running in a bash-like environment, getting these
-to work in Windows is left as an exercise for the reader.
+### Exporting workflows in the API json format
+
+In ComfyUI web interface:
+
+1. Click settings.
+2. Enable the ability to export in the API format.
+3. Click `Save (API format)`.
+
+![ComfyUI API format export instructions](assets/comfy-export-instructions.png)
 
 ### Example workflow: Prepare ComfyUI
+
+**If you don't want to try the example workflow, you can skip this section.**
 
 You need to get `sd_xl_turbo_1.0_fp16.safetensors` into the ComfyUI model
 directory.
@@ -34,25 +43,25 @@ Direct download link:
 
 ### Download the example workflow, and export it in the API format
 
+**This is optional, you can use the example workflow in `test_data/` instead and
+skip this step.**
+
 ```bash
 # Download the workflow:
 wget https://github.com/comfyanonymous/ComfyUI_examples/raw/master/sdturbo/sdxlturbo_example.png
 
-# Open the Workflow in ComfyUI, and export it in the API format to
-# `./sdxlturbo_example_api.json`.
+# 1. Open the Workflow in ComfyUI and export it. AFAIK there isn't a nice way
+# to automated this right now.
 
+# Save to `./sdxlturbo_example_api.json`.
 # Or just use `test_data/sdxlturbo_example_api.json`.
-
-# Optional: You might want to examine the json file just to see the shape of the
-# nodes, what they are called, what their inputs and outputs are called, and what
-# their default values are, etc.
 ```
 
 ### Install as a library from git and run the examples
 
 ```bash
 # Inside your environment:
-pip install https://github.com/realazthat/comfy-catapult.git
+pip install git+https://github.com/realazthat/comfy-catapult.git
 # Or (inside your environment):
 git clone https://github.com/realazthat/comfy-catapult.git
 cd comfy-catapult
@@ -78,26 +87,57 @@ python -m comfy_catapult.examples.sdxlturbo_example_catapulter \
 # Optional if you don't want to set the environment variable:
 #   --comfy_api_url "..."
 
+
 # Now $PWD/.deleteme/output.png should contain the output image.
 
-python -m comfy_catapult.examples.simple_example_catapult
-python -m comfy_catapult.examples.sdxlturbo_example_easy_catapult
+python -m comfy_catapult.examples.add_a_node
+python -m comfy_catapult.examples.using_pydantic
 
 
 
-# Examine comfy_catapult/examples/sdxlturbo_example_catapulter.py to see how to
-# use the library.
 ```
 
-### Install dependencies and run the examples
+- Examine
+  [`comfy_catapult/examples/sdxlturbo_example_catapulter.py`](comfy_catapult/examples/sdxlturbo_example_catapulter.py)
+  to see how to use the main `ComfyCatapult` library.
+- Examine
+  [`test_data/sdxlturbo_example_api.json`](test_data/sdxlturbo_example_api.json)
+  to see the API format.
+- See [`comfy_catapult/catapult_base.py`](comfy_catapult/catapult_base.py) for
+  the main library interface.
+- See [`comfy_catapult/catapult.py`](comfy_catapult/catapult_base.py) for the
+  main library implementation.
+- See [`comfy_catapult/api_client_base.py`](comfy_catapult/api_client_base.py)
+  for the direct ComfyUI API endpoint client library interface; you don't need
+  to use this usually.
+- For those who want to do use the raw API themselves and learn how it works:
+  Examine [`comfy_catapult/api_client.py`](comfy_catapult/api_client.py) to see
+  the API client implementation if you want to directly interface with ComfyUI
+  endpoints yourself.
+  - Also see
+    [ComfyUI/server.py](https://github.com/comfyanonymous/ComfyUI/blob/977eda19a6471fbff253dc92c3c2f1a4a67b1793/server.py#L99)
+    (pinned to a specific commit) for the server `@routes` endpoint
+    implementations.
+- See
+  [`comfy_catapult/examples/add_a_node.py`](comfy_catapult/examples/add_a_node.py)
+  for how to add a new node to a workflow.
+- See
+  [`comfy_catapult/examples/using_pydantic.py`](comfy_catapult/examples/using_pydantic.py)
+  for how to parse the API format into the Pydantic models schema for easier
+  navigation.
+
+### Development; install dependencies and run the examples
+
+This is if you are intending on contributing or altering the library itself.
 
 ```bash
-# Install dependencies:
+
+git clone https://github.com/realazthat/comfy-catapult.git
+cd comfy-catapult
 pip install -r requirements.txt
 
 
-
-# Run the workflow:
+# Run the example workflow:
 PYTHONPATH=$PYTHONPATH:$PWD python comfy_catapult/examples/sdxlturbo_example_catapulter.py \
   --api_workflow_json_path "$PWD/sdxlturbo_example_api.json"
   --tmp_path "$PWD/.deleteme/tmp/" \
@@ -139,6 +179,9 @@ From `comfy_catapult/examples/add_a_node.py`:
 ## Limitations
 
 - ETA estimator isn't working
+- Sometimes the job ends early but no error is sent back from the server. Error
+  is detected because not all nodes have executed, but the error is opaque
+  (check the server logs for the error).
 
 ## TODO
 
