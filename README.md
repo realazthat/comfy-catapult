@@ -54,8 +54,9 @@ wget https://github.com/comfyanonymous/ComfyUI_examples/raw/master/sdturbo/sdxlt
 
 # 1. Open the Workflow in ComfyUI and export it. AFAIK there isn't a nice way
 # to automated this right now.
-
-# Save to `./sdxlturbo_example_api.json`.
+#
+# 2, Save to `./sdxlturbo_example_api.json`.
+#
 # Or just use `test_data/sdxlturbo_example_api.json`.
 ```
 
@@ -89,9 +90,9 @@ python -m comfy_catapult.examples.sdxlturbo_example_catapulter \
 # Optional if you don't want to set the environment variable:
 #   --comfy_api_url "..."
 
+# Done! Now $PWD/.deleteme/output.png should contain the output image.
 
-# Now $PWD/.deleteme/output.png should contain the output image.
-
+# Some other examples:
 python -m comfy_catapult.examples.add_a_node
 python -m comfy_catapult.examples.using_pydantic
 
@@ -104,29 +105,33 @@ python -m comfy_catapult.examples.using_pydantic
   to see how to use the main `ComfyCatapult` library.
 - Examine
   [`test_data/sdxlturbo_example_api.json`](test_data/sdxlturbo_example_api.json)
-  to see the API format.
+  to see the API format. This will be necessary in order to programmatically set
+  the proper inputs for the workflow.
+  - (Optional) See
+    [`comfy_catapult/examples/using_pydantic.py`](comfy_catapult/examples/using_pydantic.py)
+    for how to parse the API format into the Pydantic models schema for easier
+    navigation.
+  - (Optional) See
+    [`comfy_catapult/examples/add_a_node.py`](comfy_catapult/examples/add_a_node.py)
+    for how to add a new node to a workflow. This is useful when you need to add
+    nodes at runtime (such as adding a bunch of LoadImage nodes).
 - See [`comfy_catapult/catapult_base.py`](comfy_catapult/catapult_base.py) for
   the main library interface.
-- See [`comfy_catapult/catapult.py`](comfy_catapult/catapult_base.py) for the
-  main library implementation.
-- See [`comfy_catapult/api_client_base.py`](comfy_catapult/api_client_base.py)
-  for the direct ComfyUI API endpoint client library interface; you don't need
-  to use this usually.
-- For those who want to do use the raw API themselves and learn how it works:
-  Examine [`comfy_catapult/api_client.py`](comfy_catapult/api_client.py) to see
-  the API client implementation if you want to directly interface with ComfyUI
-  endpoints yourself.
-  - Also see
+- (Optional) See [`comfy_catapult/catapult.py`](comfy_catapult/catapult_base.py)
+  for the main library implementation.
+- (Optional) See
+  [`comfy_catapult/api_client_base.py`](comfy_catapult/api_client_base.py) for
+  the direct ComfyUI API endpoint client library interface; you don't need to
+  use this usually.
+- (Optional) For those who want to do use the raw API themselves and learn how
+  it works: Examine
+  [`comfy_catapult/api_client.py`](comfy_catapult/api_client.py) to see the API
+  client implementation if you want to directly interface with ComfyUI endpoints
+  yourself.
+  - (Optional) Also see
     [ComfyUI/server.py](https://github.com/comfyanonymous/ComfyUI/blob/977eda19a6471fbff253dc92c3c2f1a4a67b1793/server.py#L99)
     (pinned to a specific commit) for the server `@routes` endpoint
     implementations.
-- See
-  [`comfy_catapult/examples/add_a_node.py`](comfy_catapult/examples/add_a_node.py)
-  for how to add a new node to a workflow.
-- See
-  [`comfy_catapult/examples/using_pydantic.py`](comfy_catapult/examples/using_pydantic.py)
-  for how to parse the API format into the Pydantic models schema for easier
-  navigation.
 
 ### Development; install dependencies and run the examples
 
