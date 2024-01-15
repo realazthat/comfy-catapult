@@ -14,6 +14,7 @@ EXTRA = 'allow'
 
 NodeID = Annotated[str, Field(alias='node_id')]
 PromptID = Annotated[str, Field(alias='prompt_id')]
+ClientID = Annotated[str, Field(alias='client_id')]
 OutputName = Annotated[str, Field(alias='output_name')]
 # This is BOOLEAN, INT etc.
 OutputType = Annotated[str, Field(alias='output_type')]

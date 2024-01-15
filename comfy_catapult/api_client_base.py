@@ -9,7 +9,8 @@ from abc import ABC, abstractmethod
 
 from comfy_catapult.comfy_schema import (APIHistory, APIObjectInfo,
                                          APIQueueInfo, APISystemStats,
-                                         APIUploadImageResp, APIWorkflowTicket)
+                                         APIUploadImageResp, APIWorkflowTicket,
+                                         ClientID, PromptID)
 
 
 class ComfyAPIClientBase(ABC):
@@ -67,7 +68,32 @@ class ComfyAPIClientBase(ABC):
     raise NotImplementedError()
 
   @abstractmethod
-  async def PostPrompt(self, *, prompt_workflow: dict) -> APIWorkflowTicket:
+  async def PostPrompt(self,
+                       *,
+                       prompt_workflow: dict,
+                       number: int | None = None,
+                       client_id: ClientID | None = None,
+                       prompt_id: PromptID | None = None,
+                       extra_data: dict | None = None) -> APIWorkflowTicket:
+    """See `ComfyUI/server.py` `@routes.post("/prompt")`.
+
+    Args:
+        prompt_workflow (dict): The API workflow, you can generate this with
+          the ComfyUI web interface, as explained in `README.md`:
+          1. Open settings (gear box in the corner).
+          2. Enable the ability to export in the API format, `Enable Dev mode Options`.
+          3. Click new menu item `Save (API format)`.
+        prompt_id (PromptID | None): If you want to set the prompt id. If you
+          leave this empty, the server will generate a prompt id for you.
+        number (int, optional): Where to insert into the queue. -1 means to
+          insert to the front of the queue. Default is None, which uses the
+          default on the server, which is also equivalent to -1.
+        client_id (ClientID | None, optional): _description_. Defaults to None.
+        extra_data (dict | None, optional): _description_. Defaults to None.
+
+    Returns:
+        APIWorkflowTicket: _description_
+    """
     raise NotImplementedError()
 
   @abstractmethod

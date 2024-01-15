@@ -22,9 +22,9 @@ a program.
 
 In ComfyUI web interface:
 
-1. Click settings.
-2. Enable the ability to export in the API format.
-3. Click `Save (API format)`.
+1. Open settings (gear box in the corner).
+2. Enable the ability to export in the API format, `Enable Dev mode Options`.
+3. Click new menu item `Save (API format)`.
 
 ![ComfyUI API format export instructions](assets/comfy-export-instructions.png)
 

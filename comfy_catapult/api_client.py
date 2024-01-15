@@ -8,7 +8,7 @@
 import base64
 import json
 import textwrap
-from typing import Any, Type, TypeVar
+from typing import Any, Dict, Type, TypeVar
 from urllib.parse import urlencode, urlparse
 
 import aiohttp
@@ -17,7 +17,8 @@ from pydantic import BaseModel
 from comfy_catapult.api_client_base import ComfyAPIClientBase
 from comfy_catapult.comfy_schema import (APIHistory, APIObjectInfo,
                                          APIQueueInfo, APISystemStats,
-                                         APIUploadImageResp, APIWorkflowTicket)
+                                         APIUploadImageResp, APIWorkflowTicket,
+                                         ClientID, PromptID)
 from comfy_catapult.comfy_utils import TryParseAsModel, YamlDump, _WatchVar
 from comfy_catapult.url_utils import SmartURLJoin
 
@@ -113,9 +114,25 @@ class ComfyAPIClient(ComfyAPIClientBase):
       async with self._session.get(url.geturl()) as resp:
         return await _TryParseRespAsJson(resp=resp)
 
-  async def PostPrompt(self, *, prompt_workflow: dict) -> APIWorkflowTicket:
-    p = {'prompt': prompt_workflow}
-    data: bytes = json.dumps(p).encode('utf-8')
+  async def PostPrompt(self,
+                       *,
+                       prompt_workflow: dict,
+                       number: int | None = None,
+                       client_id: ClientID | None = None,
+                       prompt_id: PromptID | None = None,
+                       extra_data: dict | None = None) -> APIWorkflowTicket:
+    body: Dict[str, Any] = {'prompt': prompt_workflow}
+
+    if number is not None:
+      body['number'] = number
+    if client_id is not None:
+      body['client_id'] = client_id
+    if prompt_id is not None:
+      body['prompt_id'] = prompt_id
+    if extra_data is not None:
+      body['extra_data'] = extra_data
+
+    data: bytes = json.dumps(body).encode('utf-8')
     url = urlparse(f'{self._comfy_api_url}/prompt')
     with _WatchVar(url=url.geturl()):
       async with self._session.post(url.geturl(), data=data) as resp:
