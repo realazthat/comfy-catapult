@@ -141,7 +141,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
 
   async def GetHistory(self,
                        *,
-                       prompt_id: str | None = None,
+                       prompt_id: PromptID | None = None,
                        max_items: int | None = None) -> APIHistory:
     url = urlparse(SmartURLJoin(f'{self._comfy_api_url}', '/history'))
     if max_items is not None:

@@ -85,7 +85,7 @@ class APISystemStats(BaseModel):
 ################################################################################
 class APIQueueInfoEntry(NamedTuple):
   number: int
-  prompt_id: str
+  prompt_id: PromptID
   prompt: APIWorkflow
   extra_data: dict
   outputs_to_execute: List[NodeID]
@@ -117,7 +117,7 @@ class APIWorkflowTicket(BaseModel):
   """Return from post /prompt endpoint."""
   node_errors: Dict[NodeID, NodeErrors] | None = None
   number: int | None = None
-  prompt_id: str | None = None
+  prompt_id: PromptID | None = None
   error: str | None = None
 
 
@@ -366,7 +366,7 @@ class WSExecutingData(BaseModel):
   """
   model_config = ConfigDict(extra=EXTRA)
   node: str | None = None
-  prompt_id: str | None = None
+  prompt_id: PromptID | None = None
 
 
 class WSMessage(BaseModel):

@@ -99,7 +99,7 @@ class ComfyAPIClientBase(ABC):
   @abstractmethod
   async def GetHistory(self,
                        *,
-                       prompt_id: str | None = None,
+                       prompt_id: PromptID | None = None,
                        max_items: int | None = None) -> APIHistory:
     raise NotImplementedError()
 
