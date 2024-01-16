@@ -123,3 +123,7 @@ class ComfyAPIClientBase(ABC):
                             filename: str, data: bytes,
                             overwrite: bool) -> APIUploadImageResp:
     raise NotImplementedError()
+
+  @abstractmethod
+  async def PostInterrupt(self):
+    raise NotImplementedError()

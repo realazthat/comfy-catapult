@@ -218,3 +218,12 @@ class ComfyAPIClient(ComfyAPIClientBase):
     with _WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
         return await resp.content.read()
+
+  async def PostInterrupt(self):
+    # TODO: Don't join `/interrupt`, but just `interrupt`, and same with the
+    # other endpoints.
+    # TODO: change the API to take a prompt_id.
+    url = urlparse(SmartURLJoin(f'{self._comfy_api_url}', '/interrupt'))
+    with _WatchVar(url=url.geturl()):
+      async with self._session.post(url.geturl()) as resp:
+        resp.raise_for_status()
