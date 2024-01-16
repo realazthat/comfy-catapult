@@ -8,7 +8,7 @@
 import base64
 import json
 import textwrap
-from typing import Any, Dict, Type, TypeVar
+from typing import Any, Dict, List, Type, TypeVar
 from urllib.parse import urlencode, urlparse
 
 import aiohttp
@@ -226,4 +226,11 @@ class ComfyAPIClient(ComfyAPIClientBase):
     url = urlparse(SmartURLJoin(f'{self._comfy_api_url}', '/interrupt'))
     with _WatchVar(url=url.geturl()):
       async with self._session.post(url.geturl()) as resp:
+        resp.raise_for_status()
+
+  async def PostQueue(self, *, delete: List[PromptID], clear: bool):
+    url = urlparse(SmartURLJoin(f'{self._comfy_api_url}', '/queue'))
+    data = {'delete': delete, 'clear': clear}
+    with _WatchVar(url=url.geturl()):
+      async with self._session.post(url.geturl(), data=data) as resp:
         resp.raise_for_status()

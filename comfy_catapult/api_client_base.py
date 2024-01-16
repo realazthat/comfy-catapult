@@ -6,6 +6,7 @@
 # the license text.
 
 from abc import ABC, abstractmethod
+from typing import List
 
 from comfy_catapult.comfy_schema import (APIHistory, APIObjectInfo,
                                          APIQueueInfo, APISystemStats,
@@ -126,4 +127,8 @@ class ComfyAPIClientBase(ABC):
 
   @abstractmethod
   async def PostInterrupt(self):
+    raise NotImplementedError()
+
+  @abstractmethod
+  async def PostQueue(self, *, delete: List[PromptID], clear: bool):
     raise NotImplementedError()
