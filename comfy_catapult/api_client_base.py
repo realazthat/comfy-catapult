@@ -126,6 +126,10 @@ class ComfyAPIClientBase(ABC):
     raise NotImplementedError()
 
   @abstractmethod
+  async def PostFree(self, *, unload_models: bool, free_memory: bool):
+    raise NotImplementedError()
+
+  @abstractmethod
   async def PostInterrupt(self):
     raise NotImplementedError()
 

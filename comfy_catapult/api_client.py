@@ -219,6 +219,15 @@ class ComfyAPIClient(ComfyAPIClientBase):
       async with self._session.get(url.geturl()) as resp:
         return await resp.content.read()
 
+  async def PostFree(self, *, unload_models: bool, free_memory: bool):
+    data = {'unload_models': unload_models, 'free_memory': free_memory}
+    # TODO: Don't join `/free`, but just `free`, and same with the other
+    # endpoints.
+    url = urlparse(SmartURLJoin(f'{self._comfy_api_url}', '/free'))
+    with _WatchVar(url=url.geturl()):
+      async with self._session.post(url.geturl(), data=data) as resp:
+        resp.raise_for_status()
+
   async def PostInterrupt(self):
     # TODO: Don't join `/interrupt`, but just `interrupt`, and same with the
     # other endpoints.
