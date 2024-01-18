@@ -22,11 +22,15 @@ class JobStatus(NamedTuple):
   scheduled: datetime.datetime | None
   pending: datetime.datetime | None
   running: datetime.datetime | None
-  done: datetime.datetime | None
   success: datetime.datetime | None
   errored: datetime.datetime | None
+  cancelled: datetime.datetime | None
   errors: List[Exception] = []
   job_history: dict | None = None
+
+  def IsDone(self) -> bool:
+    return (self.success is not None or self.errored is not None
+            or self.cancelled is not None)
 
 
 class ComfyCatapultBase(ABC):
@@ -72,4 +76,8 @@ class ComfyCatapultBase(ABC):
   @abstractmethod
   async def GetStatus(self, *,
                       job_id: str) -> Tuple[JobStatus, asyncio.Future[dict]]:
+    raise NotImplementedError()
+
+  @abstractmethod
+  async def CancelJob(self, *, job_id: str):
     raise NotImplementedError()
