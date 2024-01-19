@@ -128,9 +128,39 @@ class APIOutputUI(RootModel[Dict[OutputName, Any]]):
   root: Dict[OutputName, List[Any]]
 
 
+class APIHistoryEntryStatusNote(NamedTuple):
+  name: str
+  data: Any
+
+
+class APIHistoryEntryStatus(BaseModel):
+  """
+
+  Example:
+    "status": {
+      "status_str": "success",
+      "completed": true,
+      "notes": [
+        [
+          "execution_start",
+          { "prompt_id": "b1b64df6-9b2c-4a09-bd0e-b6c294702085" }
+        ],
+        [
+          "execution_cached",
+          { "nodes": [], "prompt_id": "b1b64df6-9b2c-4a09-bd0e-b6c294702085" }
+        ]
+      ]
+    }
+  """
+  status_str: str | None = None
+  completed: bool | None = None
+  notes: List[APIHistoryEntryStatusNote] | None = None
+
+
 class APIHistoryEntry(BaseModel):
   outputs: Dict[NodeID, APIOutputUI] | None = None
   prompt: APIQueueInfoEntry | None = None
+  status: APIHistoryEntryStatus | None = None
 
 
 class APIHistory(RootModel[Dict[PromptID, APIHistoryEntry]]):

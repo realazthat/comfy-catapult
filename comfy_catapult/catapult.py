@@ -16,6 +16,7 @@ import traceback
 import uuid
 from copy import deepcopy
 from dataclasses import dataclass
+from pprint import pformat
 from typing import Dict, Generic, List, Sequence, Tuple, TypeVar
 from urllib.parse import ParseResult, urlparse, urlunparse
 
@@ -27,6 +28,7 @@ from websockets import WebSocketClientProtocol, connect
 from comfy_catapult.api_client import ComfyAPIClientBase, YamlDump
 from comfy_catapult.catapult_base import ComfyCatapultBase, JobStatus, Progress
 from comfy_catapult.comfy_schema import (APIHistory, APIHistoryEntry,
+                                         APIHistoryEntryStatusNote,
                                          APIQueueInfo, APISystemStats,
                                          APIWorkflowTicket, NodeID, WSMessage)
 from comfy_catapult.comfy_utils import TryParseAsModel
@@ -217,6 +219,8 @@ class ComfyCatapult(ComfyCatapultBase):
         self._jobs[job_id].status = self._jobs[job_id].status._replace(
             job_history=job_history)
 
+      ##########################################################################
+      # Get outputs_to_execute, outputs_with_data, extra_data
       extra_data: dict | None = None
       outputs_to_execute: List[NodeID] = []
       outputs_with_data: List[NodeID] = []
@@ -227,7 +231,22 @@ class ComfyCatapult(ComfyCatapultBase):
           extra_data = job_history.prompt.extra_data
         if job_history.prompt.outputs_to_execute is not None:
           outputs_to_execute = job_history.prompt.outputs_to_execute
+      if job_history.status is not None:
+        if job_history.status.completed is False:
+          notes: List[str] = []
+          if job_history.status.notes is not None:
+            note: APIHistoryEntryStatusNote
+            for note in job_history.status.notes:
+              notes.append(textwrap.indent(pformat(note._asdict()),
+                                           prefix='  '))
+          # TODO: Turn all Exception into a subclass of Exception.
+          # TODO: Make all exceptions going forward contain the metadata that
+          # NodesNotExecuted does.
+          raise Exception('Job has failed'
+                          f'\n  status: {job_history.status}'
+                          f'\n  notes:' + '\n'.join(notes))
 
+      ##########################################################################
       print('job_history.prompt.extra_data.model_dump():', file=sys.stderr)
       print(YamlDump(extra_data), file=sys.stderr)
 
