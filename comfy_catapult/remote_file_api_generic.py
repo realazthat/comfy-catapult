@@ -59,8 +59,10 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
                      f'\n convered_urls: {convered_urls}')
 
   async def UploadFile(self, *, src_path: Path, untrusted_dst_url: str) -> str:
-    assert await src_path.exists()
-    assert await src_path.is_file()
+    if not await src_path.exists():
+      raise ValueError(f'File {src_path} does not exist')
+    if not await src_path.is_file():
+      raise ValueError(f'File {src_path} is not a file')
 
     apis: List[RemoteFileAPIBase] = self._GetAPIsForURL(url=untrusted_dst_url)
     for i, api in enumerate(apis):
@@ -70,13 +72,15 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
       except ValueError:
         if i + 1 >= len(apis):
           raise
-    assert False, 'unreachable'
+    raise AssertionError('unreachable')
 
   async def UploadToTriplet(
       self, *, src_path: Path,
       untrusted_dst_triplet: ComfyUIPathTriplet) -> ComfyUIPathTriplet:
-    assert await src_path.exists()
-    assert await src_path.is_file()
+    if not await src_path.exists():
+      raise ValueError(f'File {src_path} does not exist')
+    if not await src_path.is_file():
+      raise ValueError(f'File {src_path} is not a file')
 
     apis: List[RemoteFileAPIBase] = self._GetAPIsForTriplet(
         triplet=untrusted_dst_triplet)
@@ -88,7 +92,7 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
       except ValueError:
         if i + 1 >= len(apis):
           raise
-    assert False, 'unreachable'
+    raise AssertionError('unreachable')
 
   async def DownloadFile(self, *, untrusted_src_url: str, dst_path: Path):
     apis: List[RemoteFileAPIBase] = self._GetAPIsForURL(url=untrusted_src_url)
@@ -99,7 +103,7 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
       except ValueError:
         if i + 1 >= len(apis):
           raise
-    assert False, 'unreachable'
+    raise AssertionError('unreachable')
 
   async def DownloadTriplet(self, *, untrusted_src_triplet: ComfyUIPathTriplet,
                             dst_path: Path):
@@ -112,7 +116,7 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
       except ValueError:
         if i + 1 >= len(apis):
           raise
-    assert False, 'unreachable'
+    raise AssertionError('unreachable')
 
   def TripletToURL(self, *, triplet: ComfyUIPathTriplet) -> str:
     apis: List[RemoteFileAPIBase] = self._GetAPIsForTriplet(triplet=triplet)
@@ -122,7 +126,7 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
       except ValueError:
         if i + 1 >= len(apis):
           raise
-    assert False, 'unreachable'
+    raise AssertionError('unreachable')
 
   def URLToTriplet(self, *, url: str) -> ComfyUIPathTriplet:
     apis: List[RemoteFileAPIBase] = self._GetAPIsForURL(url=url)
@@ -132,7 +136,7 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
       except (NotImplementedError, ValueError):
         if i + 1 >= len(apis):
           raise
-    assert False, 'unreachable'
+    raise AssertionError('unreachable')
 
   def GetBases(self) -> list[str]:
     return list(self._base_to_api.keys())

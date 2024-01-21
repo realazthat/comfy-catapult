@@ -234,7 +234,11 @@ async def amain():
         ComfySchemeRemoteFileAPI(comfy_api_urls=[comfy_config.comfy_api_url],
                                  overwrite=True))
     if comfy_config.base_file_url is not None:
-      assert ToParseResult(comfy_config.base_file_url).scheme == 'file'
+      scheme = ToParseResult(comfy_config.base_file_url).scheme
+      if scheme != 'file':
+        raise ValueError(
+            f'comfy_config.base_file_url must be a file:// URL, but is {comfy_config.base_file_url}'
+        )
 
       # This one uses file:/// protocol on the local system. It is probably
       # faster. In the future, I hope to add other protocols, so this can be
@@ -304,12 +308,16 @@ async def PrepareWorkflow(*, client: ComfyAPIClientBase, workflow: APIWorkflow,
   _, sampler_custom = GetNodeByTitle(workflow=workflow, title='SamplerCustom')
 
   in_conn = sampler_custom.inputs['positive']
-  assert isinstance(in_conn, APIWorkflowInConnection)
+  if not isinstance(in_conn, APIWorkflowInConnection):
+    raise ValueError(
+        f'Expected APIWorkflowInConnection, but got {type(in_conn)}')
   positive_prompt_id = in_conn.output_node_id
   positive_prompt = workflow.root[positive_prompt_id]
 
   in_conn = sampler_custom.inputs['negative']
-  assert isinstance(in_conn, APIWorkflowInConnection)
+  if not isinstance(in_conn, APIWorkflowInConnection):
+    raise ValueError(
+        f'Expected APIWorkflowInConnection, but got {type(in_conn)}')
   negative_prompt_id = in_conn.output_node_id
   negative_prompt = workflow.root[negative_prompt_id]
 
@@ -325,31 +333,43 @@ async def PrepareWorkflow(*, client: ComfyAPIClientBase, workflow: APIWorkflow,
 
   object_info_entry = object_info.root[load_checkpoint.class_type]
 
-  assert isinstance(object_info_entry.input.required, dict)
+  if not isinstance(object_info_entry.input.required, dict):
+    raise ValueError(
+        f'Expected object_info_entry.input.required to be dict, but got {type(object_info_entry.input.required)}'
+    )
   # Inputs are stored as a list/tuple of two things: the type (usually a string)
   # and a dictionary like {default: ..., min: ..., max: ...}.
   chpt_name_entry = object_info_entry.input.required['ckpt_name']
-  assert isinstance(chpt_name_entry, APIObjectInputTuple), type(chpt_name_entry)
+  if not isinstance(chpt_name_entry, APIObjectInputTuple):
+    raise ValueError(
+        f'Expected chpt_name_entry to be APIObjectInputTuple, but got {type(chpt_name_entry)}'
+    )
 
   # Combo type is a weird type that isn't a string, but rather a list of actual
   # values that are valid to choose from, usually strings.
-  assert isinstance(chpt_name_entry.type, list), type(chpt_name_entry.type)
+  if not isinstance(chpt_name_entry.type, list):
+    raise ValueError(
+        f'Expected chpt_name_entry.type to be list, but got {type(chpt_name_entry.type)}'
+    )
 
   load_checkpoint_valid_models = []
   for item in chpt_name_entry.type:
-    assert isinstance(item, str), (f'item must be str, but is {type(item)}')
+    if not isinstance(item, str):
+      raise ValueError(f'Expected item to be str, but got {type(item)}: {item}')
     load_checkpoint_valid_models.append(item)
   ############################################################################
   # Set some stuff in the workflow api json.
 
-  assert (
-      'sd_xl_turbo_1.0_fp16.safetensors' == load_checkpoint.inputs['ckpt_name']
-  ), ('sanity check, this is just what is in the workflow already.')
+  if not ('sd_xl_turbo_1.0_fp16.safetensors'
+          == load_checkpoint.inputs['ckpt_name']):
+    raise ValueError(
+        'sanity check, this is just what is in the workflow already.')
 
   if args.ckpt_name is not None:
-    assert args.ckpt_name in load_checkpoint_valid_models, (
-        f'ckpt_name must be one of {load_checkpoint_valid_models}, but is {args.ckpt_name}'
-    )
+    if args.ckpt_name not in load_checkpoint_valid_models:
+      raise ValueError(
+          f'ckpt_name must be one of {load_checkpoint_valid_models}, but is {args.ckpt_name}'
+      )
     load_checkpoint.inputs['ckpt_name'] = args.ckpt_name
 
   positive_prompt.inputs['text'] = args.positive_prompt

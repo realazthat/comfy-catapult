@@ -19,14 +19,20 @@ async def _LocalFileURLToLocalPath(url: str) -> Path:
   url_pr = ToParseResult(url)
   if url_pr.scheme != 'file':
     raise ValueError(f'URL {repr(url)} is not a file:// URL')
-  assert url_pr.netloc == ''
-  assert url_pr.params == ''
-  assert url_pr.query == ''
-  assert url_pr.fragment == ''
-  assert url_pr.path.startswith('/')
+  if url_pr.netloc != '':
+    raise ValueError(f'URL {repr(url)} is not a local file URL')
+  if url_pr.params != '':
+    raise ValueError(f'URL {repr(url)} has params')
+  if url_pr.query != '':
+    raise ValueError(f'URL {repr(url)} has query')
+  if url_pr.fragment != '':
+    raise ValueError(f'URL {repr(url)} has fragment')
+  if not url_pr.path.startswith('/'):
+    raise ValueError(f'URL {repr(url)} has relative path')
   path = Path(url_pr.path)
   path = await path.resolve()
-  assert path.is_absolute()
+  if not path.is_absolute():
+    raise ValueError(f'URL {repr(url)} has relative path')
   return path
 
 
@@ -61,9 +67,12 @@ class LocalRemoteFileAPI(RemoteFileAPIBase):
     trusted_dst_url = ValidateIsBasedURL(url=untrusted_dst_url,
                                          any_bases=self._upload_to_bases)
     scheme = ToParseResult(trusted_dst_url).scheme
-    assert scheme == 'file'
-    assert await src_path.exists()
-    assert await src_path.is_file()
+    if scheme != 'file':
+      raise ValueError(f'URL {repr(trusted_dst_url)} is not a file:// URL')
+    if not await src_path.exists():
+      raise ValueError(f'File {src_path} does not exist')
+    if not await src_path.is_file():
+      raise ValueError(f'File {src_path} is not a file')
     untrusted_dst_path = await _LocalFileURLToLocalPath(url=trusted_dst_url)
     trusted_dst_path = await _ValidateLocalPath(
         path=untrusted_dst_path,
@@ -80,7 +89,8 @@ class LocalRemoteFileAPI(RemoteFileAPIBase):
     trusted_src_url = ValidateIsBasedURL(url=untrusted_src_url,
                                          any_bases=self._download_from_bases)
     scheme = ToParseResult(trusted_src_url).scheme
-    assert scheme == 'file'
+    if scheme != 'file':
+      raise ValueError(f'URL {repr(trusted_src_url)} is not a file:// URL')
 
     untrusted_src_path = await _LocalFileURLToLocalPath(url=trusted_src_url)
     trusted_src_path = await _ValidateLocalPath(
@@ -89,9 +99,10 @@ class LocalRemoteFileAPI(RemoteFileAPIBase):
             await _LocalFileURLToLocalPath(url=base)
             for base in self._download_from_bases
         ])
-
-    assert await trusted_src_path.exists()
-    assert await trusted_src_path.is_file()
+    if not await trusted_src_path.exists():
+      raise ValueError(f'File {trusted_src_path} does not exist')
+    if not await trusted_src_path.is_file():
+      raise ValueError(f'File {trusted_src_path} is not a file')
 
     await dst_path.parent.mkdir(parents=True, exist_ok=True)
     await aioshutil.copy(trusted_src_path, dst_path)

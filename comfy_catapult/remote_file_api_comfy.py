@@ -89,7 +89,10 @@ def ComfySchemeURLToTriplet(url: str,
   # /folder_type/subfolder/subsubfolder//filename => ('folder_type', 'subfolder/subsubfolder/', 'filename')
 
   folder_type, _, rest = url_path[1:].partition('/')
-  assert folder_type in VALID_FOLDER_TYPES
+  if folder_type not in VALID_FOLDER_TYPES:
+    raise ValueError(
+        f'URL {repr(url)} path {repr(url_path)} does not start with one of {VALID_FOLDER_TYPES}'
+    )
   subfolder, _, filename = rest.rpartition('/')
 
   comfy_api_url_pr = url_pr._replace(scheme=api_scheme, path='')
@@ -101,9 +104,10 @@ def ComfySchemeURLToTriplet(url: str,
   if inversion_check:
     inverted_url = TripletToComfySchemeURL(triplet=triplet,
                                            inversion_check=False)
-    assert inverted_url == url, (f'\nurl: {repr(url)}'
-                                 f'\ntriplet: {repr(triplet)}'
-                                 f'\ninverted_url: {repr(inverted_url)}')
+    if inverted_url != url:
+      raise ValueError(
+          f'\nurl: {repr(url)}\ntriplet: {repr(triplet)}\ninverted_url: {repr(inverted_url)}'
+      )
   return triplet
 
 

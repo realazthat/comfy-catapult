@@ -104,17 +104,21 @@ class ComfyCatapult(ComfyCatapultBase):
 
     self._stop_event.set()
 
-    for job in self._jobs.values():
-      job.future.cancel()
+    async with self._lock:
+      for job in self._jobs.values():
+        job.future.cancel()
     await self._CheckError()
-    self._monitoring_task.cancel()
-    self._poll_task.cancel()
+    async with self._lock:
+      monitoring_task = self._monitoring_task
+      poll_task = self._poll_task
+    monitoring_task.cancel()
+    poll_task.cancel()
     try:
-      await self._monitoring_task
+      await monitoring_task
     except asyncio.CancelledError:
       pass
     try:
-      await self._poll_task
+      await poll_task
     except asyncio.CancelledError:
       pass
 
@@ -125,8 +129,13 @@ class ComfyCatapult(ComfyCatapultBase):
       prepared_workflow: dict,
       important: Sequence[NodeID],
   ) -> dict:
-    assert job_id not in self._jobs, f'User job id {job_id} already exists'
-    assert slugify(job_id) == job_id, f'User job id {job_id} is not slugified'
+    async with self._lock:
+      if job_id in self._jobs:
+        raise KeyError(f'User job id {repr(job_id)} already exists')
+      if not slugify(job_id) == job_id:
+        raise ValueError(
+            f'User job id {repr(job_id)} is not slugified (e.g {repr(slugify(job_id))})'
+        )
 
     print('self._client.PostPrompt()', file=sys.stderr)
 
@@ -150,7 +159,9 @@ class ComfyCatapult(ComfyCatapultBase):
           prepared_workflow=deepcopy(prepared_workflow),
           ticket=ticket)
 
-    assert ticket.prompt_id is not None
+    if ticket.prompt_id is None:
+      raise AssertionError(
+          'ticket.prompt_id is None, should be impossible here')
 
     async with self._lock:
       self._prompt_id_index[ticket.prompt_id] = job_id
@@ -174,7 +185,7 @@ class ComfyCatapult(ComfyCatapultBase):
                       job_id: str) -> Tuple[JobStatus, asyncio.Future[dict]]:
     async with self._lock:
       if job_id not in self._jobs:
-        raise KeyError(f'Job id {job_id} not found')
+        raise KeyError(f'Job id {repr(job_id)} not found')
       job = self._jobs[job_id]
       return deepcopy(job.status), job.future
 
@@ -204,7 +215,8 @@ class ComfyCatapult(ComfyCatapultBase):
 
   async def _ReceivedJobHistory(self, *, job_id: str, history: APIHistory):
     async with _JobContext(job_id=job_id, comfy=self):
-      assert isinstance(history, APIHistory)
+      if not isinstance(history, APIHistory):
+        raise AssertionError(f'history must be APIHistory, not {type(history)}')
 
       async with self._lock:
         prepared_workflow: dict = deepcopy(self._jobs[job_id].prepared_workflow)
@@ -213,7 +225,8 @@ class ComfyCatapult(ComfyCatapultBase):
 
       if len(history.root) == 0:
         return
-      assert prompt_id in history.root
+      if prompt_id not in history.root:
+        raise AssertionError(f'prompt_id {repr(prompt_id)} not in history.root')
       job_history: APIHistoryEntry = history.root[prompt_id]
       async with self._lock:
         self._jobs[job_id].status = self._jobs[job_id].status._replace(
@@ -243,7 +256,7 @@ class ComfyCatapult(ComfyCatapultBase):
           # TODO: Make all exceptions going forward contain the metadata that
           # NodesNotExecuted does.
           raise Exception('Job has failed'
-                          f'\n  status: {job_history.status}'
+                          f'\n  status: {repr(job_history.status)}'
                           f'\n  notes:' + '\n'.join(notes))
 
       ##########################################################################
@@ -362,12 +375,13 @@ class ComfyCatapult(ComfyCatapultBase):
     # pprint(self._jobs, indent=2, stream=sys.stderr)
 
     ############################################################################
-    prompt_info = await self._comfy_client.GetPromptRaw()
-    assert isinstance(prompt_info, dict)
+    prompt_info: dict = await self._comfy_client.GetPromptRaw()
 
     exec_info = prompt_info['exec_info']
     queue_remaining = exec_info['queue_remaining']
-    assert isinstance(queue_remaining, int)
+    if not isinstance(queue_remaining, int):
+      raise AssertionError(
+          f'queue_remaining must be int, not {type(queue_remaining)}')
     print('queue_remaining:', queue_remaining, file=sys.stderr)
     ############################################################################
     # Check the /history endpoint to see if there are any updates on our jobs.
@@ -510,7 +524,7 @@ class ComfyCatapult(ComfyCatapultBase):
                     errored=now,
                     errors=job.status.errors + [
                         Exception(
-                            f'Node {node_id} of type {node_type} errored: {message.data}'
+                            f'Node {repr(node_id)} of type {repr(node_type)} errored: {repr(message.data)}'
                         )
                     ])
             self._guess_currently_running_job_id = _Guess(value=None,
@@ -632,4 +646,5 @@ class _JobContext:
         await job_history_path.parent.mkdir(parents=True, exist_ok=True)
         async with aiofiles.open(job_history_path, 'w') as f:
           await f.write(YamlDump(status))
-        print(f'Wrote job status to {job_history_path}', file=sys.stderr)
+        print(f'Wrote job status to {repr(str(job_history_path))}',
+              file=sys.stderr)

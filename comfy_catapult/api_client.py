@@ -196,7 +196,10 @@ class ComfyAPIClient(ComfyAPIClientBase):
       with _WatchVar(post_url=post_url.geturl(), fdata=fdata):
         async with self._session.post(post_url.geturl(), data=fdata) as resp:
           result = await _TryParseRespAsJson(resp=resp)
-          assert isinstance(result, dict), type(result)
+          if not isinstance(result, dict):
+            # Server should never return a list or something other than a
+            # dictionary.
+            raise TypeError(f'Expected dict, got {type(result)}')
           return result
 
   async def PostUploadImage(self, *, folder_type: str, subfolder: str,

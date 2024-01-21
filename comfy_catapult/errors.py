@@ -41,7 +41,9 @@ class NodesNotExecuted(RuntimeError):
                titles: Sequence[str | None] | None):
     if titles is None:
       titles = [None] * len(nodes)
-    assert len(nodes) == len(titles)
+    if len(nodes) != len(titles):
+      raise ValueError(
+          f'len(nodes) != len(titles): {len(nodes)} != {len(titles)}')
 
     super().__init__(
         f'Nodes {",".join(map(repr, nodes))} with titles {",".join(map(repr,titles))} not executed'

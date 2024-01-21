@@ -103,7 +103,9 @@ def FindNode(*, workflow: APIWorkflow,
     return NodeIDAndNode(node_id=title_node_id,
                          node_info=workflow.root[title_node_id])
   else:
-    assert id_node_id is not None
+    if id_node_id is None:
+      raise AssertionError('id_node_id is None')
+
     return NodeIDAndNode(node_id=id_node_id,
                          node_info=workflow.root[id_node_id])
 
@@ -156,7 +158,8 @@ async def DownloadPreviewImage(*, node_id: NodeID, job_history: APIHistoryEntry,
   #
   # TODO: Put an example here.
 
-  assert job_history.outputs is not None
+  if job_history.outputs is None:
+    raise AssertionError('job_history.outputs is None')
 
   if node_id not in job_history.outputs:
     raise Exception(f'{node_id} not in job_history.outputs')
@@ -165,16 +168,24 @@ async def DownloadPreviewImage(*, node_id: NodeID, job_history: APIHistoryEntry,
 
   file_dict: dict = pydash.get(node_outputs.root, field_path)
 
-  assert 'filename' in file_dict, f'Expected "filename" in {file_dict}'
+  if 'filename' not in file_dict:
+    raise Exception(f'Expected "filename" in {file_dict}')
   filename: str = file_dict['filename']
-  assert isinstance(filename, str)
-  assert 'subfolder' in file_dict, f'Expected "subfolder" in {file_dict}'
+  if not isinstance(filename, str):
+    raise Exception(f'Expected "filename" to be str, got {type(filename)}')
+  if 'subfolder' not in file_dict:
+    raise Exception(f'Expected "subfolder" in {file_dict}')
   subfolder: str = file_dict['subfolder']
-  assert isinstance(subfolder, str)
-  assert 'type' in file_dict, f'Expected "type" in {file_dict}'
+  if not isinstance(subfolder, str):
+    raise Exception(f'Expected "subfolder" to be str, got {type(subfolder)}')
+  if 'type' not in file_dict:
+    raise Exception(f'Expected "type" in {file_dict}')
   folder_type: Literal['temp', 'output'] = file_dict['type']
-  assert isinstance(folder_type, str)
-  assert folder_type in ['temp', 'output']
+  if not isinstance(folder_type, str):
+    raise Exception(f'Expected "type" to be str, got {type(folder_type)}')
+  if folder_type not in ['temp', 'output']:
+    raise Exception(
+        f'Expected "type" to be "temp" or "output", got {folder_type}')
 
   triplet = ComfyUIPathTriplet(comfy_api_url=comfy_api_url,
                                folder_type=folder_type,

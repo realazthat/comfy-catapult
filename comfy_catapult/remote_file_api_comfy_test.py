@@ -21,13 +21,15 @@ from comfy_catapult.url_utils import (VALID_FOLDER_TYPES, ComfyFolderType,
 from comfy_catapult.url_utils_test import VALID_SUBFOLDER_EDGES
 
 COMFY_API_URL = os.environ.get('COMFY_API_URL')
-assert COMFY_API_URL is not None, 'Please set COMFY_API_URL in the environment'
+if COMFY_API_URL is None:
+  raise ValueError('Please set COMFY_API_URL in the environment')
 
 
 class TestRemoteFileApiComfy(IsolatedAsyncioTestCase):
 
   async def asyncSetUp(self):
-    assert COMFY_API_URL is not None
+    if COMFY_API_URL is None:
+      raise ValueError('Please set COMFY_API_URL in the environment')
     self._comfy_api_url: str = COMFY_API_URL
     self._remote = ComfySchemeRemoteFileAPI(comfy_api_urls=[COMFY_API_URL],
                                             overwrite=True)
