@@ -140,7 +140,7 @@ class APIHistoryEntryStatus(BaseModel):
     "status": {
       "status_str": "success",
       "completed": true,
-      "notes": [
+      "messages": [
         [
           "execution_start",
           { "prompt_id": "b1b64df6-9b2c-4a09-bd0e-b6c294702085" }
@@ -154,7 +154,7 @@ class APIHistoryEntryStatus(BaseModel):
   """
   status_str: str | None = None
   completed: bool | None = None
-  notes: List[APIHistoryEntryStatusNote] | None = None
+  messages: List[APIHistoryEntryStatusNote] | None = None
 
 
 class APIHistoryEntry(BaseModel):

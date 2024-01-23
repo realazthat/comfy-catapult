@@ -247,9 +247,9 @@ class ComfyCatapult(ComfyCatapultBase):
       if job_history.status is not None:
         if job_history.status.completed is False:
           notes: List[str] = []
-          if job_history.status.notes is not None:
+          if job_history.status.messages is not None:
             note: APIHistoryEntryStatusNote
-            for note in job_history.status.notes:
+            for note in job_history.status.messages:
               notes.append(textwrap.indent(pformat(note._asdict()),
                                            prefix='  '))
           # TODO: Turn all Exception into a subclass of Exception.
