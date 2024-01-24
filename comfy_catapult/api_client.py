@@ -22,20 +22,26 @@ from comfy_catapult.comfy_schema import (APIHistory, APIObjectInfo,
 from comfy_catapult.comfy_utils import TryParseAsModel, YamlDump, _WatchVar
 from comfy_catapult.url_utils import SmartURLJoin
 
+T = TypeVar('T')
 
-async def _TryParseAsJson(*, content: str) -> Any:
+
+async def _TryParseAsJson(*, content: str, json_type: Type[T]) -> T:
   try:
-    return json.loads(content)
+    result = json.loads(content)
+    if not isinstance(result, json_type):
+      raise TypeError(f'Expected {json_type}, got {type(result)}')
+    return result
   except json.JSONDecodeError as e:
     raise Exception(
         f'Error: {e}\n\nContent (raw): {textwrap.indent(content, prefix="  ")}'
     ) from e
 
 
-async def _TryParseRespAsJson(*, resp: aiohttp.ClientResponse) -> Any:
+async def _TryParseRespAsJson(*, resp: aiohttp.ClientResponse,
+                              json_type: Type[T]) -> T:
   content_bytes = b''
   content_str: str = ''
-  content: Any = {}
+  content: T | None = None
   try:
     content_bytes = await resp.content.read()
     content_str = content_bytes.decode('utf-8')
@@ -45,7 +51,7 @@ async def _TryParseRespAsJson(*, resp: aiohttp.ClientResponse) -> Any:
           f'\n\nExpected content-type: application/json, got {resp.content_type}'
           f'\n\nContent (raw):\n{textwrap.indent(content_str, prefix="  ")}')
 
-    content = await _TryParseAsJson(content=content_str)
+    content = await _TryParseAsJson(content=content_str, json_type=json_type)
     if resp.status != 200:
       raise Exception(
           f'Error: {resp.status} {resp.reason}'
@@ -67,7 +73,7 @@ _BaseModelT = TypeVar('_BaseModelT', bound=BaseModel)
 
 async def _TryParseRespAsModel(*, resp: aiohttp.ClientResponse,
                                model_type: Type[_BaseModelT]) -> _BaseModelT:
-  content: Any = await _TryParseRespAsJson(resp=resp)
+  content: Any = await _TryParseRespAsJson(resp=resp, json_type=dict)
   return await TryParseAsModel(content=content, model_type=model_type)
 
 
@@ -100,7 +106,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
     url = urlparse(f'{self._comfy_api_url}/object_info')
     with _WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
-        return await _TryParseRespAsJson(resp=resp)
+        return await _TryParseRespAsJson(resp=resp, json_type=dict)
 
   async def GetObjectInfo(self) -> APIObjectInfo:
     url = urlparse(f'{self._comfy_api_url}/object_info')
@@ -112,7 +118,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
     url = urlparse(f'{self._comfy_api_url}/prompt')
     with _WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
-        return await _TryParseRespAsJson(resp=resp)
+        return await _TryParseRespAsJson(resp=resp, json_type=dict)
 
   async def PostPrompt(self,
                        *,
@@ -139,6 +145,20 @@ class ComfyAPIClient(ComfyAPIClientBase):
         return await _TryParseRespAsModel(resp=resp,
                                           model_type=APIWorkflowTicket)
 
+  async def GetHistoryRaw(self,
+                          *,
+                          prompt_id: PromptID | None = None,
+                          max_items: int | None = None) -> dict:
+    url = urlparse(SmartURLJoin(f'{self._comfy_api_url}', '/history'))
+    if max_items is not None:
+      url = url._replace(query=f'max_items={max_items}')
+    if prompt_id is not None:
+      url = url._replace(path=f'{url.path}/{prompt_id}')
+
+    with _WatchVar(url=url.geturl()):
+      async with self._session.get(url.geturl()) as resp:
+        return await _TryParseRespAsJson(resp=resp, json_type=dict)
+
   async def GetHistory(self,
                        *,
                        prompt_id: PromptID | None = None,
@@ -148,7 +168,6 @@ class ComfyAPIClient(ComfyAPIClientBase):
       url = url._replace(query=f'max_items={max_items}')
     if prompt_id is not None:
       url = url._replace(path=f'{url.path}/{prompt_id}')
-
     with _WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
         return await _TryParseRespAsModel(resp=resp, model_type=APIHistory)
@@ -195,7 +214,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
           SmartURLJoin(f'{self._comfy_api_url}', '/upload/image'))
       with _WatchVar(post_url=post_url.geturl(), fdata=fdata):
         async with self._session.post(post_url.geturl(), data=fdata) as resp:
-          result = await _TryParseRespAsJson(resp=resp)
+          result = await _TryParseRespAsJson(resp=resp, json_type=dict)
           if not isinstance(result, dict):
             # Server should never return a list or something other than a
             # dictionary.

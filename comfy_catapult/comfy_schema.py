@@ -164,7 +164,10 @@ class APIHistoryEntry(BaseModel):
 
 
 class APIHistory(RootModel[Dict[PromptID, APIHistoryEntry]]):
-  """Returned if you call /history and /history/{prompt_id} endpoints."""
+  """Returned if you call /history and /history/{prompt_id} endpoints.
+
+  TODO: Show an example.
+  """
   root: Dict[PromptID, APIHistoryEntry]
 
 

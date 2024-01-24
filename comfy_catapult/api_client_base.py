@@ -98,6 +98,13 @@ class ComfyAPIClientBase(ABC):
     raise NotImplementedError()
 
   @abstractmethod
+  async def GetHistoryRaw(self,
+                          *,
+                          prompt_id: PromptID | None = None,
+                          max_items: int | None = None) -> dict:
+    raise NotImplementedError()
+
+  @abstractmethod
   async def GetHistory(self,
                        *,
                        prompt_id: PromptID | None = None,
