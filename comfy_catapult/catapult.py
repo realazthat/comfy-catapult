@@ -17,7 +17,7 @@ import uuid
 from copy import deepcopy
 from dataclasses import dataclass
 from pprint import pformat
-from typing import Dict, Generic, List, Sequence, Tuple, TypeVar
+from typing import Any, Dict, Generic, List, Sequence, Tuple, TypeVar
 from urllib.parse import ParseResult, urlparse, urlunparse
 
 import aiofiles
@@ -45,7 +45,7 @@ class _Job:
   job_id: str
   prepared_workflow: dict
   important_nodes: Tuple[NodeID, ...]
-  ticket: APIWorkflowTicket
+  ticket: APIWorkflowTicket | None
   status: JobStatus
   future: asyncio.Future[dict]
   remote_job_status: RemoteStatus
@@ -137,39 +137,13 @@ class ComfyCatapult(ComfyCatapultBase):
             f'User job id {repr(job_id)} is not slugified (e.g {repr(slugify(job_id))})'
         )
 
-    print('self._client.PostPrompt()', file=sys.stderr)
-
-    ticket: APIWorkflowTicket = await self._comfy_client.PostPrompt(
-        prompt_workflow=prepared_workflow)
-    print('self._client.PostPrompt(), done', file=sys.stderr)
-
-    has_errors = False
-    if ticket.node_errors is not None and len(ticket.node_errors) > 0:
-      has_errors = True
-    if ticket.error is not None:
-      has_errors = True
-    if ticket.prompt_id is None:
-      has_errors = True
-
-    if has_errors:
-      raise WorkflowSubmissionError(
-          f'Errors in workflow'
-          f'\nprepared_workflow:\n{textwrap.indent(YamlDump(prepared_workflow), prefix="  ")}'
-          f'\nticket:\n{textwrap.indent(YamlDump(ticket.model_dump()), prefix="  ")}',
-          prepared_workflow=deepcopy(prepared_workflow),
-          ticket=ticket)
-
-    if ticket.prompt_id is None:
-      raise AssertionError(
-          'ticket.prompt_id is None, should be impossible here')
-
     async with self._lock:
-      self._prompt_id_index[ticket.prompt_id] = job_id
+      future = asyncio.Future()
       self._jobs[job_id] = _Job(
           job_id=job_id,
           prepared_workflow=prepared_workflow,
           important_nodes=tuple(important),
-          ticket=ticket,
+          ticket=None,
           status=JobStatus(scheduled=self._Now(),
                            running=None,
                            pending=None,
@@ -177,9 +151,41 @@ class ComfyCatapult(ComfyCatapultBase):
                            errored=None,
                            cancelled=None),
           remote_job_status=_Job.RemoteStatus.PENDING_OR_RUNNING,
-          future=asyncio.Future())
+          future=future)
       job = self._jobs[job_id]
-    return await job.future
+
+    async with _JobContext(job_id=job_id, comfy=self):
+      print('self._client.PostPrompt()', file=sys.stderr)
+
+      ticket: APIWorkflowTicket = await self._comfy_client.PostPrompt(
+          prompt_workflow=prepared_workflow)
+      print('self._client.PostPrompt(), done', file=sys.stderr)
+
+      async with self._lock:
+        job.ticket = ticket
+        if ticket.prompt_id is not None:
+          self._prompt_id_index[ticket.prompt_id] = job_id
+
+      has_errors = False
+      if ticket.node_errors is not None and len(ticket.node_errors) > 0:
+        has_errors = True
+      if ticket.error is not None:
+        has_errors = True
+      if ticket.prompt_id is None:
+        has_errors = True
+
+      if has_errors:
+        raise WorkflowSubmissionError(
+            f'Errors in workflow'
+            f'\nprepared_workflow:\n{textwrap.indent(YamlDump(prepared_workflow), prefix="  ")}'
+            f'\nticket:\n{textwrap.indent(YamlDump(ticket.model_dump()), prefix="  ")}',
+            prepared_workflow=deepcopy(prepared_workflow),
+            ticket=ticket)
+
+      if ticket.prompt_id is None:
+        raise AssertionError(
+            'ticket.prompt_id is None, should be impossible here')
+      return await future
 
   async def GetStatus(self, *,
                       job_id: str) -> Tuple[JobStatus, asyncio.Future[dict]]:
@@ -192,7 +198,10 @@ class ComfyCatapult(ComfyCatapultBase):
   async def CancelJob(self, *, job_id: str):
     async with _JobContext(job_id=job_id, comfy=self):
       async with self._lock:
-        prompt_id = self._jobs[job_id].ticket.prompt_id
+        ticket: APIWorkflowTicket | None = self._jobs[job_id].ticket
+        prompt_id: str | None = None
+        if ticket is not None:
+          prompt_id = ticket.prompt_id
         remote_job_status = self._jobs[job_id].remote_job_status
 
       if remote_job_status == _Job.RemoteStatus.PENDING_OR_RUNNING \
@@ -213,104 +222,106 @@ class ComfyCatapult(ComfyCatapultBase):
           job.status = job.status._replace(cancelled=now)
           job.future.cancel()
 
-  async def _ReceivedJobHistory(self, *, job_id: str, history: APIHistory):
-    async with _JobContext(job_id=job_id, comfy=self):
-      if not isinstance(history, APIHistory):
-        raise AssertionError(f'history must be APIHistory, not {type(history)}')
+  async def _ReceivedJobHistory(self, *, job_id: str, history: APIHistory,
+                                job_context: '_JobContext'):
+    if not isinstance(history, APIHistory):
+      raise AssertionError(f'history must be APIHistory, not {type(history)}')
 
-      async with self._lock:
-        prepared_workflow: dict = deepcopy(self._jobs[job_id].prepared_workflow)
-        prompt_id = self._jobs[job_id].ticket.prompt_id
-        important_nodes = deepcopy(self._jobs[job_id].important_nodes)
+    async with self._lock:
+      prepared_workflow: dict = deepcopy(self._jobs[job_id].prepared_workflow)
+      ticket: APIWorkflowTicket | None = deepcopy(self._jobs[job_id].ticket)
+      prompt_id: str | None = None
+      if ticket is not None:
+        prompt_id = ticket.prompt_id
+      important_nodes = deepcopy(self._jobs[job_id].important_nodes)
 
-      if len(history.root) == 0:
-        return
-      if prompt_id not in history.root:
-        raise AssertionError(f'prompt_id {repr(prompt_id)} not in history.root')
-      job_history: APIHistoryEntry = history.root[prompt_id]
-      async with self._lock:
-        self._jobs[job_id].status = self._jobs[job_id].status._replace(
-            job_history=job_history)
+    if len(history.root) == 0:
+      return
+    if prompt_id not in history.root:
+      raise AssertionError(f'prompt_id {repr(prompt_id)} not in history.root')
+    job_history: APIHistoryEntry = history.root[prompt_id]
+    async with self._lock:
+      self._jobs[job_id].status = self._jobs[job_id].status._replace(
+          job_history=job_history)
 
-      ##########################################################################
-      # Get outputs_to_execute, outputs_with_data, extra_data
-      extra_data: dict | None = None
-      outputs_to_execute: List[NodeID] = []
-      outputs_with_data: List[NodeID] = []
-      if job_history.outputs is not None:
-        outputs_with_data = list(job_history.outputs.keys())
-      if job_history.prompt is not None:
-        if job_history.prompt.extra_data is not None:
-          extra_data = job_history.prompt.extra_data
-        if job_history.prompt.outputs_to_execute is not None:
-          outputs_to_execute = job_history.prompt.outputs_to_execute
-      if job_history.status is not None:
-        if job_history.status.completed is False:
-          notes: List[str] = []
-          if job_history.status.messages is not None:
-            note: APIHistoryEntryStatusNote
-            for note in job_history.status.messages:
-              notes.append(textwrap.indent(pformat(note._asdict()),
-                                           prefix='  '))
-          # TODO: Turn all Exception into a subclass of Exception.
-          # TODO: Make all exceptions going forward contain the metadata that
-          # NodesNotExecuted does.
-          raise Exception('Job has failed'
-                          f'\n  status: {repr(job_history.status)}'
-                          f'\n  notes:' + '\n'.join(notes))
+    ##########################################################################
+    # Get outputs_to_execute, outputs_with_data, extra_data
+    extra_data: dict | None = None
+    outputs_to_execute: List[NodeID] = []
+    outputs_with_data: List[NodeID] = []
+    if job_history.outputs is not None:
+      outputs_with_data = list(job_history.outputs.keys())
+    if job_history.prompt is not None:
+      if job_history.prompt.extra_data is not None:
+        extra_data = job_history.prompt.extra_data
+      if job_history.prompt.outputs_to_execute is not None:
+        outputs_to_execute = job_history.prompt.outputs_to_execute
+    if job_history.status is not None:
+      if job_history.status.completed is False:
+        notes: List[str] = []
+        if job_history.status.messages is not None:
+          note: APIHistoryEntryStatusNote
+          for note in job_history.status.messages:
+            notes.append(textwrap.indent(pformat(note._asdict()), prefix='  '))
+        # TODO: Turn all Exception into a subclass of Exception.
+        # TODO: Make all exceptions going forward contain the metadata that
+        # NodesNotExecuted does.
+        raise Exception('Job has failed'
+                        f'\n  status: {repr(job_history.status)}'
+                        f'\n  notes:' + '\n'.join(notes))
 
-      ##########################################################################
-      print('job_history.prompt.extra_data.model_dump():', file=sys.stderr)
-      print(YamlDump(extra_data), file=sys.stderr)
+    ##########################################################################
+    print('job_history.prompt.extra_data.model_dump():', file=sys.stderr)
+    print(YamlDump(extra_data), file=sys.stderr)
 
-      print('job_history.prompt.outputs_to_execute.model_dump():',
-            file=sys.stderr)
-      print(YamlDump(outputs_to_execute), file=sys.stderr)
+    print('job_history.prompt.outputs_to_execute.model_dump():',
+          file=sys.stderr)
+    print(YamlDump(outputs_to_execute), file=sys.stderr)
 
-      print('outputs_to_execute:', file=sys.stderr)
-      print(YamlDump(outputs_to_execute), file=sys.stderr)
-      print('outputs_that_executed:', file=sys.stderr)
-      print(YamlDump(outputs_with_data), file=sys.stderr)
+    print('outputs_to_execute:', file=sys.stderr)
+    print(YamlDump(outputs_to_execute), file=sys.stderr)
+    print('outputs_that_executed:', file=sys.stderr)
+    print(YamlDump(outputs_with_data), file=sys.stderr)
 
-      bad_dataless_outputs = [
-          node_id for node_id in outputs_to_execute
-          if node_id not in outputs_with_data
-      ]
+    bad_dataless_outputs = [
+        node_id for node_id in outputs_to_execute
+        if node_id not in outputs_with_data
+    ]
 
-      def _GetTitles(node_ids: List[NodeID]) -> List[str | None]:
-        titles = []
-        for node_id in node_ids:
-          node_info: dict = prepared_workflow.get(node_id, {})
-          meta: dict = node_info.get('_meta', {})
-          title: str | None = meta.get('title', None)
-          titles.append(title)
-        return titles
+    def _GetTitles(node_ids: List[NodeID]) -> List[str | None]:
+      titles = []
+      for node_id in node_ids:
+        node_info: dict = prepared_workflow.get(node_id, {})
+        meta: dict = node_info.get('_meta', {})
+        title: str | None = meta.get('title', None)
+        titles.append(title)
+      return titles
 
-      if len(bad_dataless_outputs) > 0:
-        print('bad_dataless_outputs:', file=sys.stderr)
-        print(YamlDump(bad_dataless_outputs), file=sys.stderr)
-        print('_GetTitles(bad_dataless_outputs):', file=sys.stderr)
-        print(YamlDump(_GetTitles(bad_dataless_outputs)), file=sys.stderr)
+    if len(bad_dataless_outputs) > 0:
+      print('bad_dataless_outputs:', file=sys.stderr)
+      print(YamlDump(bad_dataless_outputs), file=sys.stderr)
+      print('_GetTitles(bad_dataless_outputs):', file=sys.stderr)
+      print(YamlDump(_GetTitles(bad_dataless_outputs)), file=sys.stderr)
 
-      dataless_important_outputs = [
-          node_id for node_id in bad_dataless_outputs
-          if node_id in important_nodes
-      ]
-      if len(dataless_important_outputs) > 0:
-        print('dataless_important_outputs:', file=sys.stderr)
-        print(YamlDump(dataless_important_outputs), file=sys.stderr)
-        print('_GetTitles(dataless_important_outputs):', file=sys.stderr)
-        print(YamlDump(_GetTitles(dataless_important_outputs)), file=sys.stderr)
-        raise NodesNotExecuted(nodes=list(dataless_important_outputs),
-                               titles=_GetTitles(dataless_important_outputs))
+    dataless_important_outputs = [
+        node_id for node_id in bad_dataless_outputs
+        if node_id in important_nodes
+    ]
+    if len(dataless_important_outputs) > 0:
+      print('dataless_important_outputs:', file=sys.stderr)
+      print(YamlDump(dataless_important_outputs), file=sys.stderr)
+      print('_GetTitles(dataless_important_outputs):', file=sys.stderr)
+      print(YamlDump(_GetTitles(dataless_important_outputs)), file=sys.stderr)
+      raise NodesNotExecuted(nodes=list(dataless_important_outputs),
+                             titles=_GetTitles(dataless_important_outputs))
 
-      # await self._eta_estimator.RecordFinished(job_id=job_id)
+    # await self._eta_estimator.RecordFinished(job_id=job_id)
 
-      now = self._Now()
-      async with self._lock:
-        job = self._jobs[job_id]
-        job.future.set_result(job_history.model_dump())
-        job.status = job.status._replace(success=now)
+    now = self._Now()
+    async with self._lock:
+      job = self._jobs[job_id]
+      job.future.set_result(job_history.model_dump())
+      job.status = job.status._replace(success=now)
 
   async def _Poll(self):
     # TODO: Use locks properly in this function
@@ -407,16 +418,26 @@ class ComfyCatapult(ComfyCatapultBase):
         if self._jobs[job_id].status.job_history is not None:
           # We already have the job history.
           continue
-        prompt_id = self._jobs[job_id].ticket.prompt_id
+
+        ticket: APIWorkflowTicket | None = self._jobs[job_id].ticket
+        prompt_id: str | None = None
+        if ticket is not None:
+          prompt_id = ticket.prompt_id
+
         if prompt_id is None:
           # This should never happen, but :shrug:.
           continue
 
       ##########################################################################
-      history: APIHistory = (await
-                             self._comfy_client.GetHistory(prompt_id=prompt_id))
-
-      await self._ReceivedJobHistory(job_id=job_id, history=history)
+      async with _JobContext(job_id=job_id, comfy=self) as job_context:
+        history_raw: dict = await self._comfy_client.GetHistoryRaw(
+            prompt_id=prompt_id)
+        job_context.WatchVar(history_raw=history_raw)
+        history: APIHistory = await TryParseAsModel(content=history_raw,
+                                                    model_type=APIHistory)
+        await self._ReceivedJobHistory(job_id=job_id,
+                                       history=history,
+                                       job_context=job_context)
       ##########################################################################
 
   def _Now(self) -> datetime.datetime:
@@ -622,6 +643,11 @@ class _JobContext:
   def __init__(self, *, job_id: str, comfy: ComfyCatapult):
     self._job_id = job_id
     self._comfy = comfy
+    self._watch_vars: Dict[str, Any] = {}
+
+  def WatchVar(self, **kwargs):
+    for name, value in kwargs.items():
+      self._watch_vars[name] = value
 
   async def __aenter__(self):
     return self
@@ -632,7 +658,7 @@ class _JobContext:
         if self._job_id not in self._comfy._jobs:
           return
         job = self._comfy._jobs[self._job_id]
-        if job.future is not None:
+        if job.future is not None and not job.future.done():
           job.future.set_exception(exc_value)
         if not job.status.IsDone():
           job.status = job.status._replace(errored=self._comfy._Now(),
@@ -640,11 +666,23 @@ class _JobContext:
                                            [exc_value])
         debug_path: Path | None = self._comfy._debug_path
         status = deepcopy(job.status)
-      # Save the job status to a file
+        workflow = deepcopy(job.prepared_workflow)
+        ticket = deepcopy(job.ticket)
+        remote_job_status = deepcopy(job.remote_job_status)
+
+      dt = datetime.datetime.now(datetime.timezone.utc).isoformat()
       if debug_path is not None:
-        job_history_path = debug_path / f'{self._job_id}.status.yaml'
+        dump = {
+            'job_id': self._job_id,
+            'job_status': status,
+            'remote_job_status': remote_job_status,
+            'ticket': ticket,
+            'watch_vars': self._watch_vars,
+            'workflow': workflow,
+        }
+        job_history_path = debug_path / f'{slugify(dt)}-{slugify(self._job_id)}.dump.yaml'
         await job_history_path.parent.mkdir(parents=True, exist_ok=True)
         async with aiofiles.open(job_history_path, 'w') as f:
-          await f.write(YamlDump(status))
-        print(f'Wrote job status to {repr(str(job_history_path))}',
+          await f.write(YamlDump(dump))
+        print(f'Wrote job status to {repr(str(job_history_path))}.',
               file=sys.stderr)
