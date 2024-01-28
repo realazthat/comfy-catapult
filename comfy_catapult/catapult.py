@@ -152,7 +152,6 @@ class ComfyCatapult(ComfyCatapultBase):
                            cancelled=None),
           remote_job_status=_Job.RemoteStatus.PENDING_OR_RUNNING,
           future=future)
-      job = self._jobs[job_id]
 
     async with _JobContext(job_id=job_id, comfy=self):
       print('self._client.PostPrompt()', file=sys.stderr)
@@ -162,7 +161,7 @@ class ComfyCatapult(ComfyCatapultBase):
       print('self._client.PostPrompt(), done', file=sys.stderr)
 
       async with self._lock:
-        job.ticket = ticket
+        self._jobs[job_id].ticket = ticket
         if ticket.prompt_id is not None:
           self._prompt_id_index[ticket.prompt_id] = job_id
 
@@ -323,9 +322,11 @@ class ComfyCatapult(ComfyCatapultBase):
       job.future.set_result(job_history.model_dump())
       job.status = job.status._replace(success=now)
 
-  async def _Poll(self):
-    # TODO: Use locks properly in this function
+  async def _GetJobIDs(self) -> List[str]:
+    async with self._lock:
+      return list(self._jobs.keys())
 
+  async def _Poll(self):
     ############################################################################
     await self._CheckError()
     ############################################################################
@@ -396,11 +397,9 @@ class ComfyCatapult(ComfyCatapultBase):
     print('queue_remaining:', queue_remaining, file=sys.stderr)
     ############################################################################
     # Check the /history endpoint to see if there are any updates on our jobs.
-    async with self._lock:
-      job_ids = list(self._jobs.keys())
 
     # Update job.remote_job_status.
-    for job_id in job_ids:
+    for job_id in await self._GetJobIDs():
       async with self._lock:
         new_remote_job_status = (_Job.RemoteStatus.NONE
                                  if job_id not in prompt_id_2_status else
@@ -408,7 +407,7 @@ class ComfyCatapult(ComfyCatapultBase):
         self._jobs[job_id].remote_job_status = new_remote_job_status
 
     # Update job.job_history.
-    for job_id in job_ids:
+    for job_id in await self._GetJobIDs():
       async with self._lock:
         if job_id in prompt_id_2_status:
           # In this case, it's pending or running, not going to be in the
@@ -470,8 +469,9 @@ class ComfyCatapult(ComfyCatapultBase):
         if message.type == 'executing' and 'last_node_id' in message.data:
           last_node_id = message.data['last_node_id']
 
-          self._guess_currently_running_node_id = _Guess(value=last_node_id,
-                                                         updated=self._Now())
+          async with self._lock:
+            self._guess_currently_running_node_id = _Guess(value=last_node_id,
+                                                           updated=self._Now())
           await self._Record()
         elif message.type == 'executing' and 'node' in message.data and 'prompt_id' in message.data:
           prompt_id = message.data.get('prompt_id', None)
@@ -615,10 +615,11 @@ class ComfyCatapult(ComfyCatapultBase):
         traceback.print_exc(file=sys.stderr)
 
   async def _CheckError(self):
-    if self._monitoring_task.done():
-      self._monitoring_task.result()
-    if self._poll_task.done():
-      self._poll_task.result()
+    async with self._lock:
+      if self._monitoring_task.done():
+        self._monitoring_task.result()
+      if self._poll_task.done():
+        self._poll_task.result()
 
 
 class _DummyLock:
