@@ -140,6 +140,36 @@ async def DownloadPreviewImage(*, node_id: NodeID, job_history: APIHistoryEntry,
   * field_path=='gifs[0]' works for Video Combine
   * field_path=='images[0]' works for Preview Image
 
+
+
+  Example Preview Image Workflow API json:
+
+  ```
+  '25':
+    inputs:
+      images:
+      - '8'
+      - 0
+    class_type: PreviewImage
+    meta:
+      title: Preview Image
+  ```
+
+  Example Preview Image node output:
+
+  ```
+  outputs:
+    '25':
+      images:
+      - filename: ComfyUI_temp_huntb_00001_.png
+        subfolder: ''
+        type: temp
+  ```
+
+  Example Video Combine node output:
+
+  TODO: Put an example here.
+
   Args:
       node_id: The node_id.
       job_history: The job_history.
@@ -149,14 +179,6 @@ async def DownloadPreviewImage(*, node_id: NodeID, job_history: APIHistoryEntry,
       remote: A RemoteFileAPI instance.
       local_dst_path: Path to the local destination file.
   """
-
-  # Example Preview Image node output:
-  #
-  # TODO: Put an example here.
-
-  # Example Video Combine node output:
-  #
-  # TODO: Put an example here.
 
   if job_history.outputs is None:
     raise AssertionError('job_history.outputs is None')
