@@ -13,6 +13,7 @@ import sys
 import textwrap
 import threading
 import traceback
+import traceback as tb
 import uuid
 from copy import deepcopy
 from dataclasses import dataclass
@@ -49,6 +50,7 @@ class _Job:
   status: JobStatus
   future: asyncio.Future[dict]
   remote_job_status: RemoteStatus
+  job_debug_path: Path | None
 
 
 T = TypeVar('T')
@@ -62,9 +64,20 @@ class _Guess(Generic[T]):
 
 class ComfyCatapult(ComfyCatapultBase):
 
-  def __init__(self, *, comfy_client: ComfyAPIClientBase,
-               debug_path: Path | None):
+  def __init__(self,
+               *,
+               comfy_client: ComfyAPIClientBase,
+               debug_path: Path | None,
+               debug_save_all: bool = False):
+    """_summary_
 
+    Args:
+        comfy_client (ComfyAPIClientBase): _description_
+        debug_path (Path | None): For logging of certain debug information, in
+          case of errors.
+        debug_save_all (bool, optional): If set, as much information as possible
+          will be saved to the debug_path. Defaults to False.
+    """
     self._comfy_client = comfy_client
     ############################################################################
     self._client_id = str(uuid.uuid4())
@@ -92,6 +105,7 @@ class ComfyCatapult(ComfyCatapultBase):
     # node is sent upon reconnect.
     self._ws_connect_interval = 20.
     self._debug_path = debug_path
+    self._debug_save_all = debug_save_all
 
   async def __aenter__(self):
     await self._comfy_client.__aenter__()
@@ -128,6 +142,7 @@ class ComfyCatapult(ComfyCatapultBase):
       job_id: str,
       prepared_workflow: dict,
       important: Sequence[NodeID],
+      job_debug_path: Path | None = None,
   ) -> dict:
     async with self._lock:
       if job_id in self._jobs:
@@ -136,6 +151,12 @@ class ComfyCatapult(ComfyCatapultBase):
         raise ValueError(
             f'User job id {repr(job_id)} is not slugified (e.g {repr(slugify(job_id))})'
         )
+      if job_debug_path is None and self._debug_path is not None:
+        dt = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        job_debug_path = self._debug_path / f'{slugify(dt)}-{slugify(job_id)}'
+
+    if job_debug_path is not None:
+      await job_debug_path.mkdir(parents=True, exist_ok=True)
 
     async with self._lock:
       future = asyncio.Future()
@@ -144,6 +165,7 @@ class ComfyCatapult(ComfyCatapultBase):
           prepared_workflow=prepared_workflow,
           important_nodes=tuple(important),
           ticket=None,
+          future=future,
           status=JobStatus(scheduled=self._Now(),
                            running=None,
                            pending=None,
@@ -151,11 +173,10 @@ class ComfyCatapult(ComfyCatapultBase):
                            errored=None,
                            cancelled=None),
           remote_job_status=_Job.RemoteStatus.PENDING_OR_RUNNING,
-          future=future)
+          job_debug_path=job_debug_path)
 
     async with _JobContext(job_id=job_id, comfy=self):
       print('self._client.PostPrompt()', file=sys.stderr)
-
       ticket: APIWorkflowTicket = await self._comfy_client.PostPrompt(
           prompt_workflow=prepared_workflow)
       print('self._client.PostPrompt(), done', file=sys.stderr)
@@ -431,7 +452,7 @@ class ComfyCatapult(ComfyCatapultBase):
       async with _JobContext(job_id=job_id, comfy=self) as job_context:
         history_raw: dict = await self._comfy_client.GetHistoryRaw(
             prompt_id=prompt_id)
-        job_context.WatchVar(history_raw=history_raw)
+        await job_context.WatchVar(history_raw=history_raw)
         history: APIHistory = await TryParseAsModel(content=history_raw,
                                                     model_type=APIHistory)
         await self._ReceivedJobHistory(job_id=job_id,
@@ -646,9 +667,21 @@ class _JobContext:
     self._comfy = comfy
     self._watch_vars: Dict[str, Any] = {}
 
-  def WatchVar(self, **kwargs):
+  async def WatchVar(self, **kwargs):
     for name, value in kwargs.items():
       self._watch_vars[name] = value
+    async with self._comfy._lock:
+      job = self._comfy._jobs[self._job_id]
+      job_debug_path: Path | None = job.job_debug_path
+    if job_debug_path is None:
+      return
+    if self._comfy._debug_save_all:
+      dt = datetime.datetime.now(datetime.timezone.utc).isoformat()
+      for name, value in kwargs.items():
+        dump_path = job_debug_path / 'watch' / f'{slugify(dt)}-{slugify(name)}.yaml'
+        await dump_path.parent.mkdir(parents=True, exist_ok=True)
+        async with aiofiles.open(dump_path, 'w') as f:
+          await f.write(YamlDump(value))
 
   async def __aenter__(self):
     return self
@@ -665,25 +698,28 @@ class _JobContext:
           job.status = job.status._replace(errored=self._comfy._Now(),
                                            errors=job.status.errors +
                                            [exc_value])
-        debug_path: Path | None = self._comfy._debug_path
+        job_debug_path: Path | None = job.job_debug_path
         status = deepcopy(job.status)
         workflow = deepcopy(job.prepared_workflow)
         ticket = deepcopy(job.ticket)
         remote_job_status = deepcopy(job.remote_job_status)
 
       dt = datetime.datetime.now(datetime.timezone.utc).isoformat()
-      if debug_path is not None:
+      if job_debug_path is not None:
         dump = {
             'job_id': self._job_id,
+            'exc_type': exc_type,
+            'exc_value': str(exc_value),
+            'traceback': tb.format_exception(exc_type, exc_value, traceback),
             'job_status': status,
             'remote_job_status': remote_job_status,
             'ticket': ticket,
             'watch_vars': self._watch_vars,
             'workflow': workflow,
         }
-        job_history_path = debug_path / f'{slugify(dt)}-{slugify(self._job_id)}.dump.yaml'
-        await job_history_path.parent.mkdir(parents=True, exist_ok=True)
-        async with aiofiles.open(job_history_path, 'w') as f:
+        job_dump_path = job_debug_path / 'context-dumps' / f'{slugify(dt)}.dump.yaml'
+        await job_dump_path.parent.mkdir(parents=True, exist_ok=True)
+        async with aiofiles.open(job_dump_path, 'w') as f:
           await f.write(YamlDump(dump))
-        print(f'Wrote job status to {repr(str(job_history_path))}.',
+        print(f'Wrote job status to {repr(str(job_dump_path))}.',
               file=sys.stderr)
