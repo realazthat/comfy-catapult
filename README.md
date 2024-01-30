@@ -18,6 +18,16 @@ hosting this API endpoint for its user interface.
 This makes it easier for you to make workflows via the UI, and then use it from
 a program.
 
+## Related Projects
+
+- [ComfyUI script_examples](https://github.com/comfyanonymous/ComfyUI/tree/master/script_examples).
+- [ComfyUI-to-Python-Extension](https://github.com/pydn/ComfyUI-to-Python-Extension).
+- [ComfyScript](https://github.com/Chaoses-Ib/ComfyScript)
+- [hordelib](https://pypi.org/project/hordelib/)
+- [ComfyUI_NetDist](https://github.com/city96/ComfyUI_NetDist)
+- [ComfyUI-Serving-Toolkit](https://github.com/matan1905/ComfyUI-Serving-Toolkit)
+- [comfyui-python-api](https://github.com/andreyryabtsev/comfyui-python-api)
+
 ## Getting Started
 
 ### Exporting workflows in the API json format
