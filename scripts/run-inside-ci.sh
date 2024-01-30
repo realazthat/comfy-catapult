@@ -10,18 +10,24 @@ ENV_VARS_FILE=${ENV_VARS_FILE:-""}
 
 if [[ -z "${PROJECT_CLONE_PATH}" ]]; then
   echo -e "${RED}PROJECT_CLONE_PATH is not set${NC}"
+  # trunk-ignore(shellcheck/SC2128)
+  # trunk-ignore(shellcheck/SC2209)
   [[ $0 == "${BASH_SOURCE}" ]] && EXIT=exit || EXIT=return
   ${EXIT} 1
 fi
 
 if [[ -z "${ENV_VARS_FILE}" ]]; then
   echo -e "${RED}ENV_VARS_FILE is not set${NC}"
+  # trunk-ignore(shellcheck/SC2128)
+  # trunk-ignore(shellcheck/SC2209)
   [[ $0 == "${BASH_SOURCE}" ]] && EXIT=exit || EXIT=return
   ${EXIT} 1
 fi
 
 if [[ ! -f "${ENV_VARS_FILE}" ]]; then
   echo -e "${RED}${ENV_VARS_FILE} does not exist${NC}"
+  # trunk-ignore(shellcheck/SC2128)
+  # trunk-ignore(shellcheck/SC2209)
   [[ $0 == "${BASH_SOURCE}" ]] && EXIT=exit || EXIT=return
   ${EXIT} 1
 fi

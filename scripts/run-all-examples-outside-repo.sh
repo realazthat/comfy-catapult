@@ -1,41 +1,45 @@
+#!/bin/bash
+
 # https://gist.github.com/mohanpedala/1e2ff5661761d3abd0385e8223e16425
 set -e -x -v -u -o pipefail
 
 SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-source $SCRIPT_DIR/utilities/common.sh
+source "${SCRIPT_DIR}/utilities/common.sh"
 
 export COMFY_API_URL=${COMFY_API_URL:-""}
 
-if [ -z "$COMFY_API_URL" ]; then
+if [[ -z "${COMFY_API_URL}" ]]; then
   echo -e "${RED}COMFY_API_URL is not set${NC}"
-  [[ $0 == "$BASH_SOURCE" ]] && EXIT=exit || EXIT=return
-  $EXIT 1
+  # trunk-ignore(shellcheck/SC2128)
+  # trunk-ignore(shellcheck/SC2209)
+  [[ $0 == "${BASH_SOURCE}" ]] && EXIT=exit || EXIT=return
+  ${EXIT} 1
 fi
 
 export COMFY_BASE_URL=${COMFY_BASE_URL:-""}
 
-VENV_PATH=$PWD/.venv source $PROJ_PATH/scripts/utilities/ensure-venv.sh
+VENV_PATH="${PWD}/.venv" source "${PROJ_PATH}/scripts/utilities/ensure-venv.sh"
 
 export PYTHONPATH=${PYTHONPATH:-}
-export PYTHONPATH=$PYTHONPATH:$PWD
+export PYTHONPATH=${PYTHONPATH}:${PWD}
 
 python -m comfy_catapult.examples.using_pydantic
 python -m comfy_catapult.examples.add_a_node
 
 ARGS=(
-  "--comfy_base_file_url" "$COMFY_BASE_URL"
-  "--comfy_api_url" "$COMFY_API_URL"
-  "--tmp_path" "$PWD/.deleteme/tmp/"
-  "--output_path" "$PWD/.deleteme/output.png"
+  "--comfy_base_file_url" "${COMFY_BASE_URL}"
+  "--comfy_api_url" "${COMFY_API_URL}"
+  "--tmp_path" "${PWD}/.deleteme/tmp/"
+  "--output_path" "${PWD}/.deleteme/output.png"
   "--positive_prompt" "amazing cloudscape, towering clouds, thunderstorm, awe"
   "--negative_prompt" "dull, blurry, nsfw"
 )
 
-if [ -n "${API_WORKFLOW_JSON_PATH-}" ]; then
-  ARGS+=("--api_workflow_json_path" "$API_WORKFLOW_JSON_PATH")
+if [[ -n "${API_WORKFLOW_JSON_PATH-}" ]]; then
+  ARGS+=("--api_workflow_json_path" "${API_WORKFLOW_JSON_PATH}")
 fi
 
-if [ -n "${CHECKPOINT_NAME-}" ]; then
-  ARGS+=("--ckpt_name" "$CHECKPOINT_NAME")
+if [[ -n "${CHECKPOINT_NAME-}" ]]; then
+  ARGS+=("--ckpt_name" "${CHECKPOINT_NAME}")
 fi
 python -m comfy_catapult.examples.sdxlturbo_example_catapulter "${ARGS[@]}"
