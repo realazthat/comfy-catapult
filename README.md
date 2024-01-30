@@ -221,6 +221,7 @@ class ExampleWorkflowInfo:
   # this job.
   job_history_dict: dict | None
 
+  # These are inputs that modify this particular workflow.
   ckpt_name: str | None
   positive_prompt: str
   negative_prompt: str
@@ -230,13 +231,15 @@ class ExampleWorkflowInfo:
 
 async def RunExampleWorkflow(*, job_info: ExampleWorkflowInfo):
 
-  # You have to write this, to change the inputs of the workflow json as you
-  # like.
+  # You have to write this function, to change the workflow_dict as you like.
   await PrepareWorkflow(job_info=job_info)
+
+  # Here the magic happens, the job is submitted to the ComfyUI server.
   job_info.job_history_dict = await job_info.catapult.Catapult(
       job_id=job_info.job_id,
       prepared_workflow=job_info.workflow_dict,
       important=job_info.important)
+
   # Now that the job is done, you have to write something that will go and get
   # the results you care about, if necessary.
   await DownloadResults(job_info=job_info)
