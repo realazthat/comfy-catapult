@@ -39,3 +39,6 @@ if [[ -n "${CHECKPOINT_NAME-}" ]]; then
   ARGS+=("--ckpt_name" "${CHECKPOINT_NAME}")
 fi
 python comfy_catapult/examples/sdxlturbo_example_catapulter.py "${ARGS[@]}"
+
+
+echo -e "${GREEN}All examples ran successfully${NC}"

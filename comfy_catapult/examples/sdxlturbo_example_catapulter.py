@@ -6,27 +6,78 @@
 # the license text.
 
 import asyncio
+import copy
+import json
 import sys
 import uuid
+from dataclasses import dataclass
+from datetime import datetime
 from pprint import pprint
 from typing import List
 
+from anyio import Path
+from slugify import slugify
+
 from comfy_catapult.api_client import ComfyAPIClient, ComfyAPIClientBase
-from comfy_catapult.catapult import ComfyCatapult, JobStatus
-from comfy_catapult.comfy_config import RemoteComfyConfig
+from comfy_catapult.catapult import ComfyCatapult
+from comfy_catapult.catapult_base import ComfyCatapultBase
 from comfy_catapult.comfy_schema import (APIHistoryEntry, APIObjectInfo,
                                          APIObjectInputTuple, APISystemStats,
                                          APIWorkflow, APIWorkflowInConnection,
                                          NodeID)
 from comfy_catapult.comfy_utils import (DownloadPreviewImage, GetNodeByTitle,
                                         YamlDump)
-from comfy_catapult.examples.utilities.sdxlturbo_parse_args import (Args,
-                                                                    ParseArgs)
+from comfy_catapult.examples.utilities.sdxlturbo_parse_args import ParseArgs
 from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
 from comfy_catapult.remote_file_api_comfy import ComfySchemeRemoteFileAPI
 from comfy_catapult.remote_file_api_generic import GenericRemoteFileAPI
 from comfy_catapult.remote_file_api_local import LocalRemoteFileAPI
 from comfy_catapult.url_utils import ToParseResult
+
+
+@dataclass
+class ExampleWorkflowInfo:
+  # Direct wrapper around the ComfyUI API.
+  client: ComfyAPIClientBase
+  # Job scheduler (the main point of this library).
+  catapult: ComfyCatapultBase
+  # Something to help with retrieving files from the ComfyUI storage.
+  remote: RemoteFileAPIBase
+  comfy_api_url: str
+
+  # This should be the workflow json as a dict.
+  workflow_template_dict: dict
+  # This should begin as a deep copy of the template.
+  workflow_dict: dict
+  # This will hold the node ids that we must have results for.
+  important: List[NodeID]
+
+  # Make this any string unique to this job.
+  job_id: str
+
+  # When the job is complete, this will be the `/history` json/dictionary for
+  # this job.
+  job_history_dict: dict | None
+
+  ckpt_name: str | None
+  positive_prompt: str
+  negative_prompt: str
+  # For this particular workflow, this will define the path to the output image.
+  output_path: Path
+
+
+async def RunExampleWorkflow(*, job_info: ExampleWorkflowInfo):
+
+  # You have to write this, to change the inputs of the workflow json as you
+  # like.
+  await PrepareWorkflow(job_info=job_info)
+  job_info.job_history_dict = await job_info.catapult.Catapult(
+      job_id=job_info.job_id,
+      prepared_workflow=job_info.workflow_dict,
+      important=job_info.important)
+  # Now that the job is done, you have to write something that will go and get
+  # the results you care about, if necessary.
+  await DownloadResults(job_info=job_info)
 
 
 async def amain():
@@ -38,28 +89,6 @@ async def amain():
          indent=2,
          width=120,
          sort_dicts=False)
-  comfy_api_url = args.comfy_api_url
-
-  # These are used to insure that files are not written/read outside of the
-  # comfy_input_url and comfy_output_url directories.
-  comfy_config = RemoteComfyConfig(
-      comfy_api_url=args.comfy_api_url,
-      base_file_url=args.comfy_base_file_url,
-      input_file_url=args.comfy_input_file_url,
-      temp_file_url=args.comfy_temp_file_url,
-      output_file_url=args.comfy_output_file_url,
-  )
-
-  # Read the workflow into a string.
-  workflow_json_str: str = await args.api_workflow_json_path.read_text()
-
-  # Parse it with the pydantic model so we can manipulate it more nicely than
-  # with raw json, we'll use this as a template, and fill in the inputs to
-  # customize it for this job.
-  #
-  # If you prefer, you can work with raw python dict conversion of the json.
-  workflow: APIWorkflow
-  workflow = APIWorkflow.model_validate_json(workflow_json_str)
 
   # Start a ComfyUI Client (provided in comfy_catapult.api_client).
   async with ComfyAPIClient(comfy_api_url=args.comfy_api_url) as comfy_client:
@@ -69,13 +98,13 @@ async def amain():
     # This maps comfy+http://comfy_host:port/folder_type/subfolder/filename to
     # the /view and /upload API endpoints.
     remote.Register(
-        ComfySchemeRemoteFileAPI(comfy_api_urls=[comfy_config.comfy_api_url],
+        ComfySchemeRemoteFileAPI(comfy_api_urls=[args.comfy_api_url],
                                  overwrite=True))
-    if comfy_config.base_file_url is not None:
-      scheme = ToParseResult(comfy_config.base_file_url).scheme
+    if args.comfy_base_file_url is not None:
+      scheme = ToParseResult(args.comfy_base_file_url).scheme
       if scheme != 'file':
         raise ValueError(
-            f'comfy_config.base_file_url must be a file:// URL, but is {comfy_config.base_file_url}'
+            f'args.comfy_base_file_url must be a file:// URL, but is {args.comfy_base_file_url}'
         )
 
       # This one uses file:/// protocol on the local system. It is probably
@@ -83,18 +112,11 @@ async def amain():
       # used with other a choice remote storage systems as transparently as
       # possible.
       remote.Register(
-          LocalRemoteFileAPI(upload_to_bases=[comfy_config.input_file_url],
+          LocalRemoteFileAPI(upload_to_bases=[args.comfy_input_file_url],
                              download_from_bases=[
-                                 comfy_config.output_file_url,
-                                 comfy_config.temp_file_url
+                                 args.comfy_output_file_url,
+                                 args.comfy_temp_file_url
                              ]))
-
-    # Now specialize the workflow for this job.
-    important: List[NodeID] = []
-    await PrepareWorkflow(client=comfy_client,
-                          workflow=workflow,
-                          args=args,
-                          important=important)
 
     # Dump the ComfyUI server stats.
     system_stats: APISystemStats = await comfy_client.GetSystemStats()
@@ -104,40 +126,40 @@ async def amain():
     async with ComfyCatapult(comfy_client=comfy_client,
                              debug_path=args.debug_path,
                              debug_save_all=True) as catapult:
-      job_id = str(uuid.uuid4())
 
-      # Launch the job.
-      job_history_dict: dict = await catapult.Catapult(
-          job_id=job_id,
-          prepared_workflow=workflow.model_dump(),
-          important=important)
+      dt_str = datetime.now().isoformat()
 
-      # Job is done.
+      # Read the workflow into a string.
+      workflow_template_json_str: str = await args.api_workflow_json_path.read_text(
+      )
+      workflow_template_dict = json.loads(workflow_template_json_str)
+      workflow_dict = copy.deepcopy(workflow_template_dict)
 
-      # Now, we can either trudge through job_history_dict, or we can convert it
-      # to a pydantic model, which is easier to work with.
-      job_history = APIHistoryEntry.model_validate(job_history_dict)
-
-      status: JobStatus
-      status, future = await catapult.GetStatus(job_id=job_id)
-      print('status:', file=sys.stderr)
-      print(YamlDump(status._asdict()), file=sys.stderr)
-      print('job_history:', file=sys.stderr)
-      print(YamlDump(job_history.model_dump()), file=sys.stderr)
-
-      # Download Preview Image.
-      await FinishWorkflow(comfy_api_url=comfy_api_url,
-                           remote=remote,
-                           workflow=workflow,
-                           args=args,
-                           job_history=job_history)
+      job_info = ExampleWorkflowInfo(
+          client=comfy_client,
+          catapult=catapult,
+          remote=remote,
+          workflow_template_dict=workflow_template_dict,
+          workflow_dict=workflow_dict,
+          important=[],
+          job_id=f'{slugify(dt_str)}-my-job-{uuid.uuid4()}',
+          job_history_dict=None,
+          comfy_api_url=args.comfy_api_url,
+          ckpt_name=args.ckpt_name,
+          positive_prompt=args.positive_prompt,
+          negative_prompt=args.negative_prompt,
+          output_path=args.output_path)
+      await RunExampleWorkflow(job_info=job_info)
 
 
-async def PrepareWorkflow(*, client: ComfyAPIClientBase, workflow: APIWorkflow,
-                          args: Args, important: List[NodeID]):
-  # Connect the inputs to `workflow` here.
+async def PrepareWorkflow(*, job_info: ExampleWorkflowInfo):
+  # Connect the inputs to `workflow_dict` here.
 
-  # Get nodes by title.
+  # Use the pydantic model to manipulate the workflow json.
+  workflow = APIWorkflow.model_validate(job_info.workflow_dict)
+
+  ##############################################################################
+  # Get all the nodes we care about, by title.
 
   _, load_checkpoint = GetNodeByTitle(workflow=workflow,
                                       title='Load Checkpoint')
@@ -168,7 +190,7 @@ async def PrepareWorkflow(*, client: ComfyAPIClientBase, workflow: APIWorkflow,
   # a directory, depending on the ComfyUI's system. E.g 'sd_xl_turbo_1.0_fp16'
   # vs 'SDXL-TURBO\sd_xl_turbo_1.0_fp16.safetensors' vs
   # 'SDXL-TURBO/sd_xl_turbo_1.0_fp16.safetensors'.
-  object_info: APIObjectInfo = await client.GetObjectInfo()
+  object_info: APIObjectInfo = await job_info.client.GetObjectInfo()
 
   object_info_entry = object_info.root[load_checkpoint.class_type]
 
@@ -204,27 +226,30 @@ async def PrepareWorkflow(*, client: ComfyAPIClientBase, workflow: APIWorkflow,
     raise ValueError(
         'sanity check, this is just what is in the workflow already.')
 
-  if args.ckpt_name is not None:
-    if args.ckpt_name not in load_checkpoint_valid_models:
+  if job_info.ckpt_name is not None:
+    if job_info.ckpt_name not in load_checkpoint_valid_models:
       raise ValueError(
-          f'ckpt_name must be one of {load_checkpoint_valid_models}, but is {args.ckpt_name}'
+          f'ckpt_name must be one of {load_checkpoint_valid_models}, but is {job_info.ckpt_name}'
       )
-    load_checkpoint.inputs['ckpt_name'] = args.ckpt_name
+    load_checkpoint.inputs['ckpt_name'] = job_info.ckpt_name
 
-  positive_prompt.inputs['text'] = args.positive_prompt
-  negative_prompt.inputs['text'] = args.negative_prompt
-  negative_prompt.inputs['text'] = args.negative_prompt
+  positive_prompt.inputs['text'] = job_info.positive_prompt
+  negative_prompt.inputs['text'] = job_info.negative_prompt
   ############################################################################
   # Mark some nodes as required to be executed, in order for us to consider
   # the job done.
-  important.append(preview_image_id)
+  job_info.important.append(preview_image_id)
   ############################################################################
+  # Save our changes to the job_info workflow.
+  job_info.workflow_dict = workflow.model_dump()
 
 
-async def FinishWorkflow(*, comfy_api_url: str, remote: RemoteFileAPIBase,
-                         workflow: APIWorkflow, args: Args,
-                         job_history: APIHistoryEntry):
+async def DownloadResults(*, job_info: ExampleWorkflowInfo):
   print('job_history:', file=sys.stderr)
+  if job_info.job_history_dict is None:
+    raise AssertionError('job_info.job_history_dict is None')
+  job_history = APIHistoryEntry.model_validate(job_info.job_history_dict)
+  workflow = APIWorkflow.model_validate(job_info.workflow_dict)
   print(YamlDump(job_history.model_dump()), file=sys.stderr)
 
   preview_image_id, _ = GetNodeByTitle(workflow=workflow, title='Preview Image')
@@ -233,9 +258,9 @@ async def FinishWorkflow(*, comfy_api_url: str, remote: RemoteFileAPIBase,
   await DownloadPreviewImage(node_id=preview_image_id,
                              job_history=job_history,
                              field_path='images[0]',
-                             comfy_api_url=comfy_api_url,
-                             remote=remote,
-                             local_dst_path=args.output_path)
+                             comfy_api_url=job_info.comfy_api_url,
+                             remote=job_info.remote,
+                             local_dst_path=Path(job_info.output_path))
 
 
 asyncio.run(amain(), debug=True)

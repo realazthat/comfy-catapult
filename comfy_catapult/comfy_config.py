@@ -11,6 +11,9 @@ from comfy_catapult.url_utils import ToParseResult, ValidateIsURLDirectory
 
 
 class RemoteComfyConfig(BaseModel):
+  """
+  TODO: is this class still needed?
+  """
   comfy_api_url: str
   base_file_url: str
   """Optional URL to ComfyUI install directory, e.g.'file:///mnt/d/stability-matrix-data/Packages/ComfyUI/'.
