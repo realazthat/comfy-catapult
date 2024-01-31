@@ -6,7 +6,7 @@ set -e -x -v -u -o pipefail
 SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 source "${SCRIPT_DIR}/utilities/common.sh"
 
-VENV_PATH=.cache/scripts/.venv source "${PROJ_PATH}/scripts/utilities/ensure-venv.s"h
+VENV_PATH=.cache/scripts/.venv source "${PROJ_PATH}/scripts/utilities/ensure-venv.sh"
 
 REQS=${PROJ_PATH}/scripts/requirements-dev.txt source "${PROJ_PATH}/scripts/utilities/ensure-reqs.sh"
 
