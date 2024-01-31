@@ -10,6 +10,8 @@ import datetime
 from abc import ABC, abstractmethod
 from typing import List, NamedTuple, Sequence, Tuple
 
+from anyio import Path
+
 from comfy_catapult.comfy_schema import NodeID
 
 
@@ -58,12 +60,17 @@ class ComfyCatapultBase(ABC):
       job_id: str,
       prepared_workflow: dict,
       important: Sequence[NodeID],
+      job_debug_path: Path | None = None,
   ) -> dict:
     """Schedule a ComfyUI workflow job.
 
     Args:
         job_id (str): A unique identifier for the job.
-        prepared_workflow (APIWorkflow): Workflow to submit.
+        prepared_workflow (dict): Workflow to submit.
+        important (List[NodeID]): List of important nodes (e.g output nodes we
+          are interested in).
+        job_debug_path (Path, optional): Path to save debug information. If
+          None, will use sensible defaults.
 
     Raises:
         WorkflowSubmissionError: Failed to submit workflow.
