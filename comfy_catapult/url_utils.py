@@ -91,7 +91,8 @@ def Relativize(*, base: str, url: str) -> str:
 
   url_path = url_parsed.path
   base_path = base_parsed.path
-  assert url_path.startswith(base_path)
+  if not url_path.startswith(base_path):
+    raise ValueError(f'URL {repr(url)} is not relative to base {repr(base)}')
 
   return url_path[len(base_path):]
 
