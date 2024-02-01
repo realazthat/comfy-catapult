@@ -29,8 +29,6 @@ def _ValidateComfyAPITargetURL(url: str, *,
     raise ValueError(
         f'URL {repr(url)} scheme does not start with one of {VALID_COMFY_API_SCHEMES}'
     )
-  if url_pr.path != '':
-    raise ValueError(f'URL {repr(url)} path must be empty')
 
   if any_api_targets is not None:
     if url not in any_api_targets:
