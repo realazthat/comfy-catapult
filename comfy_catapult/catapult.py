@@ -19,7 +19,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from pprint import pformat
 from typing import Any, Dict, Generic, List, Sequence, Tuple, TypeVar
-from urllib.parse import ParseResult, urlparse, urlunparse
+from urllib.parse import ParseResult, urlparse
 
 import aiofiles
 from anyio import Path
@@ -609,13 +609,16 @@ class ComfyCatapult(ComfyCatapultBase):
 
     # replace protocol with ws, using a url library
     ws_url: ParseResult = urlparse(comfy_api_url)
-    ws_url = ws_url._replace(scheme='ws')
+    if ws_url.scheme == 'https':
+      ws_url = ws_url._replace(scheme='wss')
+    else:
+      ws_url = ws_url._replace(scheme='ws')
     ws_url = ws_url._replace(path='/ws')
     ws_url = ws_url._replace(query=f'clientId={client_id}')
 
     async def _MonitoringThreadLoopOnce():
       try:
-        async with connect(urlunparse(ws_url)) as ws:
+        async with connect(ws_url.geturl()) as ws:
           await asyncio.wait_for(self._LoopWS(ws=ws),
                                  timeout=ws_connect_interval)
       except asyncio.TimeoutError:
