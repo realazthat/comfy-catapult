@@ -84,6 +84,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
     self._session = aiohttp.ClientSession()
 
   async def __aenter__(self):
+    await self._session.__aenter__()
     return self
 
   async def __aexit__(self, exc_type, exc, tb):
