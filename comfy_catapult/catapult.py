@@ -48,6 +48,9 @@ class _Job:
   important_nodes: Tuple[NodeID, ...]
   ticket: APIWorkflowTicket | None
   status: JobStatus
+  # Exceptions that should be in status but aren't because they're not pickable
+  # or deepcopyable.
+  errors: List[Exception]
   future: asyncio.Future[dict]
   remote_job_status: RemoteStatus
   job_debug_path: Path | None
@@ -172,6 +175,7 @@ class ComfyCatapult(ComfyCatapultBase):
                            success=None,
                            errored=None,
                            cancelled=None),
+          errors=[],
           remote_job_status=_Job.RemoteStatus.PENDING_OR_RUNNING,
           job_debug_path=job_debug_path)
 
@@ -214,6 +218,13 @@ class ComfyCatapult(ComfyCatapultBase):
         raise KeyError(f'Job id {repr(job_id)} not found')
       job = self._jobs[job_id]
       return deepcopy(job.status), job.future
+
+  async def GetExceptions(self, *, job_id: str) -> List[Exception]:
+    async with self._lock:
+      if job_id not in self._jobs:
+        raise KeyError(f'Job id {repr(job_id)} not found')
+      job = self._jobs[job_id]
+      return list(job.errors)
 
   async def CancelJob(self, *, job_id: str):
     async with _JobContext(job_id=job_id, comfy=self):
@@ -698,9 +709,19 @@ class _JobContext:
         if job.future is not None and not job.future.done():
           job.future.set_exception(exc_value)
         if not job.status.IsDone():
+          job.errors += [exc_value]
+          exc_info = JobStatus.ExceptionInfo(
+              type=exc_type.__name__,
+              message=str(exc_value),
+              traceback=''.join(
+                  tb.format_exception(exc_type, exc_value, traceback)),
+              attributes={
+                  k: str(v)
+                  for k, v in exc_value.__dict__.items()
+              })
           job.status = job.status._replace(errored=self._comfy._Now(),
                                            errors=job.status.errors +
-                                           [exc_value])
+                                           [exc_info])
         job_debug_path: Path | None = job.job_debug_path
         status = deepcopy(job.status)
         workflow = deepcopy(job.prepared_workflow)

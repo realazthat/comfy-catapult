@@ -8,7 +8,7 @@
 import asyncio
 import datetime
 from abc import ABC, abstractmethod
-from typing import List, NamedTuple, Sequence, Tuple
+from typing import Dict, List, NamedTuple, Sequence, Tuple
 
 from anyio import Path
 
@@ -21,13 +21,20 @@ class Progress(NamedTuple):
 
 
 class JobStatus(NamedTuple):
+
+  class ExceptionInfo(NamedTuple):
+    type: str
+    message: str
+    traceback: str
+    attributes: Dict[str, str]
+
   scheduled: datetime.datetime | None
   pending: datetime.datetime | None
   running: datetime.datetime | None
   success: datetime.datetime | None
   errored: datetime.datetime | None
   cancelled: datetime.datetime | None
-  errors: List[Exception] = []
+  errors: List[ExceptionInfo] = []
   job_history: dict | None = None
 
   def IsDone(self) -> bool:
@@ -83,6 +90,10 @@ class ComfyCatapultBase(ABC):
   @abstractmethod
   async def GetStatus(self, *,
                       job_id: str) -> Tuple[JobStatus, asyncio.Future[dict]]:
+    raise NotImplementedError()
+
+  @abstractmethod
+  async def GetExceptions(self, *, job_id: str) -> List[Exception]:
     raise NotImplementedError()
 
   @abstractmethod
