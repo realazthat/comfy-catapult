@@ -1,5 +1,5 @@
 # Use the official Ubuntu base image
-FROM ubuntu:latest
+FROM ubuntu:jammy-20240111
 
 ARG PYTHON_VERSION
 ENV PYTHON_VERSION=${PYTHON_VERSION}
