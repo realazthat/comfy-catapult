@@ -32,6 +32,14 @@ def SmartURLJoin(base: str, path: str) -> str:
   return urlunparse(new)
 
 
+def JoinToBaseURL(base: str, path: str) -> str:
+  if not base.endswith('/'):
+    base += '/'
+  if path.startswith('/'):
+    path = path[1:]
+  return base + path
+
+
 def IsValidURL(url: str) -> bool:
   try:
     urlparse(url)
