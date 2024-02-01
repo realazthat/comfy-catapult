@@ -115,10 +115,6 @@ def ValidateIsComfyAPITargetURL(url: str) -> str:
     raise ValueError(f'URL {repr(url)} is not a comfy API target URL, because'
                      f' its hostname is empty')
 
-  if url_pr.port is None:
-    raise ValueError(f'URL {repr(url)} is not a comfy API target URL, because'
-                     f' its port is empty')
-
   return url
 
 
