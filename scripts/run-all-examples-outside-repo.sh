@@ -16,7 +16,7 @@ if [[ -z "${COMFY_API_URL}" ]]; then
   ${EXIT} 1
 fi
 
-export COMFY_BASE_URL=${COMFY_BASE_URL:-""}
+export COMFY_INSTALL_FILE_URL=${COMFY_INSTALL_FILE_URL:-""}
 
 VENV_PATH="${PWD}/.venv" source "${PROJ_PATH}/scripts/utilities/ensure-venv.sh"
 
@@ -27,7 +27,7 @@ python -m comfy_catapult.examples.using_pydantic
 python -m comfy_catapult.examples.add_a_node
 
 ARGS=(
-  "--comfy_base_file_url" "${COMFY_BASE_URL}"
+  "--comfy_install_file_url" "${COMFY_INSTALL_FILE_URL}"
   "--comfy_api_url" "${COMFY_API_URL}"
   "--tmp_path" "${PWD}/.deleteme/tmp/"
   "--output_path" "${PWD}/.deleteme/output.png"

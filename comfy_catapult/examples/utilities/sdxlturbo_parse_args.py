@@ -20,7 +20,7 @@ from comfy_catapult.url_utils import SmartURLJoin, ValidateIsURLDirectory
 class Args(NamedTuple):
   comfy_api_url: str
   api_workflow_json_path: Path
-  comfy_base_file_url: str
+  comfy_install_file_url: str
   comfy_input_file_url: str
   comfy_temp_file_url: str
   comfy_output_file_url: str
@@ -39,10 +39,10 @@ async def ParseArgs() -> Args:
     lines = [
         f'Optional URL to ComfyUI {to} directory, e.g. {repr(example_url)}.',
         'Note, that the URL must end with a trailing slash.',
-        'If --comfy_base_file_url is not supplied or is empty, then the API will be used to transfer files.',
+        'If --comfy_install_file_url is not supplied or is empty, then the API will be used to transfer files.',
     ]
     if default_subdir is not None:
-      lines += [f"Defaults to comfy_base_file_url + '{default_subdir}'."]
+      lines += [f"Defaults to comfy_install_file_url + '{default_subdir}'."]
     return ' '.join(lines)
 
   parser = argparse.ArgumentParser()
@@ -51,7 +51,7 @@ async def ParseArgs() -> Args:
                       type=Path,
                       default=Path('./test_data/sdxlturbo_example_api.json'))
   parser.add_argument(
-      '--comfy_base_file_url',
+      '--comfy_install_file_url',
       type=urlparse,
       default=None,
       help=URL_HELP('install',
@@ -116,27 +116,28 @@ async def ParseArgs() -> Args:
   ##############################################################################
   api_workflow_json_path: Path = args.api_workflow_json_path
   ##############################################################################
-  comfy_base_file_url_pr: ParseResult | None = args.comfy_base_file_url
+  comfy_install_file_url_pr: ParseResult | None = args.comfy_install_file_url
 
   comfy_input_file_url_pr: ParseResult | None = args.comfy_input_file_url
   comfy_output_file_url_pr: ParseResult | None = args.comfy_output_file_url
   comfy_temp_file_url_pr: ParseResult | None = args.comfy_temp_file_url
-  if comfy_base_file_url_pr is None or comfy_base_file_url_pr.geturl() == '':
-    comfy_base_file_url_pr = urlparse(ValidateIsURLDirectory(url='file:///'))
+  if comfy_install_file_url_pr is None or comfy_install_file_url_pr.geturl(
+  ) == '':
+    comfy_install_file_url_pr = urlparse(ValidateIsURLDirectory(url='file:///'))
   comfy_api_url_pr = urlparse(
-      ValidateIsURLDirectory(url=comfy_base_file_url_pr.geturl()))
+      ValidateIsURLDirectory(url=comfy_install_file_url_pr.geturl()))
 
   if comfy_input_file_url_pr is None:
     comfy_input_file_url_pr = urlparse(
-        SmartURLJoin(comfy_base_file_url_pr.geturl(), 'input/'))
+        SmartURLJoin(comfy_install_file_url_pr.geturl(), 'input/'))
   if comfy_output_file_url_pr is None:
     comfy_output_file_url_pr = urlparse(
-        SmartURLJoin(comfy_base_file_url_pr.geturl(), 'output/'))
+        SmartURLJoin(comfy_install_file_url_pr.geturl(), 'output/'))
   if comfy_temp_file_url_pr is None:
     comfy_temp_file_url_pr = urlparse(
-        SmartURLJoin(comfy_base_file_url_pr.geturl(), 'temp/'))
+        SmartURLJoin(comfy_install_file_url_pr.geturl(), 'temp/'))
 
-  comfy_base_file_url = comfy_base_file_url_pr.geturl()
+  comfy_install_file_url = comfy_install_file_url_pr.geturl()
   comfy_input_file_url = comfy_input_file_url_pr.geturl()
   comfy_output_file_url = comfy_output_file_url_pr.geturl()
   comfy_temp_file_url = comfy_temp_file_url_pr.geturl()
@@ -152,7 +153,7 @@ async def ParseArgs() -> Args:
   return Args(
       comfy_api_url=comfy_api_url,
       api_workflow_json_path=api_workflow_json_path,
-      comfy_base_file_url=comfy_base_file_url,
+      comfy_install_file_url=comfy_install_file_url,
       comfy_input_file_url=comfy_input_file_url,
       comfy_output_file_url=comfy_output_file_url,
       comfy_temp_file_url=comfy_temp_file_url,

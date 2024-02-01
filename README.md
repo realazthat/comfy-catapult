@@ -275,11 +275,11 @@ async def amain():
     remote.Register(
         ComfySchemeRemoteFileAPI(comfy_api_urls=[args.comfy_api_url],
                                  overwrite=True))
-    if args.comfy_base_file_url is not None:
-      scheme = ToParseResult(args.comfy_base_file_url).scheme
+    if args.comfy_install_file_url is not None:
+      scheme = ToParseResult(args.comfy_install_file_url).scheme
       if scheme != 'file':
         raise ValueError(
-            f'args.comfy_base_file_url must be a file:// URL, but is {args.comfy_base_file_url}'
+            f'args.comfy_install_file_url must be a file:// URL, but is {args.comfy_install_file_url}'
         )
 
       # This one uses file:/// protocol on the local system. It is probably
