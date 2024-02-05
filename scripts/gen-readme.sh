@@ -10,12 +10,10 @@ source "${SCRIPT_DIR}/utilities/common.sh"
 VENV_PATH=.cache/scripts/.venv source "${PROJ_PATH}/scripts/utilities/ensure-venv.sh"
 REQS="${PROJ_PATH}/scripts/requirements-dev.txt" source "${PROJ_PATH}/scripts/utilities/ensure-reqs.sh"
 ################################################################################
-chmod 644 README.md
 
-echo "<!-- WARNING: This file is auto-generated. Do not edit directly.             -->" >README.md
-# trunk-ignore(shellcheck/SC2016)
-echo '<!-- SOURCE: `README.template.md`.                                           -->' >>README.md
 
-python "${PROJ_PATH}/scripts/utilities/gen-readme.py" README.template.md >>README.md
-chmod 444 README.md
+rm -f "${PROJ_PATH}/README.md" || true
+python -m snipinator.cli \
+  -t "${PROJ_PATH}/README.md.jinja2" \
+  -o "${PROJ_PATH}/README.md" --chmod 555
 ################################################################################

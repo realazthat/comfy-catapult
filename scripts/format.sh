@@ -11,7 +11,7 @@ VENV_PATH=.cache/scripts/.venv source "${PROJ_PATH}/scripts/utilities/ensure-ven
 REQS="${PROJ_PATH}/scripts/requirements-dev.txt" source "${PROJ_PATH}/scripts/utilities/ensure-reqs.sh"
 
 # Must have mdformat-gfm installed, otherwise checkboxes get messed up
-mdformat README.template.md
+mdformat README.md.jinja2
 
 yapf -r ./comfy_catapult -i
 yapf ./setup.py -i

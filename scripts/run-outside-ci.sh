@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # https://gist.github.com/mohanpedala/1e2ff5661761d3abd0385e8223e16425
 set -e -x -v -u -o pipefail
 
@@ -10,42 +12,42 @@ PROJECT_CLONE_PATH=/ci-project-export/
 IMAGE_PREFIX=${IMAGE_PREFIX:-""}
 INSTANCE=${INSTANCE:-""}
 
-if [[ -z "$IMAGE_PREFIX" ]]; then
+if [[ -z "${IMAGE_PREFIX}" ]]; then
   echo -e "${RED}IMAGE_PREFIX is not set${NC}"
   [[ $0 == "$BASH_SOURCE" ]] && EXIT=exit || EXIT=return
   $EXIT 1
 fi
 
-if [[ -z "$INSTANCE" ]]; then
+if [[ -z "${INSTANCE}" ]]; then
   echo -e "${RED}INSTANCE is not set${NC}"
   [[ $0 == "$BASH_SOURCE" ]] && EXIT=exit || EXIT=return
-  $EXIT 1
+  ${EXIT} 1
 fi
 
-if [[ -z "$ENV_VARS_FILE" ]]; then
+if [[ -z "${ENV_VARS_FILE}" ]]; then
   echo -e "${RED}ENV_VARS_FILE is not set${NC}"
   [[ $0 == "$BASH_SOURCE" ]] && EXIT=exit || EXIT=return
-  $EXIT 1
+  ${EXIT} 1
 fi
 
-if [[ ! -f "$ENV_VARS_FILE" ]]; then
+if [[ ! -f "${ENV_VARS_FILE}" ]]; then
   echo -e "${RED}$ENV_VARS_FILE does not exist${NC}"
   [[ $0 == "$BASH_SOURCE" ]] && EXIT=exit || EXIT=return
-  $EXIT 1
+  ${EXIT} 1
 fi
 
 PYTHON_VERSION=$(cat .python-version)
-IMAGE=${IMAGE_PREFIX}-${PYTHON_VERSION}
+IMAGE="${IMAGE_PREFIX}-${PYTHON_VERSION}"
 
 docker build -t "${IMAGE}" \
-  --build-arg PYTHON_VERSION=${PYTHON_VERSION} \
+  --build-arg "PYTHON_VERSION=${PYTHON_VERSION}" \
   "${PROJ_PATH}/scripts/ci/docker"
 
 # Absolutely stomp on any existing instance
-docker rm --force "$INSTANCE" || true
+docker rm --force "${INSTANCE}" || true
 
 run() {
-  ENV_VARS_FILE=$(realpath "$ENV_VARS_FILE")
+  ENV_VARS_FILE=$(realpath "${ENV_VARS_FILE}")
 
   docker run \
     --rm \
@@ -56,7 +58,7 @@ run() {
     --env "PROJECT_RO_PATH=${PROJECT_RO_PATH}" \
     --env "PROJECT_CLONE_PATH=${PROJECT_CLONE_PATH}" \
     --env "ENV_VARS_FILE=/home/root/env.yml" \
-    ${IMAGE_PREFIX} \
+    "${IMAGE}" \
     /bin/bash -c "${PROJECT_RO_PATH}/scripts/run-inside-ci.sh"
 }
 

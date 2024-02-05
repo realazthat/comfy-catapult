@@ -16,6 +16,15 @@ hosting this API endpoint for its user interface.
 This makes it easier for you to make workflows via the UI, and then use it from
 a program.
 
+### Scheduling a job
+
+From
+[`{{ path('comfy_catapult/examples/sdxlturbo_example_catapulter.py') }}`](comfy_catapult/examples/sdxlturbo_example_catapulter.py):
+
+`{{ pysnippet('comfy_catapult/examples/sdxlturbo_example_catapulter.py', symbol='RunExampleWorkflow', backtickify='py') }}`
+
+`{{ pysnippet('comfy_catapult/examples/sdxlturbo_example_catapulter.py', symbol='ExampleWorkflowInfo', backtickify='py') }}`
+
 ## Related Projects
 
 - [ComfyUI script_examples](https://github.com/comfyanonymous/ComfyUI/tree/master/script_examples).
@@ -163,29 +172,19 @@ PYTHONPATH=$PYTHONPATH:$PWD python comfy_catapult/examples/sdxlturbo_example_cat
 
 ```
 
-### Scheduling a job
-
-From `comfy_catapult/examples/sdxlturbo_example_catapulter.py`:
-
-```py
-{% include 'comfy_catapult/examples/sdxlturbo_example_catapulter.py' %}
-```
-
 ### Parsing the API format into the Pydantic models schema for easier navigation
 
-From `comfy_catapult/examples/using_pydantic.py`:
+From
+[`{{ path('comfy_catapult/examples/using_pydantic.py') }}`](comfy_catapult/examples/using_pydantic.py):
 
-```py
-{% include 'comfy_catapult/examples/add_a_node.py' %}
-```
+`{{ rawsnippet('comfy_catapult/examples/using_pydantic.py', backtickify='py') }}`
 
 ### Adding a new node to a workflow
 
-From `comfy_catapult/examples/add_a_node.py`:
+From
+[`{{ path('comfy_catapult/examples/add_a_node.py') }}`](comfy_catapult/examples/add_a_node.py):
 
-```py
-{% include 'comfy_catapult/examples/add_a_node.py' %}
-```
+`{{ rawsnippet('comfy_catapult/examples/add_a_node.py', backtickify='py') }}`
 
 ## Known to work on
 
