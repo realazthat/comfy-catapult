@@ -252,7 +252,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
         resp.raise_for_status()
 
   async def PostInterrupt(self):
-    # TODO: change the API to take a prompt_id.
+    # TODO(realazthat/comfy-catapult#5): change the API to take a prompt_id.
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'interrupt'))
     with _WatchVar(url=url.geturl()):
       async with self._session.post(url.geturl()) as resp:
