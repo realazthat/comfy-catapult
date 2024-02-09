@@ -27,12 +27,12 @@ from comfy_catapult.comfy_schema import (APIHistoryEntry, APIObjectInfo,
                                          NodeID)
 from comfy_catapult.comfy_utils import (DownloadPreviewImage, GetNodeByTitle,
                                         YamlDump)
-from comfy_catapult.examples.utilities.sdxlturbo_parse_args import ParseArgs
 from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
 from comfy_catapult.remote_file_api_comfy import ComfySchemeRemoteFileAPI
 from comfy_catapult.remote_file_api_generic import GenericRemoteFileAPI
 from comfy_catapult.remote_file_api_local import LocalRemoteFileAPI
 from comfy_catapult.url_utils import ToParseResult
+from examples.utilities.sdxlturbo_parse_args import ParseArgs
 
 
 @dataclass

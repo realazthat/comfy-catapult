@@ -13,9 +13,9 @@ REQS="${PROJ_PATH}/scripts/requirements-dev.txt" source "${PROJ_PATH}/scripts/ut
 # Must have mdformat-gfm installed, otherwise checkboxes get messed up
 mdformat README.md.jinja2
 
-yapf -r ./comfy_catapult -i
+yapf -r ./comfy_catapult ./examples -i
 yapf ./setup.py -i
-autoflake --remove-all-unused-imports --in-place --recursive ./comfy_catapult
-isort ./comfy_catapult
+autoflake --remove-all-unused-imports --in-place --recursive ./comfy_catapult ./examples
+isort ./comfy_catapult ./examples
 
-# vulture ./comfy_catapult
+# vulture ./comfy_catapult ./examples

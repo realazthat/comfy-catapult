@@ -23,8 +23,8 @@ VENV_PATH="${PWD}/.venv" source "${PROJ_PATH}/scripts/utilities/ensure-venv.sh"
 export PYTHONPATH=${PYTHONPATH:-}
 export PYTHONPATH=${PYTHONPATH}:${PWD}
 
-python comfy_catapult/examples/using_pydantic.py
-python comfy_catapult/examples/add_a_node.py
+python examples/using_pydantic.py
+python examples/add_a_node.py
 
 ARGS=(
   "--comfy_install_file_url" "${COMFY_INSTALL_FILE_URL}"
@@ -38,7 +38,7 @@ ARGS=(
 if [[ -n "${CHECKPOINT_NAME-}" ]]; then
   ARGS+=("--ckpt_name" "${CHECKPOINT_NAME}")
 fi
-python comfy_catapult/examples/sdxlturbo_example_catapulter.py "${ARGS[@]}"
+python examples/sdxlturbo_example_catapulter.py "${ARGS[@]}"
 
 
 echo -e "${GREEN}All examples ran successfully${NC}"

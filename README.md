@@ -25,7 +25,7 @@ a program.
 ### Scheduling a job
 
 From
-[`comfy_catapult/examples/sdxlturbo_example_catapulter.py`](comfy_catapult/examples/sdxlturbo_example_catapulter.py):
+[`examples/sdxlturbo_example_catapulter.py`](examples/sdxlturbo_example_catapulter.py):
 
 ````py
 async def RunExampleWorkflow(*, job_info: ExampleWorkflowInfo):
@@ -169,20 +169,18 @@ python -m comfy_catapult.examples.using_pydantic
 ```
 
 - Examine
-  [`comfy_catapult/examples/sdxlturbo_example_catapulter.py`](comfy_catapult/examples/sdxlturbo_example_catapulter.py)
+  [`examples/sdxlturbo_example_catapulter.py`](examples/sdxlturbo_example_catapulter.py)
   to see how to use the main `ComfyCatapult` library.
 - Examine
   [`test_data/sdxlturbo_example_api.json`](test_data/sdxlturbo_example_api.json)
   to see the API format. This will be necessary in order to programmatically set
   the proper inputs for the workflow.
-  - (Optional) See
-    [`comfy_catapult/examples/using_pydantic.py`](comfy_catapult/examples/using_pydantic.py)
+  - (Optional) See [`examples/using_pydantic.py`](examples/using_pydantic.py)
     for how to parse the API format into the Pydantic models schema for easier
     navigation.
-  - (Optional) See
-    [`comfy_catapult/examples/add_a_node.py`](comfy_catapult/examples/add_a_node.py)
-    for how to add a new node to a workflow. This is useful when you need to add
-    nodes at runtime (such as adding a bunch of LoadImage nodes).
+  - (Optional) See [`examples/add_a_node.py`](examples/add_a_node.py) for how to
+    add a new node to a workflow. This is useful when you need to add nodes at
+    runtime (such as adding a bunch of LoadImage nodes).
 - See [`comfy_catapult/catapult_base.py`](comfy_catapult/catapult_base.py) for
   the main library interface.
 - (Optional) See [`comfy_catapult/catapult.py`](comfy_catapult/catapult_base.py)
@@ -213,7 +211,7 @@ pip install -r requirements.txt
 
 
 # Run the example workflow:
-PYTHONPATH=$PYTHONPATH:$PWD python comfy_catapult/examples/sdxlturbo_example_catapulter.py \
+PYTHONPATH=$PYTHONPATH:$PWD python examples/sdxlturbo_example_catapulter.py \
   --api_workflow_json_path "$PWD/sdxlturbo_example_api.json"
   --tmp_path "$PWD/.deleteme/tmp/" \
   --output_path "$PWD/.deleteme/output.png" \
@@ -225,8 +223,7 @@ PYTHONPATH=$PYTHONPATH:$PWD python comfy_catapult/examples/sdxlturbo_example_cat
 
 ### Parsing the API format into the Pydantic models schema for easier navigation
 
-From
-[`comfy_catapult/examples/using_pydantic.py`](comfy_catapult/examples/using_pydantic.py):
+From [`examples/using_pydantic.py`](examples/using_pydantic.py):
 
 ````py
 # -*- coding: utf-8 -*-
@@ -281,8 +278,7 @@ print(api_workflow_json)
 
 ### Adding a new node to a workflow
 
-From
-[`comfy_catapult/examples/add_a_node.py`](comfy_catapult/examples/add_a_node.py):
+From [`examples/add_a_node.py`](examples/add_a_node.py):
 
 ````py
 # -*- coding: utf-8 -*-
