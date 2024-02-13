@@ -13,7 +13,7 @@ REQS=${PROJ_PATH}/scripts/requirements-dev.txt source "${PROJ_PATH}/scripts/util
 bash scripts/format.sh
 bash scripts/gen-readme.sh
 bash scripts/run-all-tests.sh
-bash scripts/run-all-examples-inside-repo.sh
+bash scripts/run-all-examples-as-modules.sh
 bash scripts/run-outside-ci.sh
 
 # pre-commit autoupdate

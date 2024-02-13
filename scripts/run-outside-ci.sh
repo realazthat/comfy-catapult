@@ -14,25 +14,25 @@ INSTANCE=${INSTANCE:-""}
 
 if [[ -z "${IMAGE_PREFIX}" ]]; then
   echo -e "${RED}IMAGE_PREFIX is not set${NC}"
-  [[ $0 == "$BASH_SOURCE" ]] && EXIT=exit || EXIT=return
-  $EXIT 1
+  [[ $0 == "$BASH_SOURCE" ]] && EXIT="exit" || EXIT="return"
+  ${EXIT} 1
 fi
 
 if [[ -z "${INSTANCE}" ]]; then
   echo -e "${RED}INSTANCE is not set${NC}"
-  [[ $0 == "$BASH_SOURCE" ]] && EXIT=exit || EXIT=return
+  [[ $0 == "$BASH_SOURCE" ]] && EXIT="exit" || EXIT="return"
   ${EXIT} 1
 fi
 
 if [[ -z "${ENV_VARS_FILE}" ]]; then
   echo -e "${RED}ENV_VARS_FILE is not set${NC}"
-  [[ $0 == "$BASH_SOURCE" ]] && EXIT=exit || EXIT=return
+  [[ $0 == "$BASH_SOURCE" ]] && EXIT="exit" || EXIT="return"
   ${EXIT} 1
 fi
 
 if [[ ! -f "${ENV_VARS_FILE}" ]]; then
-  echo -e "${RED}$ENV_VARS_FILE does not exist${NC}"
-  [[ $0 == "$BASH_SOURCE" ]] && EXIT=exit || EXIT=return
+  echo -e "${RED}${ENV_VARS_FILE} does not exist${NC}"
+  [[ $0 == "$BASH_SOURCE" ]] && EXIT="exit" || EXIT="return"
   ${EXIT} 1
 fi
 
@@ -64,10 +64,10 @@ run() {
 
 if run; then
   echo -e "${GREEN}Successfully ran inside docker${NC}"
-  [[ $0 == "${BASH_SOURCE}" ]] && EXIT=exit || EXIT=return
-  $EXIT 0
+  [[ $0 == "${BASH_SOURCE}" ]] && EXIT="exit" || EXIT="return"
+  ${EXIT} 0
 else
   echo -e "${RED}Failed!${NC}"
-  [[ $0 == "${BASH_SOURCE}" ]] && EXIT=exit || EXIT=return
-  $EXIT 1
+  [[ $0 == "${BASH_SOURCE}" ]] && EXIT="exit" || EXIT="return"
+  ${EXIT} 1
 fi

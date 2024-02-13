@@ -43,18 +43,23 @@ cd "${PROJ_PATH}"
 mkdir -p "${PROJECT_CLONE_PATH}"
 git checkout-index --all --prefix="${PROJECT_CLONE_PATH}"
 ################################################################################
-cd "${PROJECT_CLONE_PATH}"
+# Make a new temporary path, to test installing the repo in-directory.
+TMP_PATH=$(mktemp -d)
+cp -a "${PROJECT_CLONE_PATH}/." "${TMP_PATH}"
+cd "${TMP_PATH}"
+ls -la "${PROJECT_CLONE_PATH}"
+ls -la
 
-VENV_PATH=.venv source "${PROJECT_CLONE_PATH}/scripts/utilities/ensure-venv.sh"
+VENV_PATH=.venv source "${TMP_PATH}/scripts/utilities/ensure-venv.sh"
 
-cat "${PROJECT_CLONE_PATH}/.python-version"
-cat "${PROJECT_CLONE_PATH}/requirements.txt"
+cat "${TMP_PATH}/.python-version"
+cat "${TMP_PATH}/requirements.txt"
 pip install -r requirements.txt
 
-bash "${PROJECT_CLONE_PATH}/scripts/run-all-tests.sh"
-bash "${PROJECT_CLONE_PATH}/scripts/run-all-examples-inside-repo.sh"
-
-# Make a new temporary path, to test installing the repo as a package.
+bash "${TMP_PATH}/scripts/run-all-tests.sh"
+bash "${TMP_PATH}/scripts/run-all-examples-as-modules.sh"
+################################################################################
+# Make a new temporary path, to test installing the repo as a package in editable mode.
 TMP_PATH=$(mktemp -d)
 cd "${TMP_PATH}"
 cp "${PROJECT_CLONE_PATH}/.python-version" .
@@ -62,5 +67,22 @@ ls -la .
 VENV_PATH=.venv source "${PROJECT_CLONE_PATH}/scripts/utilities/ensure-venv.sh"
 pip install -e "${PROJECT_CLONE_PATH}"
 
+
 export API_WORKFLOW_JSON_PATH="${PROJECT_CLONE_PATH}/test_data/sdxlturbo_example_api.json"
-bash "${PROJECT_CLONE_PATH}/scripts/run-all-examples-outside-repo.sh"
+bash "${PROJECT_CLONE_PATH}/scripts/run-all-examples-as-modules.sh"
+################################################################################
+# Make a new temporary path, to test installing the repo as a package using setup.py.
+TMP_PATH=$(mktemp -d)
+cd "${TMP_PATH}"
+cp "${PROJECT_CLONE_PATH}/.python-version" .
+cp -R "${PROJECT_CLONE_PATH}/examples" .
+cp -R "${PROJECT_CLONE_PATH}/scripts" .
+ls -la .
+VENV_PATH=.venv source "${TMP_PATH}/scripts/utilities/ensure-venv.sh"
+pip install "${PROJECT_CLONE_PATH}"
+
+
+# bash "${PROJECT_CLONE_PATH}/scripts/run-all-tests.sh"
+export API_WORKFLOW_JSON_PATH="${PROJECT_CLONE_PATH}/test_data/sdxlturbo_example_api.json"
+bash "${TMP_PATH}/scripts/run-all-examples-as-modules.sh"
+################################################################################

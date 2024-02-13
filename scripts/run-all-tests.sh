@@ -23,6 +23,6 @@ export PYTHONPATH=${PYTHONPATH}:${PWD}
 
 # Find all files in comfy_catapult that end in _test.py
 find comfy_catapult -name "*_test.py" | while read -r TEST_FILE; do
-  echo "Running ${TEST_FILE}"
-  python "${TEST_FILE}"
+  TEST_MODULE=$(echo "${TEST_FILE}" | sed -e 's/\//./g' -e 's/\.py$//')
+  python -m "${TEST_MODULE}"
 done
