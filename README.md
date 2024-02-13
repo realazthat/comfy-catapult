@@ -78,6 +78,7 @@ class ExampleWorkflowInfo:
 
 ## Related Projects
 
+- [comfyui-deploy](https://github.com/BennyKok/comfyui-deploy).
 - [ComfyUI script_examples](https://github.com/comfyanonymous/ComfyUI/tree/master/script_examples).
 - [ComfyUI-to-Python-Extension](https://github.com/pydn/ComfyUI-to-Python-Extension).
 - [ComfyScript](https://github.com/Chaoses-Ib/ComfyScript)
