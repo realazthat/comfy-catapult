@@ -361,20 +361,14 @@ print(api_workflow.model_dump_json())
 - [ ]  Make sure the schema can parse the formats even if the format adds new
   fields.
 
-## Comitting
+## Contributions
 
-1. `bash scripts/pre.sh`.
-2. Check for modified files: `git status`
-3. Stage any modified: `git add -u`
-4. If any modified files: Go to step 1.
+1. Fork the `develop` branch.
+2. Stage your files: `git add path/to/file.py`.
+3. `bash scripts/pre.sh`, this will format, lint, and test the code. Note, that
+   you will need a `COMFY_API_URL` environment variable set to a ComfyUI server
+   for the tests.
+4. `git status` check if anything changed, if so, `git add` the changes, and go
+   back to the previous step.
 5. `git commit -m "..."`.
-
-## Releasing
-
-1. Bump version in `README.template.md`, `setup.py`, `CHANGELOG.md`.
-2. `REL_VER=...`.
-3. `git commit -nam "Release $REL_VER"`.
-4. `git push`.
-5. `git tag $REL_VER`.
-6. `git push --tags`.
-7. Create a GitHub release.
+6. Make a PR to `develop`.
