@@ -349,9 +349,6 @@ print(api_workflow.model_dump_json())
 ## Limitations
 
 - ETA estimator isn't working
-- Sometimes the job ends early but no error is sent back from the server. Error
-  is detected because not all nodes have executed, but the error is opaque
-  (check the server logs for the error).
 
 ## TODO
 
