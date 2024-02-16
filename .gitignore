@@ -10,3 +10,4 @@ comfy_catapult.egg-info/
 .deleteme
 **/.deleteme*
 .scrap/
+dist/
