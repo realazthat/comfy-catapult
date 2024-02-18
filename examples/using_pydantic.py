@@ -5,6 +5,7 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
+# SNIPPETSTART
 from comfy_catapult.comfy_schema import APIWorkflow
 
 api_workflow_json_str: str = """
@@ -45,3 +46,4 @@ api_workflow_json = api_workflow.model_dump_json()
 # See comfy_catapult/comfyui_schema.py for the schema definition.
 
 print(api_workflow_json)
+# SNIPPETEND

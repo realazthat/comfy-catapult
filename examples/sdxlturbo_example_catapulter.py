@@ -72,11 +72,13 @@ async def RunExampleWorkflow(*, job_info: ExampleWorkflowInfo):
   # You have to write this function, to change the workflow_dict as you like.
   await PrepareWorkflow(job_info=job_info)
 
+  job_id: str = job_info.job_id
+  workflow_dict: dict = job_info.workflow_dict
+  important: List[NodeID] = job_info.important
+
   # Here the magic happens, the job is submitted to the ComfyUI server.
   job_info.job_history_dict = await job_info.catapult.Catapult(
-      job_id=job_info.job_id,
-      prepared_workflow=job_info.workflow_dict,
-      important=job_info.important)
+      job_id=job_id, prepared_workflow=workflow_dict, important=important)
 
   # Now that the job is done, you have to write something that will go and get
   # the results you care about, if necessary.

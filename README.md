@@ -33,11 +33,13 @@ async def RunExampleWorkflow(*, job_info: ExampleWorkflowInfo):
   # You have to write this function, to change the workflow_dict as you like.
   await PrepareWorkflow(job_info=job_info)
 
+  job_id: str = job_info.job_id
+  workflow_dict: dict = job_info.workflow_dict
+  important: List[NodeID] = job_info.important
+
   # Here the magic happens, the job is submitted to the ComfyUI server.
   job_info.job_history_dict = await job_info.catapult.Catapult(
-      job_id=job_info.job_id,
-      prepared_workflow=job_info.workflow_dict,
-      important=job_info.important)
+      job_id=job_id, prepared_workflow=workflow_dict, important=important)
 
   # Now that the job is done, you have to write something that will go and get
   # the results you care about, if necessary.
@@ -129,24 +131,18 @@ wget https://github.com/comfyanonymous/ComfyUI_examples/raw/master/sdturbo/sdxlt
 # Or just use `test_data/sdxlturbo_example_api.json`.
 ```
 
-### Install as a library from git and run the examples
+### Install as a library and run the examples
 
 ```bash
 # Inside your environment:
-pip install git+https://github.com/realazthat/comfy-catapult.git
-# Or (inside your environment):
-git clone https://github.com/realazthat/comfy-catapult.git
-cd comfy-catapult
-pip install .
+pip install comfy-catapult
 
 
 
 # If you set this environment variable, you don't have to specify it as an
 # argument.
 export COMFY_API_URL=http://127.0.0.1:8188
-# Note, in WSL2 you may have to use the following if ComfyUI is running on the
-# Windows side:
-export COMFY_API_URL=http://host.docker.internal:8188
+# Note, in WSL2 you may have to use the IP of the host to connect to ComfyUI.
 
 
 python -m comfy_catapult.examples.sdxlturbo_example_catapulter \
@@ -227,12 +223,6 @@ PYTHONPATH=$PYTHONPATH:$PWD python examples/sdxlturbo_example_catapulter.py \
 From [`examples/using_pydantic.py`](examples/using_pydantic.py):
 
 ````py
-# -*- coding: utf-8 -*-
-# SPDX-License-Identifier: MIT
-#
-# The Comfy Catapult project requires contributions made to this file be licensed
-# under the MIT license or a compatible open source license. See LICENSE.md for
-# the license text.
 
 from comfy_catapult.comfy_schema import APIWorkflow
 
@@ -274,7 +264,7 @@ api_workflow_json = api_workflow.model_dump_json()
 # See comfy_catapult/comfyui_schema.py for the schema definition.
 
 print(api_workflow_json)
-
+# 
 ````
 
 ### Adding a new node to a workflow
@@ -282,12 +272,6 @@ print(api_workflow_json)
 From [`examples/add_a_node.py`](examples/add_a_node.py):
 
 ````py
-# -*- coding: utf-8 -*-
-# SPDX-License-Identifier: MIT
-#
-# The Comfy Catapult project requires contributions made to this file be licensed
-# under the MIT license or a compatible open source license. See LICENSE.md for
-# the license text.
 
 from pathlib import Path
 

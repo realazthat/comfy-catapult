@@ -78,24 +78,18 @@ wget https://github.com/comfyanonymous/ComfyUI_examples/raw/master/sdturbo/sdxlt
 # Or just use `test_data/sdxlturbo_example_api.json`.
 ```
 
-### Install as a library from git and run the examples
+### Install as a library and run the examples
 
 ```bash
 # Inside your environment:
-pip install git+https://github.com/realazthat/comfy-catapult.git
-# Or (inside your environment):
-git clone https://github.com/realazthat/comfy-catapult.git
-cd comfy-catapult
-pip install .
+pip install comfy-catapult
 
 
 
 # If you set this environment variable, you don't have to specify it as an
 # argument.
 export COMFY_API_URL=http://127.0.0.1:8188
-# Note, in WSL2 you may have to use the following if ComfyUI is running on the
-# Windows side:
-export COMFY_API_URL=http://host.docker.internal:8188
+# Note, in WSL2 you may have to use the IP of the host to connect to ComfyUI.
 
 
 python -m comfy_catapult.examples.sdxlturbo_example_catapulter \
@@ -175,13 +169,13 @@ PYTHONPATH=$PYTHONPATH:$PWD python examples/sdxlturbo_example_catapulter.py \
 
 From [`{{ path('examples/using_pydantic.py') }}`](examples/using_pydantic.py):
 
-`{{ rawsnippet('examples/using_pydantic.py', backtickify='py') }}`
+`{{ snippet('examples/using_pydantic.py', start='SNIPPETSTART', end='SNIPPETEND', backtickify='py') }}`
 
 ### Adding a new node to a workflow
 
 From [`{{ path('examples/add_a_node.py') }}`](examples/add_a_node.py):
 
-`{{ rawsnippet('examples/add_a_node.py', backtickify='py') }}`
+`{{ snippet('examples/add_a_node.py', start='# SNIPPETSTART', end='# SNIPPETEND', backtickify='py') }}`
 
 ## Known to work on
 
