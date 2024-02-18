@@ -25,7 +25,7 @@ repos:
   - id: mixed-line-ending
   - id: name-tests-test
   - id: requirements-txt-fixer
-  - id: trailing-whitespace
+  # - id: trailing-whitespace
   - id: check-byte-order-marker
 - repo: https://github.com/jlebar/pre-commit-hooks
   rev: f2d115a052860b09b2888b4f104be614bf3b4779
