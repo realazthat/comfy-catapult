@@ -13,6 +13,15 @@ SOURCE: `README.md.jinja2`.
 **Warning:** Very raw and unmaintained code. Use at your own risk. Mainly
 intended as a starting point.
 
+```
+ComfyUI API Endpoint <|   <=  Comfy Catapult <=>   <| <=      Public users
+                     <|                            <|
+                     <|     Your python program    <|      Your Webui/JS frontend
+                     <|                            <|
+                     <|        Your workflows      <|
+                     <|                            <|
+```
+
 ## What is it?
 
 Comfy Catapult is a library for scheduling and running ComfyUI workflows from a
