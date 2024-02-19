@@ -14,12 +14,12 @@ SOURCE: `README.md.jinja2`.
 intended as a starting point.
 
 ```
-ComfyUI API Endpoint <|   <=  Comfy Catapult <=>   <| <=      Public users
-                     <|                            <|
-                     <|     Your python program    <|      Your Webui/JS frontend
-                     <|                            <|
-                     <|        Your workflows      <|
-                     <|                            <|
+ComfyUI API Endpoint <| <=  Comfy Catapult <=> HTTP Server <| <=  Public users
+                     <|                                    <|
+                     <|         Your python program        <| Your Webui/JS frontend
+                     <|                                    <|
+                     <|           Your workflows           <|
+                     <|          Your HTTP server          <|
 ```
 
 ## What is it?
