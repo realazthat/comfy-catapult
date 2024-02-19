@@ -100,6 +100,12 @@ class ComfyAPIClient(ComfyAPIClientBase):
   def GetURL(self) -> str:
     return self._comfy_api_url
 
+  async def GetSystemStatsRaw(self) -> dict:
+    url = urlparse(JoinToBaseURL(self._comfy_api_url, 'system_stats'))
+    with _WatchVar(url=url.geturl()):
+      async with self._session.get(url.geturl()) as resp:
+        return await _TryParseRespAsJson(resp=resp, json_type=dict)
+
   async def GetSystemStats(self) -> APISystemStats:
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'system_stats'))
     with _WatchVar(url=url.geturl()):
@@ -124,13 +130,13 @@ class ComfyAPIClient(ComfyAPIClientBase):
       async with self._session.get(url.geturl()) as resp:
         return await _TryParseRespAsJson(resp=resp, json_type=dict)
 
-  async def PostPrompt(self,
-                       *,
-                       prompt_workflow: dict,
-                       number: int | None = None,
-                       client_id: ClientID | None = None,
-                       prompt_id: PromptID | None = None,
-                       extra_data: dict | None = None) -> APIWorkflowTicket:
+  async def PostPromptRaw(self,
+                          *,
+                          prompt_workflow: dict,
+                          number: int | None = None,
+                          client_id: ClientID | None = None,
+                          prompt_id: PromptID | None = None,
+                          extra_data: dict | None = None) -> dict:
     body: Dict[str, Any] = {'prompt': prompt_workflow}
 
     if number is not None:
@@ -146,8 +152,21 @@ class ComfyAPIClient(ComfyAPIClientBase):
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'prompt'))
     with _WatchVar(url=url.geturl()):
       async with self._session.post(url.geturl(), data=data) as resp:
-        return await _TryParseRespAsModel(resp=resp,
-                                          model_type=APIWorkflowTicket)
+        return await _TryParseRespAsJson(resp=resp, json_type=dict)
+
+  async def PostPrompt(self,
+                       *,
+                       prompt_workflow: dict,
+                       number: int | None = None,
+                       client_id: ClientID | None = None,
+                       prompt_id: PromptID | None = None,
+                       extra_data: dict | None = None) -> APIWorkflowTicket:
+    ticket = await self.PostPromptRaw(prompt_workflow=prompt_workflow,
+                                      number=number,
+                                      client_id=client_id,
+                                      prompt_id=prompt_id,
+                                      extra_data=extra_data)
+    return await TryParseAsModel(content=ticket, model_type=APIWorkflowTicket)
 
   async def GetHistoryRaw(self,
                           *,
@@ -167,20 +186,18 @@ class ComfyAPIClient(ComfyAPIClientBase):
                        *,
                        prompt_id: PromptID | None = None,
                        max_items: int | None = None) -> APIHistory:
-    url = urlparse(JoinToBaseURL(self._comfy_api_url, 'history'))
-    if max_items is not None:
-      url = url._replace(query=f'max_items={max_items}')
-    if prompt_id is not None:
-      url = url._replace(path=f'{url.path}/{prompt_id}')
-    with _WatchVar(url=url.geturl()):
-      async with self._session.get(url.geturl()) as resp:
-        return await _TryParseRespAsModel(resp=resp, model_type=APIHistory)
+    history = await self.GetHistoryRaw(prompt_id=prompt_id, max_items=max_items)
+    return await TryParseAsModel(content=history, model_type=APIHistory)
 
-  async def GetQueue(self) -> APIQueueInfo:
+  async def GetQueueRaw(self) -> dict:
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'queue'))
     with _WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
-        return await _TryParseRespAsModel(resp=resp, model_type=APIQueueInfo)
+        return await _TryParseRespAsJson(resp=resp, json_type=dict)
+
+  async def GetQueue(self) -> APIQueueInfo:
+    queue: dict = await self.GetQueueRaw()
+    return await TryParseAsModel(content=queue, model_type=APIQueueInfo)
 
   async def PostUploadImageRaw(self, *, folder_type: str, subfolder: str,
                                filename: str, data: bytes,

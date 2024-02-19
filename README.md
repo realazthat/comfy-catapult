@@ -13,6 +13,15 @@ SOURCE: `README.md.jinja2`.
 **Warning:** Very raw and unmaintained code. Use at your own risk. Mainly
 intended as a starting point.
 
+```
+ComfyUI API Endpoint <|   <=  Comfy Catapult <=>   <| <=      Public users
+                     <|                            <|
+                     <|     Your python program    <|      Your Webui/JS frontend
+                     <|                            <|
+                     <|        Your workflows      <|
+                     <|                            <|
+```
+
 ## What is it?
 
 Comfy Catapult is a library for scheduling and running ComfyUI workflows from a
@@ -26,23 +35,6 @@ a program.
 
 From
 [`examples/sdxlturbo_example_catapulter.py`](examples/sdxlturbo_example_catapulter.py):
-
-````py
-async def RunExampleWorkflow(*, job_info: ExampleWorkflowInfo):
-
-  # You have to write this function, to change the workflow_dict as you like.
-  await PrepareWorkflow(job_info=job_info)
-
-  # Here the magic happens, the job is submitted to the ComfyUI server.
-  job_info.job_history_dict = await job_info.catapult.Catapult(
-      job_id=job_info.job_id,
-      prepared_workflow=job_info.workflow_dict,
-      important=job_info.important)
-
-  # Now that the job is done, you have to write something that will go and get
-  # the results you care about, if necessary.
-  await DownloadResults(job_info=job_info)
-````
 
 ````py
 class ExampleWorkflowInfo:
@@ -76,16 +68,35 @@ class ExampleWorkflowInfo:
   output_path: Path
 ````
 
+````py
+async def RunExampleWorkflow(*, job_info: ExampleWorkflowInfo):
+
+  # You have to write this function, to change the workflow_dict as you like.
+  await PrepareWorkflow(job_info=job_info)
+
+  job_id: str = job_info.job_id
+  workflow_dict: dict = job_info.workflow_dict
+  important: List[NodeID] = job_info.important
+
+  # Here the magic happens, the job is submitted to the ComfyUI server.
+  job_info.job_history_dict = await job_info.catapult.Catapult(
+      job_id=job_id, prepared_workflow=workflow_dict, important=important)
+
+  # Now that the job is done, you have to write something that will go and get
+  # the results you care about, if necessary.
+  await DownloadResults(job_info=job_info)
+````
+
 ## Related Projects
 
 - [comfyui-deploy](https://github.com/BennyKok/comfyui-deploy).
 - [ComfyUI script_examples](https://github.com/comfyanonymous/ComfyUI/tree/master/script_examples).
 - [ComfyUI-to-Python-Extension](https://github.com/pydn/ComfyUI-to-Python-Extension).
-- [ComfyScript](https://github.com/Chaoses-Ib/ComfyScript)
-- [hordelib](https://pypi.org/project/hordelib/)
-- [ComfyUI_NetDist](https://github.com/city96/ComfyUI_NetDist)
-- [ComfyUI-Serving-Toolkit](https://github.com/matan1905/ComfyUI-Serving-Toolkit)
-- [comfyui-python-api](https://github.com/andreyryabtsev/comfyui-python-api)
+- [ComfyScript](https://github.com/Chaoses-Ib/ComfyScript).
+- [hordelib](https://pypi.org/project/hordelib/).
+- [ComfyUI_NetDist](https://github.com/city96/ComfyUI_NetDist).
+- [ComfyUI-Serving-Toolkit](https://github.com/matan1905/ComfyUI-Serving-Toolkit).
+- [comfyui-python-api](https://github.com/andreyryabtsev/comfyui-python-api).
 
 ## Getting Started
 
@@ -129,24 +140,18 @@ wget https://github.com/comfyanonymous/ComfyUI_examples/raw/master/sdturbo/sdxlt
 # Or just use `test_data/sdxlturbo_example_api.json`.
 ```
 
-### Install as a library from git and run the examples
+### Install as a library and run the examples
 
 ```bash
 # Inside your environment:
-pip install git+https://github.com/realazthat/comfy-catapult.git
-# Or (inside your environment):
-git clone https://github.com/realazthat/comfy-catapult.git
-cd comfy-catapult
-pip install .
+pip install comfy-catapult
 
 
 
 # If you set this environment variable, you don't have to specify it as an
 # argument.
 export COMFY_API_URL=http://127.0.0.1:8188
-# Note, in WSL2 you may have to use the following if ComfyUI is running on the
-# Windows side:
-export COMFY_API_URL=http://host.docker.internal:8188
+# Note, in WSL2 you may have to use the IP of the host to connect to ComfyUI.
 
 
 python -m comfy_catapult.examples.sdxlturbo_example_catapulter \
@@ -227,12 +232,6 @@ PYTHONPATH=$PYTHONPATH:$PWD python examples/sdxlturbo_example_catapulter.py \
 From [`examples/using_pydantic.py`](examples/using_pydantic.py):
 
 ````py
-# -*- coding: utf-8 -*-
-# SPDX-License-Identifier: MIT
-#
-# The Comfy Catapult project requires contributions made to this file be licensed
-# under the MIT license or a compatible open source license. See LICENSE.md for
-# the license text.
 
 from comfy_catapult.comfy_schema import APIWorkflow
 
@@ -274,7 +273,7 @@ api_workflow_json = api_workflow.model_dump_json()
 # See comfy_catapult/comfyui_schema.py for the schema definition.
 
 print(api_workflow_json)
-
+# 
 ````
 
 ### Adding a new node to a workflow
@@ -282,12 +281,6 @@ print(api_workflow_json)
 From [`examples/add_a_node.py`](examples/add_a_node.py):
 
 ````py
-# -*- coding: utf-8 -*-
-# SPDX-License-Identifier: MIT
-#
-# The Comfy Catapult project requires contributions made to this file be licensed
-# under the MIT license or a compatible open source license. See LICENSE.md for
-# the license text.
 
 from pathlib import Path
 
@@ -349,32 +342,23 @@ print(api_workflow.model_dump_json())
 ## Limitations
 
 - ETA estimator isn't working
-- Sometimes the job ends early but no error is sent back from the server. Error
-  is detected because not all nodes have executed, but the error is opaque
-  (check the server logs for the error).
 
 ## TODO
 
 - [ ]  Helpers should support remote/cloud storage for ComfyUI input/output/model
-  directories. (Currently only supports local paths.)
+  directories (Currently only supports local paths).
 - [ ]  ETA Estimator.
 - [ ]  Make sure the schema can parse the formats even if the format adds new
   fields.
 
-## Comitting
+## Contributions
 
-1. `bash scripts/pre.sh`.
-2. Check for modified files: `git status`
-3. Stage any modified: `git add -u`
-4. If any modified files: Go to step 1.
+1. Fork the `develop` branch.
+2. Stage your files: `git add path/to/file.py`.
+3. `bash scripts/pre.sh`, this will format, lint, and test the code. Note, that
+   you will need a `COMFY_API_URL` environment variable set to a ComfyUI server
+   for the tests.
+4. `git status` check if anything changed, if so, `git add` the changes, and go
+   back to the previous step.
 5. `git commit -m "..."`.
-
-## Releasing
-
-1. Bump version in `README.template.md`, `setup.py`, `CHANGELOG.md`.
-2. `REL_VER=...`.
-3. `git commit -nam "Release $REL_VER"`.
-4. `git push`.
-5. `git tag $REL_VER`.
-6. `git push --tags`.
-7. Create a GitHub release.
+6. Make a PR to `develop`.

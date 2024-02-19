@@ -27,23 +27,41 @@ ComboInputType = Annotated[List[Any], Field(alias='combo_input_class')]
 
 ################################################################################
 class APIWorkflowInConnection(NamedTuple):
+  """Represents a connection between two nodes in a workflow. This is used in the input of a node."""
   output_node_id: NodeID
   output_index: int
 
 
 class APIWorkflowNodeMeta(BaseModel):
+  """Nodes are allowed to have a `_meta` field.
+
+  The meta field was was added in
+  https://github.com/comfyanonymous/ComfyUI/pull/2380 for information such as
+  the title of the node.
+  """
   model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
   title: str | None = None
 
 
 class APIWorkflowNodeInfo(BaseModel):
   model_config = ConfigDict(populate_by_name=True, extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  populate_by_name: This is to allow `meta` field to be populated by `_meta` or
+  `meta`.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
 
   inputs: Dict[str, str | int | float | bool | APIWorkflowInConnection | dict]
   class_type: str
   meta: APIWorkflowNodeMeta | None = Field(None, alias='_meta')
-
-  # model_config = ConfigDict(populate_by_name=True)
 
 
 class APIWorkflow(RootModel[Dict[NodeID, APIWorkflowNodeInfo]]):
@@ -58,6 +76,11 @@ class APIWorkflow(RootModel[Dict[NodeID, APIWorkflowNodeInfo]]):
 ################################################################################
 class APISystemStatsSystem(BaseModel):
   model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
 
   os: str | None = None
   python_version: str | None = None
@@ -66,7 +89,11 @@ class APISystemStatsSystem(BaseModel):
 
 class APISystemStatsDevice(BaseModel):
   model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
 
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
   name: str | None = None
   type: str | None = None
   index: int | None = None
@@ -78,6 +105,12 @@ class APISystemStatsDevice(BaseModel):
 
 class APISystemStats(BaseModel):
   """Returned from /system_stats endpoint."""
+  model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
   system: APISystemStatsSystem | None = None
   devices: List[APISystemStatsDevice] | None = None
 
@@ -93,7 +126,12 @@ class APIQueueInfoEntry(NamedTuple):
 
 class APIQueueInfo(BaseModel):
   """Returned from /queue endpoint."""
-  model_config = ConfigDict(extra='allow')
+  model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
 
   queue_pending: List[APIQueueInfoEntry]
   queue_running: List[APIQueueInfoEntry]
@@ -101,6 +139,12 @@ class APIQueueInfo(BaseModel):
 
 ################################################################################
 class NodeErrorInfo(BaseModel):
+  model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
   details: str
   extra_info: dict
   message: str
@@ -108,6 +152,12 @@ class NodeErrorInfo(BaseModel):
 
 
 class NodeErrors(BaseModel):
+  model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
   class_type: str
   dependent_outputs: List[NodeID]
   errors: List[NodeErrorInfo]
@@ -115,6 +165,12 @@ class NodeErrors(BaseModel):
 
 class APIWorkflowTicket(BaseModel):
   """Return from post /prompt endpoint."""
+  model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
   node_errors: Dict[NodeID, NodeErrors] | None = None
   number: int | None = None
   prompt_id: PromptID | None = None
@@ -152,12 +208,24 @@ class APIHistoryEntryStatus(BaseModel):
       ]
     }
   """
+  model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
   status_str: str | None = None
   completed: bool | None = None
   messages: List[APIHistoryEntryStatusNote] | None = None
 
 
 class APIHistoryEntry(BaseModel):
+  model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
   outputs: Dict[NodeID, APIOutputUI] | None = None
   prompt: APIQueueInfoEntry | None = None
   status: APIHistoryEntryStatus | None = None
@@ -199,15 +267,22 @@ class APIObjectInputInfo(BaseModel):
     min: 0
     max: 18446744073709551615
   """
-  # I allow extra here because I don't know what the keys are, and they seem to
-  # vary quite a bit.
-  model_config = ConfigDict(extra='allow')
+  model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+
+  I allow extra here because I don't know what the keys are, and they seem to
+  vary quite a bit.
+  """
   default: Any | None = None
   min: Any | None = None
   max: Any | None = None
   step: Any | None = None
   round: Any | None = None
-  # Note: Everything else is going to be in the extra dict.
+  # Note: Everything else is going to be in the extra dict. Access it with the
+  # `extra` attribute.
 
 
 class APIObjectInputTuple(NamedTuple):
@@ -241,6 +316,11 @@ class APIObjectInput(BaseModel):
         ...
   """
   model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
 
   required: Dict[str, APIObjectInputTuple | NamedInputType] | None = None
   """
@@ -280,6 +360,11 @@ class APIObjectInfoEntry(BaseModel):
     output_node: false
   """
   model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
   input: APIObjectInput
   output: OutputType | List[OutputType | List[OutputType]]
   output_is_list: List[bool]
@@ -398,6 +483,11 @@ class WSExecutingData(BaseModel):
 
   """
   model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
   node: str | None = None
   prompt_id: PromptID | None = None
 
@@ -405,6 +495,11 @@ class WSExecutingData(BaseModel):
 class WSMessage(BaseModel):
   """Messages from the websocket, if it is non-binary."""
   model_config = ConfigDict(extra=EXTRA)
+  """This is a pydantic thing, to configure the model, it is not an accessible field.
+
+  extra: This is just to future proof the schema so it won't break if extra
+  fields are added. They'll be stored dynamically.
+  """
   type: str
   data: dict
 

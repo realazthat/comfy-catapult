@@ -7,6 +7,15 @@
 **Warning:** Very raw and unmaintained code. Use at your own risk. Mainly
 intended as a starting point.
 
+```
+ComfyUI API Endpoint <|   <=  Comfy Catapult <=>   <| <=      Public users
+                     <|                            <|
+                     <|     Your python program    <|      Your Webui/JS frontend
+                     <|                            <|
+                     <|        Your workflows      <|
+                     <|                            <|
+```
+
 ## What is it?
 
 Comfy Catapult is a library for scheduling and running ComfyUI workflows from a
@@ -21,20 +30,20 @@ a program.
 From
 [`{{ path('examples/sdxlturbo_example_catapulter.py') }}`](examples/sdxlturbo_example_catapulter.py):
 
-`{{ pysnippet('examples/sdxlturbo_example_catapulter.py', symbol='RunExampleWorkflow', backtickify='py') }}`
-
 `{{ pysnippet('examples/sdxlturbo_example_catapulter.py', symbol='ExampleWorkflowInfo', backtickify='py') }}`
+
+`{{ pysnippet('examples/sdxlturbo_example_catapulter.py', symbol='RunExampleWorkflow', backtickify='py') }}`
 
 ## Related Projects
 
 - [comfyui-deploy](https://github.com/BennyKok/comfyui-deploy).
 - [ComfyUI script_examples](https://github.com/comfyanonymous/ComfyUI/tree/master/script_examples).
 - [ComfyUI-to-Python-Extension](https://github.com/pydn/ComfyUI-to-Python-Extension).
-- [ComfyScript](https://github.com/Chaoses-Ib/ComfyScript)
-- [hordelib](https://pypi.org/project/hordelib/)
-- [ComfyUI_NetDist](https://github.com/city96/ComfyUI_NetDist)
-- [ComfyUI-Serving-Toolkit](https://github.com/matan1905/ComfyUI-Serving-Toolkit)
-- [comfyui-python-api](https://github.com/andreyryabtsev/comfyui-python-api)
+- [ComfyScript](https://github.com/Chaoses-Ib/ComfyScript).
+- [hordelib](https://pypi.org/project/hordelib/).
+- [ComfyUI_NetDist](https://github.com/city96/ComfyUI_NetDist).
+- [ComfyUI-Serving-Toolkit](https://github.com/matan1905/ComfyUI-Serving-Toolkit).
+- [comfyui-python-api](https://github.com/andreyryabtsev/comfyui-python-api).
 
 ## Getting Started
 
@@ -78,24 +87,18 @@ wget https://github.com/comfyanonymous/ComfyUI_examples/raw/master/sdturbo/sdxlt
 # Or just use `test_data/sdxlturbo_example_api.json`.
 ```
 
-### Install as a library from git and run the examples
+### Install as a library and run the examples
 
 ```bash
 # Inside your environment:
-pip install git+https://github.com/realazthat/comfy-catapult.git
-# Or (inside your environment):
-git clone https://github.com/realazthat/comfy-catapult.git
-cd comfy-catapult
-pip install .
+pip install comfy-catapult
 
 
 
 # If you set this environment variable, you don't have to specify it as an
 # argument.
 export COMFY_API_URL=http://127.0.0.1:8188
-# Note, in WSL2 you may have to use the following if ComfyUI is running on the
-# Windows side:
-export COMFY_API_URL=http://host.docker.internal:8188
+# Note, in WSL2 you may have to use the IP of the host to connect to ComfyUI.
 
 
 python -m comfy_catapult.examples.sdxlturbo_example_catapulter \
@@ -175,13 +178,13 @@ PYTHONPATH=$PYTHONPATH:$PWD python examples/sdxlturbo_example_catapulter.py \
 
 From [`{{ path('examples/using_pydantic.py') }}`](examples/using_pydantic.py):
 
-`{{ rawsnippet('examples/using_pydantic.py', backtickify='py') }}`
+`{{ snippet('examples/using_pydantic.py', start='SNIPPETSTART', end='SNIPPETEND', backtickify='py') }}`
 
 ### Adding a new node to a workflow
 
 From [`{{ path('examples/add_a_node.py') }}`](examples/add_a_node.py):
 
-`{{ rawsnippet('examples/add_a_node.py', backtickify='py') }}`
+`{{ snippet('examples/add_a_node.py', start='# SNIPPETSTART', end='# SNIPPETEND', backtickify='py') }}`
 
 ## Known to work on
 
@@ -190,32 +193,23 @@ From [`{{ path('examples/add_a_node.py') }}`](examples/add_a_node.py):
 ## Limitations
 
 - ETA estimator isn't working
-- Sometimes the job ends early but no error is sent back from the server. Error
-  is detected because not all nodes have executed, but the error is opaque
-  (check the server logs for the error).
 
 ## TODO
 
 - [ ]  Helpers should support remote/cloud storage for ComfyUI input/output/model
-  directories. (Currently only supports local paths.)
+  directories (Currently only supports local paths).
 - [ ]  ETA Estimator.
 - [ ]  Make sure the schema can parse the formats even if the format adds new
   fields.
 
-## Comitting
+## Contributions
 
-1. `bash scripts/pre.sh`.
-2. Check for modified files: `git status`
-3. Stage any modified: `git add -u`
-4. If any modified files: Go to step 1.
+1. Fork the `develop` branch.
+2. Stage your files: `git add path/to/file.py`.
+3. `bash scripts/pre.sh`, this will format, lint, and test the code. Note, that
+   you will need a `COMFY_API_URL` environment variable set to a ComfyUI server
+   for the tests.
+4. `git status` check if anything changed, if so, `git add` the changes, and go
+   back to the previous step.
 5. `git commit -m "..."`.
-
-## Releasing
-
-1. Bump version in `README.template.md`, `setup.py`, `CHANGELOG.md`.
-2. `REL_VER=...`.
-3. `git commit -nam "Release $REL_VER"`.
-4. `git push`.
-5. `git tag $REL_VER`.
-6. `git push --tags`.
-7. Create a GitHub release.
+6. Make a PR to `develop`.

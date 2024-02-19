@@ -5,6 +5,7 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
+# SNIPPETSTART
 from pathlib import Path
 
 from comfy_catapult.comfy_schema import (APIWorkflow, APIWorkflowNodeInfo,
@@ -55,3 +56,4 @@ api_workflow.root[new_node_id] = APIWorkflowNodeInfo(
     _meta=APIWorkflowNodeMeta(title='My Loader Title'))
 
 print(api_workflow.model_dump_json())
+# SNIPPETEND
