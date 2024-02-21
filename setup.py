@@ -23,7 +23,7 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     author='AYF',
-    author_email='realazthat@example.com',
+    author_email='realazthat@gmail.com',
     url='https://github.com/realazthat/comfy-catapult',
     install_requires=requirements,
     classifiers=[
