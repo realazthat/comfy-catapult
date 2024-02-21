@@ -9,10 +9,9 @@ import asyncio
 import datetime
 import enum
 import json
-import sys
+import logging
 import textwrap
 import threading
-import traceback
 import traceback as tb
 import uuid
 from copy import deepcopy
@@ -34,6 +33,8 @@ from comfy_catapult.comfy_schema import (APIHistory, APIHistoryEntry,
                                          APIWorkflowTicket, NodeID, WSMessage)
 from comfy_catapult.comfy_utils import TryParseAsModel
 from comfy_catapult.errors import NodesNotExecuted, WorkflowSubmissionError
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -180,10 +181,8 @@ class ComfyCatapult(ComfyCatapultBase):
           job_debug_path=job_debug_path)
 
     async with _JobContext(job_id=job_id, comfy=self):
-      print('self._client.PostPrompt()', file=sys.stderr)
       ticket: APIWorkflowTicket = await self._comfy_client.PostPrompt(
           prompt_workflow=prepared_workflow)
-      print('self._client.PostPrompt(), done', file=sys.stderr)
 
       async with self._lock:
         self._jobs[job_id].ticket = ticket
@@ -287,6 +286,8 @@ class ComfyCatapult(ComfyCatapultBase):
         extra_data = job_history.prompt.extra_data
       if job_history.prompt.outputs_to_execute is not None:
         outputs_to_execute = job_history.prompt.outputs_to_execute
+    logger.debug('extra_data: %s', YamlDump(extra_data))
+
     if job_history.status is not None:
       if job_history.status.completed is False:
         notes: List[str] = []
@@ -302,17 +303,13 @@ class ComfyCatapult(ComfyCatapultBase):
                         f'\n  notes:' + '\n'.join(notes))
 
     ##########################################################################
-    print('job_history.prompt.extra_data.model_dump():', file=sys.stderr)
-    print(YamlDump(extra_data), file=sys.stderr)
+    logger.debug('job_history.prompt.extra_data.model_dump(): %s',
+                 YamlDump(extra_data))
+    logger.debug('job_history.prompt.outputs_to_execute.model_dump(): %s',
+                 YamlDump(outputs_to_execute))
 
-    print('job_history.prompt.outputs_to_execute.model_dump():',
-          file=sys.stderr)
-    print(YamlDump(outputs_to_execute), file=sys.stderr)
-
-    print('outputs_to_execute:', file=sys.stderr)
-    print(YamlDump(outputs_to_execute), file=sys.stderr)
-    print('outputs_that_executed:', file=sys.stderr)
-    print(YamlDump(outputs_with_data), file=sys.stderr)
+    logger.debug('outputs_to_execute: %s', YamlDump(outputs_to_execute))
+    logger.debug('outputs_that_executed: %s', YamlDump(outputs_with_data))
 
     bad_dataless_outputs = [
         node_id for node_id in outputs_to_execute
@@ -329,20 +326,19 @@ class ComfyCatapult(ComfyCatapultBase):
       return titles
 
     if len(bad_dataless_outputs) > 0:
-      print('bad_dataless_outputs:', file=sys.stderr)
-      print(YamlDump(bad_dataless_outputs), file=sys.stderr)
-      print('_GetTitles(bad_dataless_outputs):', file=sys.stderr)
-      print(YamlDump(_GetTitles(bad_dataless_outputs)), file=sys.stderr)
+      logger.error('bad_dataless_outputs: %s', YamlDump(bad_dataless_outputs))
+      logger.error('_GetTitles(bad_dataless_outputs): %s',
+                   YamlDump(_GetTitles(bad_dataless_outputs)))
 
     dataless_important_outputs = [
         node_id for node_id in bad_dataless_outputs
         if node_id in important_nodes
     ]
     if len(dataless_important_outputs) > 0:
-      print('dataless_important_outputs:', file=sys.stderr)
-      print(YamlDump(dataless_important_outputs), file=sys.stderr)
-      print('_GetTitles(dataless_important_outputs):', file=sys.stderr)
-      print(YamlDump(_GetTitles(dataless_important_outputs)), file=sys.stderr)
+      logger.error('dataless_important_outputs: %s',
+                   YamlDump(dataless_important_outputs))
+      logger.error('_GetTitles(dataless_important_outputs): %s',
+                   YamlDump(_GetTitles(dataless_important_outputs)))
       raise NodesNotExecuted(nodes=list(dataless_important_outputs),
                              titles=_GetTitles(dataless_important_outputs))
 
@@ -377,7 +373,7 @@ class ComfyCatapult(ComfyCatapultBase):
           job.status = job.status._replace(success=self._Now())
     ############################################################################
     system_stats: APISystemStats = await self._comfy_client.GetSystemStats()
-    print(YamlDump(system_stats.model_dump()), file=sys.stderr)
+    logger.info('system_stats: %s', YamlDump(system_stats.model_dump()))
     ############################################################################
     queue_info: APIQueueInfo = await self._comfy_client.GetQueue()
 
@@ -393,8 +389,8 @@ class ComfyCatapult(ComfyCatapultBase):
         [1 for status in prompt_id_2_status.values() if status == 'running'],
         start=0)
 
-    print('pending_count:', pending_count, file=sys.stderr)
-    print('running_count:', running_count, file=sys.stderr)
+    logger.info('pending_count: %s', pending_count)
+    logger.info('running_count: %s', running_count)
 
     for prompt_id, status in prompt_id_2_status.items():
       async with self._lock:
@@ -415,6 +411,7 @@ class ComfyCatapult(ComfyCatapultBase):
           self._guess_currently_running_node_progress = _Guess(
               value=None, updated=self._Now())
 
+    # TODO: Reenable this or remove it.
     # print('self._jobs:', file=sys.stderr)
     # pprint(self._jobs, indent=2, stream=sys.stderr)
 
@@ -426,7 +423,7 @@ class ComfyCatapult(ComfyCatapultBase):
     if not isinstance(queue_remaining, int):
       raise AssertionError(
           f'queue_remaining must be int, not {type(queue_remaining)}')
-    print('queue_remaining:', queue_remaining, file=sys.stderr)
+    logger.info('queue_remaining: %s', queue_remaining)
     ############################################################################
     # Check the /history endpoint to see if there are any updates on our jobs.
 
@@ -458,14 +455,20 @@ class ComfyCatapult(ComfyCatapultBase):
         if prompt_id is None:
           # This should never happen, but :shrug:.
           continue
+        job_debug_path = self._jobs[job_id].job_debug_path
+        errors_dump_directory: Path | None = None
+        if job_debug_path is not None:
+          errors_dump_directory = job_debug_path / 'errors'
 
       ##########################################################################
       async with _JobContext(job_id=job_id, comfy=self) as job_context:
         history_raw: dict = await self._comfy_client.GetHistoryRaw(
             prompt_id=prompt_id)
         await job_context.WatchVar(history_raw=history_raw)
-        history: APIHistory = await TryParseAsModel(content=history_raw,
-                                                    model_type=APIHistory)
+        history: APIHistory = await TryParseAsModel(
+            content=history_raw,
+            model_type=APIHistory,
+            errors_dump_directory=errors_dump_directory)
         await self._ReceivedJobHistory(job_id=job_id,
                                        history=history,
                                        job_context=job_context)
@@ -486,17 +489,22 @@ class ComfyCatapult(ComfyCatapultBase):
   async def _LoopWS(self, *, ws: WebSocketClientProtocol):
     while True:
       try:
-        print('websocket recv', file=sys.stderr)
+        logger.debug('websocket recv')
         out = await ws.recv()
         if not isinstance(out, str):
-          print('websocket type(out):', type(out), file=sys.stderr)
+          logger.debug('websocket type(out): %s', type(out))
           continue
-        print('websocket raw:', file=sys.stderr)
-        print(YamlDump(out), file=sys.stderr)
-        message = await TryParseAsModel(content=json.loads(out),
-                                        model_type=WSMessage)
-        print('websocket message:', file=sys.stderr)
-        print(YamlDump(message.__dict__), file=sys.stderr)
+        logger.debug('websocket raw: %s', YamlDump(out))
+        errors_dump_directory: Path | None = None
+        async with self._lock:
+          if self._debug_path is not None:
+            errors_dump_directory = self._debug_path / 'errors'
+
+        message = await TryParseAsModel(
+            content=json.loads(out),
+            model_type=WSMessage,
+            errors_dump_directory=errors_dump_directory)
+        logger.debug('websocket message: %s', YamlDump(message.__dict__))
 
         if message.type == 'executing' and 'last_node_id' in message.data:
           last_node_id = message.data['last_node_id']
@@ -599,7 +607,7 @@ class ComfyCatapult(ComfyCatapultBase):
       except asyncio.CancelledError:
         raise
       except Exception:
-        traceback.print_exc(file=sys.stderr)
+        logger.exception('Error in _LoopWS')
 
   async def _PollLoop(self):
     while not self._stop_event.is_set():
@@ -609,7 +617,7 @@ class ComfyCatapult(ComfyCatapultBase):
       except asyncio.CancelledError:
         raise
       except Exception:
-        traceback.print_exc(file=sys.stderr)
+        logger.exception('Error in _PollLoop')
 
   async def _MonitoringThread(self):
 
@@ -637,7 +645,7 @@ class ComfyCatapult(ComfyCatapultBase):
       except asyncio.CancelledError:
         raise
       except Exception:
-        traceback.print_exc(file=sys.stderr)
+        logger.exception('Error in _MonitoringThreadLoopOnce')
 
     while not self._stop_event.is_set():
       try:
@@ -647,7 +655,7 @@ class ComfyCatapult(ComfyCatapultBase):
       except asyncio.CancelledError:
         raise
       except Exception:
-        traceback.print_exc(file=sys.stderr)
+        logger.exception('Error in _MonitoringThreadLoopOnce')
 
   async def _CheckError(self):
     async with self._lock:
@@ -745,5 +753,4 @@ class _JobContext:
         await job_dump_path.parent.mkdir(parents=True, exist_ok=True)
         async with aiofiles.open(job_dump_path, 'w') as f:
           await f.write(YamlDump(dump))
-        print(f'Wrote job status to {repr(str(job_dump_path))}.',
-              file=sys.stderr)
+        logger.error(f'Wrote job status to {repr(str(job_dump_path))}.')

@@ -7,11 +7,12 @@
 
 import dataclasses
 import datetime
-import sys
+import logging
 import textwrap
+import warnings
 from dataclasses import is_dataclass
 from typing import (Any, Generator, Hashable, List, Literal, NamedTuple, Type,
-                    TypeVar)
+                    TypeVar, cast)
 
 import aiofiles
 import pydantic_core
@@ -29,7 +30,9 @@ from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
 from comfy_catapult.url_utils import ComfyUIPathTriplet
 
 MAX_DUMP_LINES: int | None = 200
+# TODO: Remove this in version 2.x
 DUMP_DIR: Path = Path('.logs/dumps')
+logger = logging.getLogger(__name__)
 
 
 class NodeIDAndNode(NamedTuple):
@@ -86,7 +89,7 @@ def FindNode(*, workflow: APIWorkflow,
     pass
 
   try:
-    id_node_id = NodeID(id_or_title)
+    id_node_id = cast(NodeID, id_or_title)
     # node = workflow.root[id_node_id]
   except ValueError:
     # title_node_error = e
@@ -128,7 +131,7 @@ def GenerateNewNodeID(*, workflow: APIWorkflow) -> NodeID:
     except ValueError:
       continue
 
-  return NodeID(str(max_integer + 1))
+  return cast(NodeID, str(max_integer + 1))
 
 
 async def DownloadPreviewImage(*, node_id: NodeID, job_history: APIHistoryEntry,
@@ -237,6 +240,7 @@ async def _GetNewPath(*, parent_path: Path) -> Path:
   while await path.exists():
     path = parent_path / f'{name}_{index}'
     index += 1
+  await path.mkdir(parents=True, exist_ok=True)
   return path
 
 
@@ -272,10 +276,6 @@ _BaseModelT = TypeVar('_BaseModelT', bound=BaseModel)
 
 def _IsDataclassInstance(instance):
   return is_dataclass(instance) and not isinstance(instance, type)
-
-
-def _IsNamedTuple(instance):
-  return isinstance(instance, tuple) and hasattr(instance, '_fields')
 
 
 class _ExtraFieldWarning(NamedTuple):
@@ -320,14 +320,28 @@ def _WarnModelExtras(*, path: List[Any],
     pass
 
 
+class _Sentinal:
+  pass
+
+
+_sentinal = _Sentinal()
+
+
 async def TryParseAsModel(
     *,
     content: Any,
     model_type: Type[_BaseModelT],
+    errors_dump_directory: Path | _Sentinal | None = _sentinal,
     strict: Literal['yes', 'no', 'warn'] = 'warn') -> _BaseModelT:
+  if isinstance(errors_dump_directory, _Sentinal):
+    # TODO: Remove this in version 2.x
+    warnings.warn('it is deprecated to not specify errors_dump_directory',
+                  DeprecationWarning,
+                  stacklevel=2)
+    errors_dump_directory = DUMP_DIR
 
-  async def _Internal():
-    dump_path: Path | None = None
+  async def _Internal(errors_dump_directory: Path | None):
+    error_dump_path: Path | None = None
 
     try:
       try:
@@ -341,68 +355,75 @@ async def TryParseAsModel(
         # succeeds. If it errors, then we'll go to the except below which
         # prints the error.
         model = model_type.model_validate(content, strict=False)
-        if dump_path is None:
-          dump_path = await _GetNewPath(parent_path=DUMP_DIR)
+        if error_dump_path is None and errors_dump_directory is not None:
+          error_dump_path = await _GetNewPath(parent_path=errors_dump_directory)
 
-        error_line = await BigErrorStrDump(
-            exception=e,
-            max_lines=MAX_DUMP_LINES,
-            path=dump_path / f'{slugify(str(model_type))}-error_str.txt')
+        if error_dump_path is not None:
+          error_line = await BigErrorStrDump(
+              exception=e,
+              max_lines=MAX_DUMP_LINES,
+              path=error_dump_path /
+              f'{slugify(str(model_type))}-error_str.txt')
 
-        model_dump_yaml = await BigYamlDump(
-            model.model_dump(),
-            max_lines=MAX_DUMP_LINES,
-            path=dump_path / f'{slugify(str(model_type))}-model_dump.yaml')
-        input_content_yaml = await BigYamlDump(
-            content,
-            max_lines=MAX_DUMP_LINES,
-            path=dump_path / f'{slugify(str(model_type))}-input_content.yaml')
+          model_dump_yaml = await BigYamlDump(
+              model.model_dump(),
+              max_lines=MAX_DUMP_LINES,
+              path=error_dump_path /
+              f'{slugify(str(model_type))}-model_dump.yaml')
+          input_content_yaml = await BigYamlDump(
+              content,
+              max_lines=MAX_DUMP_LINES,
+              path=error_dump_path /
+              f'{slugify(str(model_type))}-input_content.yaml')
         msg = f'Warning: Error parsing {model_type} with strict=True: {error_line}'
-        print(
+        logger.error(
             f'{msg}:'
             f'\n\n{textwrap.indent(str(e), prefix="  ")}'
             f'\nParsed Model:\n{textwrap.indent(model_dump_yaml, prefix="  ")}'
             f'\nInput content\n{textwrap.indent(input_content_yaml, prefix="  ")}'
-            f'\n{msg}',
-            file=sys.stderr)
+            f'\n{msg}')
         return model
     except pydantic_core.ValidationError as e:
       # It failed strictly or non-strictly. Print the error and raise.
 
-      if dump_path is None:
-        dump_path = await _GetNewPath(parent_path=DUMP_DIR)
-        await dump_path.mkdir(parents=True, exist_ok=True)
+      if error_dump_path is None and errors_dump_directory is not None:
+        error_dump_path = await _GetNewPath(parent_path=errors_dump_directory)
 
-      error_line = await BigErrorStrDump(
-          exception=e,
-          max_lines=MAX_DUMP_LINES,
-          path=dump_path / f'{slugify(str(model_type))}-error_str.txt')
-      msg = f'Error parsing {model_type}: {error_line}'
+      if error_dump_path is not None:
+        error_line = await BigErrorStrDump(
+            exception=e,
+            max_lines=MAX_DUMP_LINES,
+            path=error_dump_path / f'{slugify(str(model_type))}-error_str.txt')
+      else:
+        error_line = str(e)
+      msg_summary = f'Error parsing {model_type}: {error_line}'
+      msg = f'{msg_summary}'
+      if error_dump_path is not None:
+        input_content_yaml = await BigYamlDump(
+            content,
+            max_lines=MAX_DUMP_LINES,
+            path=error_dump_path /
+            f'{slugify(str(model_type))}-input_content.yaml')
+        msg += '\nInput content\n' + textwrap.indent(input_content_yaml,
+                                                     prefix='  ')
+        errors_yaml = await BigYamlDump(
+            e.errors(),
+            max_lines=MAX_DUMP_LINES,
+            path=error_dump_path / f'{slugify(str(model_type))}-errors.yaml')
+        msg += '\nError details\n' + textwrap.indent(errors_yaml, prefix='  ')
+      msg += f'\n{msg_summary}'
+      raise Exception(msg) from e
 
-      input_content_yaml = await BigYamlDump(
-          content,
-          max_lines=MAX_DUMP_LINES,
-          path=dump_path / f'{slugify(str(model_type))}-input_content.yaml')
-      errors_yaml = await BigYamlDump(e.errors(),
-                                      max_lines=MAX_DUMP_LINES,
-                                      path=dump_path /
-                                      f'{slugify(str(model_type))}-errors.yaml')
-
-      raise Exception(
-          f'{msg}'
-          f'\nInput content\n{textwrap.indent(input_content_yaml, prefix="  ")}'
-          f'\nError details\n{textwrap.indent(errors_yaml, prefix="  ")}'
-          f'\n{msg}') from e
-
-  model = await _Internal()
-  warnings = _WarnModelExtras(path=[], thing=model)
+  model = await _Internal(errors_dump_directory=errors_dump_directory)
+  extra_fields_warnings = _WarnModelExtras(path=[], thing=model)
   if strict == 'warn':
-    for warning in warnings:
-      print(warning.message, file=sys.stderr)
+    for warning in extra_fields_warnings:
+      logger.warn(warning.message)
   elif strict == 'yes':
-    for warning in warnings:
+    for warning in extra_fields_warnings:
       raise Exception(warning.message)
 
+  # TODO: Renable this or remove it.
   # model_dump: Dict[str, Any] = model.model_dump()
   # differences = list(diff(model_dump, content))
   # if len(differences) > 0:
@@ -416,7 +437,7 @@ async def TryParseAsModel(
   return model
 
 
-class _WatchVar:
+class WatchVar:
 
   def __init__(self, **kwargs):
     self._kwargs = kwargs
@@ -426,9 +447,9 @@ class _WatchVar:
 
   def __exit__(self, exc_type, exc, tb):
     if exc is not None:
-      print(
-          f'{type(self).__name__}: Error occurred, and you are watching these variables:',
-          file=sys.stderr)
+      logger.error(
+          f'{type(self).__name__}: Error occurred, and you are watching these variables:'
+      )
       for key, value in self._kwargs.items():
         value_lines = str(value).split('\n')
         if len(value_lines) > 1:
@@ -436,4 +457,4 @@ class _WatchVar:
         else:
           if isinstance(value, str):
             value = repr(value)
-        print(f'  {key}: {value}', file=sys.stderr)
+        logger.error(f'  {key}: {value}')
