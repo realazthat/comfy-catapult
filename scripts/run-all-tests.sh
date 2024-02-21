@@ -17,6 +17,7 @@ if [[ -z "${COMFY_API_URL}" ]]; then
 fi
 
 VENV_PATH="${PWD}/.venv" source "${PROJ_PATH}/scripts/utilities/ensure-venv.sh"
+REQS="${PWD}/requirements.txt" source "${PROJ_PATH}/scripts/utilities/ensure-reqs.sh"
 
 export PYTHONPATH=${PYTHONPATH:-}
 export PYTHONPATH=${PYTHONPATH}:${PWD}
