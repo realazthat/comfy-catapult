@@ -5,6 +5,7 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
+import warnings
 from typing import List, Literal
 from urllib.parse import ParseResult, urljoin, urlparse, urlunparse
 
@@ -20,16 +21,41 @@ VALID_COMFY_API_SCHEMES: List[ComfyAPIScheme] = ['http', 'https']
 VALID_FOLDER_TYPES: List[ComfyFolderType] = ['input', 'output', 'temp']
 
 
-def SmartURLJoin(base: str, path: str) -> str:
+def SmartURLJoin(base: str,
+                 url: str | None = None,
+                 *,
+                 path: str | None = None) -> str:
   """urljoin() but can handle relative paths even for custom schemes.
 
   See: https://github.com/python/cpython/issues/63028
 
   From: https://github.com/python/cpython/issues/63028#issuecomment-1564858715
   """
-  parsed_base = urlparse(base)
-  new = parsed_base._replace(path=urljoin(parsed_base.path, path))
-  return urlunparse(new)
+  if path is not None:
+    warnings.warn(
+        'The path argument is deprecated and will be removed in a future version. Use the url argument instead.',
+        DeprecationWarning,
+        stacklevel=2)
+
+  url = url or path
+  if url is None:
+    raise ValueError('Either url or path must be provided')
+
+  base_pr = urlparse(base)
+  bscheme = base_pr.scheme
+
+  url_pr = urlparse(url)
+  scheme = url_pr.scheme or bscheme
+  if bscheme != scheme:
+    return url
+
+  base_pr = base_pr._replace(scheme='http')
+  url_pr = url_pr._replace(scheme='http')
+
+  joined = urljoin(urlunparse(base_pr), urlunparse(url_pr))
+  joined_pr = urlparse(joined)
+  joined_pr = joined_pr._replace(scheme=scheme)
+  return urlunparse(joined_pr)
 
 
 def JoinToBaseURL(base: str, path: str) -> str:
