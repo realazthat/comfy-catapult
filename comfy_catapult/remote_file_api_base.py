@@ -12,6 +12,7 @@ from anyio import Path
 
 from comfy_catapult.url_utils import ComfyUIPathTriplet
 
+# TODO: This is deprecated, remove this next major version.
 EMPTY_URL = ParseResult(scheme='',
                         netloc='',
                         path='',
