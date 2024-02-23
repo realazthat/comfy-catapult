@@ -131,11 +131,7 @@ def TripletToComfySchemeURL(triplet: ComfyUIPathTriplet,
   # trunk-ignore(bandit/B101)
   assert not triplet.subfolder.startswith('/')
 
-  path = f'{triplet.folder_type}/{triplet.subfolder}'
-  if not path.endswith('/'):
-    path += '/'
-
-  path = SmartURLJoin(path, triplet.filename)
+  path = triplet.ToLocalPathStr(include_folder_type=True)
   comfy_scheme = f'comfy+{ToParseResult(triplet.comfy_api_url).scheme}'
   # Sanity check, since api_scheme is in VALID_COMFY_API_SCHEMES, this should
   # always be true.
