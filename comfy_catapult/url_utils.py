@@ -33,6 +33,9 @@ def SmartURLJoin(base: str, path: str) -> str:
 
 
 def JoinToBaseURL(base: str, path: str) -> str:
+  """Takes a URL and appends the path to it.
+  
+  Always assumes the base is a directory. Always assumes the path is relative to that directory."""
   if not base.endswith('/'):
     base += '/'
   if path.startswith('/'):
