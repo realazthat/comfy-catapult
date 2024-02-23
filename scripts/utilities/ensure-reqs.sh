@@ -21,6 +21,6 @@ else
   pip install pip-tools
 fi
 
-pip-sync "$REQS"
-# pip install -r "$REQS"
+# pip-sync "$REQS"
+pip install -r "$REQS"
 # pip install --no-deps --ignore-installed -r "$REQS"
