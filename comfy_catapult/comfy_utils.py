@@ -9,7 +9,6 @@ import dataclasses
 import datetime
 import logging
 import textwrap
-import warnings
 from dataclasses import is_dataclass
 from typing import (Any, Generator, Hashable, List, Literal, NamedTuple, Type,
                     TypeVar, cast)
@@ -30,8 +29,6 @@ from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
 from comfy_catapult.url_utils import ComfyUIPathTriplet
 
 MAX_DUMP_LINES: int | None = 200
-# TODO: Remove this in version 2.x
-DUMP_DIR: Path = Path('.logs/dumps')
 logger = logging.getLogger(__name__)
 
 
@@ -212,11 +209,11 @@ async def DownloadPreviewImage(*, node_id: NodeID, job_history: APIHistoryEntry,
     raise Exception(
         f'Expected "type" to be "temp" or "output", got {folder_type}')
 
-  triplet = ComfyUIPathTriplet(comfy_api_url=comfy_api_url,
-                               folder_type=folder_type,
+  triplet = ComfyUIPathTriplet(folder_type=folder_type,
                                subfolder=subfolder,
                                filename=filename)
-  return await remote.DownloadTriplet(untrusted_src_triplet=triplet,
+  return await remote.DownloadTriplet(untrusted_comfy_api_url=comfy_api_url,
+                                      untrusted_src_triplet=triplet,
                                       dst_path=local_dst_path)
 
 
@@ -320,25 +317,12 @@ def _WarnModelExtras(*, path: List[Any],
     pass
 
 
-class _Sentinal:
-  pass
-
-
-_sentinal = _Sentinal()
-
-
 async def TryParseAsModel(
     *,
     content: Any,
     model_type: Type[_BaseModelT],
-    errors_dump_directory: Path | _Sentinal | None = _sentinal,
+    errors_dump_directory: Path | None,
     strict: Literal['yes', 'no', 'warn'] = 'warn') -> _BaseModelT:
-  if isinstance(errors_dump_directory, _Sentinal):
-    # TODO: Remove this in version 2.x
-    warnings.warn('it is deprecated to not specify errors_dump_directory',
-                  DeprecationWarning,
-                  stacklevel=2)
-    errors_dump_directory = DUMP_DIR
 
   async def _Internal(errors_dump_directory: Path | None):
     error_dump_path: Path | None = None

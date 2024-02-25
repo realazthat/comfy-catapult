@@ -6,7 +6,7 @@
 # the license text.
 
 from collections import defaultdict
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 from anyio import Path
 
@@ -38,13 +38,14 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
                      f' to handle such URLs')
 
   def _GetAPIsForTriplet(
-      self, *, triplet: ComfyUIPathTriplet) -> List[RemoteFileAPIBase]:
+      self, *, comfy_api_url: str,
+      triplet: ComfyUIPathTriplet) -> List[RemoteFileAPIBase]:
     relevant_apis = []
     convered_urls = []
     for base, base_apis in self._base_to_api.items():
       for api in base_apis:
         try:
-          url = api.TripletToURL(triplet=triplet)
+          url = api.TripletToURL(comfy_api_url=comfy_api_url, triplet=triplet)
         except NotImplementedError:
           continue
 
@@ -53,7 +54,7 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
           relevant_apis.append(api)
     if relevant_apis:
       return relevant_apis
-    raise ValueError(f'ComfyUI API server URL {repr(triplet.comfy_api_url)}:'
+    raise ValueError(f'ComfyUI API server URL {repr(comfy_api_url)}:'
                      ' there is no API registered to handle this URL'
                      f'\n triplet: {triplet}'
                      f'\n convered_urls: {convered_urls}')
@@ -75,7 +76,7 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
     raise AssertionError('unreachable')
 
   async def UploadToTriplet(
-      self, *, src_path: Path,
+      self, *, src_path: Path, untrusted_comfy_api_url: str,
       untrusted_dst_triplet: ComfyUIPathTriplet) -> ComfyUIPathTriplet:
     if not await src_path.exists():
       raise ValueError(f'File {src_path} does not exist')
@@ -83,12 +84,14 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
       raise ValueError(f'File {src_path} is not a file')
 
     apis: List[RemoteFileAPIBase] = self._GetAPIsForTriplet(
-        triplet=untrusted_dst_triplet)
+        comfy_api_url=untrusted_comfy_api_url, triplet=untrusted_dst_triplet)
 
     for i, api in enumerate(apis):
       try:
         return await api.UploadToTriplet(
-            src_path=src_path, untrusted_dst_triplet=untrusted_dst_triplet)
+            untrusted_comfy_api_url=untrusted_comfy_api_url,
+            src_path=src_path,
+            untrusted_dst_triplet=untrusted_dst_triplet)
       except ValueError:
         if i + 1 >= len(apis):
           raise
@@ -105,30 +108,35 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
           raise
     raise AssertionError('unreachable')
 
-  async def DownloadTriplet(self, *, untrusted_src_triplet: ComfyUIPathTriplet,
+  async def DownloadTriplet(self, *, untrusted_comfy_api_url: str,
+                            untrusted_src_triplet: ComfyUIPathTriplet,
                             dst_path: Path):
     apis: List[RemoteFileAPIBase] = self._GetAPIsForTriplet(
-        triplet=untrusted_src_triplet)
+        comfy_api_url=untrusted_comfy_api_url, triplet=untrusted_src_triplet)
     for i, api in enumerate(apis):
       try:
         return await api.DownloadTriplet(
-            untrusted_src_triplet=untrusted_src_triplet, dst_path=dst_path)
+            untrusted_comfy_api_url=untrusted_comfy_api_url,
+            untrusted_src_triplet=untrusted_src_triplet,
+            dst_path=dst_path)
       except ValueError:
         if i + 1 >= len(apis):
           raise
     raise AssertionError('unreachable')
 
-  def TripletToURL(self, *, triplet: ComfyUIPathTriplet) -> str:
-    apis: List[RemoteFileAPIBase] = self._GetAPIsForTriplet(triplet=triplet)
+  def TripletToURL(self, *, comfy_api_url: str,
+                   triplet: ComfyUIPathTriplet) -> str:
+    apis: List[RemoteFileAPIBase] = self._GetAPIsForTriplet(
+        comfy_api_url=comfy_api_url, triplet=triplet)
     for i, api in enumerate(apis):
       try:
-        return api.TripletToURL(triplet=triplet)
+        return api.TripletToURL(comfy_api_url=comfy_api_url, triplet=triplet)
       except ValueError:
         if i + 1 >= len(apis):
           raise
     raise AssertionError('unreachable')
 
-  def URLToTriplet(self, *, url: str) -> ComfyUIPathTriplet:
+  def URLToTriplet(self, *, url: str) -> Tuple[str, ComfyUIPathTriplet]:
     apis: List[RemoteFileAPIBase] = self._GetAPIsForURL(url=url)
     for i, api in enumerate(apis):
       try:

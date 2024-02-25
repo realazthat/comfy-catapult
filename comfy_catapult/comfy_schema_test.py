@@ -22,6 +22,7 @@ class TestComfySchema(IsolatedAsyncioTestCase):
       content = yaml.safe_load(await f.read())
     await TryParseAsModel(content=content,
                           model_type=APIObjectInfo,
+                          errors_dump_directory=None,
                           strict='yes')
 
 

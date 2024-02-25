@@ -5,7 +5,7 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
-from typing import List
+from typing import List, Tuple
 from urllib.parse import ParseResult
 
 from anyio import Path
@@ -51,20 +51,20 @@ def _ValidateComfySchemeURL(url: str, *, any_bases: List[str] | None) -> str:
   return url
 
 
-def ComfySchemeURLToTriplet(url: str,
-                            *,
-                            inversion_check: bool = __debug__
-                            ) -> ComfyUIPathTriplet:
+def ComfySchemeURLToTriplet(
+    url: str,
+    *,
+    inversion_check: bool = __debug__) -> Tuple[str, ComfyUIPathTriplet]:
   """Turns a custom URL scheme into a triplet.
 
   Args:
-      url (str): URL in the form of:
-        comfy+http://comfy-server-host:port/folder_type/subfolder/sub/filename
+    url (str): URL in the form of:
+      comfy+http://comfy-server-host:port/folder_type/subfolder/sub/filename
   Raises:
-      ValueError: When something is wrong with the URL.
+    ValueError: When something is wrong with the URL.
 
   Returns:
-      ComfyUIPathTriplet: The triplet.
+    Tuple[str, ComfyUIPathTriplet]: The ComfyUI API URL, and the triplet.
   """
   url_pr = ToParseResult(url=url)
   url_path = url_pr.path
@@ -95,24 +95,26 @@ def ComfySchemeURLToTriplet(url: str,
 
   comfy_api_url_pr = url_pr._replace(scheme=api_scheme, path='')
 
-  triplet = ComfyUIPathTriplet(comfy_api_url=comfy_api_url_pr.geturl(),
-                               folder_type=folder_type,
+  triplet = ComfyUIPathTriplet(folder_type=folder_type,
                                subfolder=subfolder,
                                filename=filename)
   if inversion_check:
-    inverted_url = TripletToComfySchemeURL(triplet=triplet,
-                                           inversion_check=False)
+    inverted_url = TripletToComfySchemeURL(
+        comfy_api_url=comfy_api_url_pr.geturl(),
+        triplet=triplet,
+        inversion_check=False)
     if inverted_url != url:
       raise ValueError(
           f'\nurl: {repr(url)}\ntriplet: {repr(triplet)}\ninverted_url: {repr(inverted_url)}'
       )
-  return triplet
+  return comfy_api_url_pr.geturl(), triplet
 
 
-def TripletToComfySchemeURL(triplet: ComfyUIPathTriplet,
+def TripletToComfySchemeURL(comfy_api_url: str,
+                            triplet: ComfyUIPathTriplet,
                             *,
                             inversion_check: bool = __debug__) -> str:
-  comfy_api_url = ValidateIsComfyAPITargetURL(triplet.comfy_api_url)
+  comfy_api_url = ValidateIsComfyAPITargetURL(comfy_api_url)
   comfy_api_url_pr = ToParseResult(comfy_api_url)
   api_scheme = comfy_api_url_pr.scheme
   # ComfyUIPathTriplet validation should have already caught this.
@@ -132,7 +134,7 @@ def TripletToComfySchemeURL(triplet: ComfyUIPathTriplet,
   assert not triplet.subfolder.startswith('/')
 
   path = triplet.ToLocalPathStr(include_folder_type=True)
-  comfy_scheme = f'comfy+{ToParseResult(triplet.comfy_api_url).scheme}'
+  comfy_scheme = f'comfy+{ToParseResult(comfy_api_url).scheme}'
   # Sanity check, since api_scheme is in VALID_COMFY_API_SCHEMES, this should
   # always be true.
   # trunk-ignore(bandit/B101)
@@ -186,47 +188,52 @@ class ComfySchemeRemoteFileAPI(RemoteFileAPIBase):
 
     self._overwrite = overwrite
 
-  def _ToTrustedTriplet(self, *,
-                        untrusted_comfy_scheme_url: str) -> ComfyUIPathTriplet:
-    triplet = ComfySchemeURLToTriplet(url=untrusted_comfy_scheme_url)
-    return ComfyUIPathTriplet(comfy_api_url=_ValidateComfyAPITargetURL(
-        triplet.comfy_api_url, any_api_targets=self._comfy_api_urls),
-                              folder_type=triplet.folder_type,
-                              subfolder=triplet.subfolder,
-                              filename=triplet.filename)
+  def _ToTrustedTriplet(
+      self, *,
+      untrusted_comfy_scheme_url: str) -> Tuple[str, ComfyUIPathTriplet]:
+    comfy_api_url, triplet = ComfySchemeURLToTriplet(
+        url=untrusted_comfy_scheme_url)
+    comfy_api_url = _ValidateComfyAPITargetURL(
+        comfy_api_url, any_api_targets=self._comfy_api_urls)
+    return comfy_api_url, triplet
 
   def _ValidateTriplet(
-      self, *, untrusted_triplet: ComfyUIPathTriplet) -> ComfyUIPathTriplet:
-    return ComfyUIPathTriplet(comfy_api_url=_ValidateComfyAPITargetURL(
-        untrusted_triplet.comfy_api_url, any_api_targets=self._comfy_api_urls),
-                              folder_type=untrusted_triplet.folder_type,
-                              subfolder=untrusted_triplet.subfolder,
-                              filename=untrusted_triplet.filename)
+      self, *, untrusted_comfy_api_url: str,
+      untrusted_triplet: ComfyUIPathTriplet) -> Tuple[str, ComfyUIPathTriplet]:
+    comfy_api_url = _ValidateComfyAPITargetURL(
+        untrusted_comfy_api_url, any_api_targets=self._comfy_api_urls)
+    triplet = untrusted_triplet
+    return comfy_api_url, triplet
 
   async def DownloadFile(self, *, untrusted_src_url: str, dst_path: Path):
-    trusted_src_triplet = self._ToTrustedTriplet(
+    trusted_comfy_api_url, trusted_src_triplet = self._ToTrustedTriplet(
         untrusted_comfy_scheme_url=untrusted_src_url)
-    await self.DownloadTriplet(untrusted_src_triplet=trusted_src_triplet,
+    await self.DownloadTriplet(untrusted_comfy_api_url=trusted_comfy_api_url,
+                               untrusted_src_triplet=trusted_src_triplet,
                                dst_path=dst_path)
 
   async def UploadFile(self, *, src_path: Path, untrusted_dst_url: str) -> str:
     # Validate andt turn the URL into the form:
     #   comfy+http://api_host:port/folder_type/subfolder/filename
-    trusted_dst_triplet = self._ToTrustedTriplet(
+    trusted_comfy_api_url, trusted_dst_triplet = self._ToTrustedTriplet(
         untrusted_comfy_scheme_url=untrusted_dst_url)
     new_triplet = await self.UploadToTriplet(
-        src_path=src_path, untrusted_dst_triplet=trusted_dst_triplet)
+        src_path=src_path,
+        untrusted_comfy_api_url=trusted_comfy_api_url,
+        untrusted_dst_triplet=trusted_dst_triplet)
     # Turn the triplet back into the form:
     #   comfy+http://api_host:port/folder_type/subfolder/filename
-    return TripletToComfySchemeURL(triplet=new_triplet)
+    return TripletToComfySchemeURL(comfy_api_url=trusted_comfy_api_url,
+                                   triplet=new_triplet)
 
-  async def DownloadTriplet(self, *, untrusted_src_triplet: ComfyUIPathTriplet,
+  async def DownloadTriplet(self, *, untrusted_comfy_api_url: str,
+                            untrusted_src_triplet: ComfyUIPathTriplet,
                             dst_path: Path):
-    trusted_src_triplet = self._ValidateTriplet(
+    trusted_comfy_api_url, trusted_src_triplet = self._ValidateTriplet(
+        untrusted_comfy_api_url=untrusted_comfy_api_url,
         untrusted_triplet=untrusted_src_triplet)
 
-    async with ComfyAPIClient(
-        comfy_api_url=trusted_src_triplet.comfy_api_url) as client:
+    async with ComfyAPIClient(comfy_api_url=trusted_comfy_api_url) as client:
       data: bytes = await client.GetView(
           folder_type=trusted_src_triplet.folder_type,
           subfolder=trusted_src_triplet.subfolder,
@@ -237,16 +244,16 @@ class ComfySchemeRemoteFileAPI(RemoteFileAPIBase):
       await f.write(data)
 
   async def UploadToTriplet(
-      self, *, src_path: Path,
+      self, *, src_path: Path, untrusted_comfy_api_url: str,
       untrusted_dst_triplet: ComfyUIPathTriplet) -> ComfyUIPathTriplet:
-    trusted_dst_triplet = self._ValidateTriplet(
+    trusted_comfy_api_url, trusted_dst_triplet = self._ValidateTriplet(
+        untrusted_comfy_api_url=untrusted_comfy_api_url,
         untrusted_triplet=untrusted_dst_triplet)
 
     async with await src_path.open('rb') as f:
       data = await f.read()
 
-    async with ComfyAPIClient(
-        comfy_api_url=trusted_dst_triplet.comfy_api_url) as client:
+    async with ComfyAPIClient(comfy_api_url=trusted_comfy_api_url) as client:
       resp: APIUploadImageResp = await client.PostUploadImage(
           folder_type=trusted_dst_triplet.folder_type,
           subfolder=trusted_dst_triplet.subfolder,
@@ -261,10 +268,11 @@ class ComfySchemeRemoteFileAPI(RemoteFileAPIBase):
     },
                                           deep=True)
 
-  def TripletToURL(self, *, triplet: ComfyUIPathTriplet) -> str:
-    return TripletToComfySchemeURL(triplet=triplet)
+  def TripletToURL(self, *, comfy_api_url: str,
+                   triplet: ComfyUIPathTriplet) -> str:
+    return TripletToComfySchemeURL(comfy_api_url=comfy_api_url, triplet=triplet)
 
-  def URLToTriplet(self, *, url: str) -> ComfyUIPathTriplet:
+  def URLToTriplet(self, *, url: str) -> Tuple[str, ComfyUIPathTriplet]:
     return ComfySchemeURLToTriplet(url=url)
 
   def GetBases(self) -> list[str]:

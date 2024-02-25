@@ -36,80 +36,31 @@ class TestUrlUtils(unittest.IsolatedAsyncioTestCase):
 
   def test_ComfyUIPathTriplet_Scheme(self):
     # Simple cases.
-    _ = ComfyUIPathTriplet(comfy_api_url='http://host:1234',
-                           folder_type='input',
-                           subfolder='subfolder',
-                           filename='filename.txt')
-    _ = ComfyUIPathTriplet(comfy_api_url='https://host:1234',
-                           folder_type='input',
+    _ = ComfyUIPathTriplet(folder_type='input',
                            subfolder='subfolder',
                            filename='filename.txt')
     # These should be OK
-    _ = ComfyUIPathTriplet(comfy_api_url='http://host:1234/',
-                           folder_type='input',
+    _ = ComfyUIPathTriplet(folder_type='input',
                            subfolder='subfolder',
                            filename='filename.txt')
-    _ = ComfyUIPathTriplet(comfy_api_url='http://host:1234/prefix',
-                           folder_type='input',
-                           subfolder='subfolder',
-                           filename='filename.txt')
-    _ = ComfyUIPathTriplet(comfy_api_url='http://host:1234/prefix',
-                           folder_type='input',
+    _ = ComfyUIPathTriplet(folder_type='input',
                            subfolder='./subfolder',
                            filename='filename.txt')
-    _ = ComfyUIPathTriplet(comfy_api_url='http://host:1234/prefix',
-                           folder_type='input',
+    _ = ComfyUIPathTriplet(folder_type='input',
                            subfolder='./subfolder/',
                            filename='filename.txt')
-    _ = ComfyUIPathTriplet(comfy_api_url='http://host:1234/prefix',
-                           folder_type='input',
+    _ = ComfyUIPathTriplet(folder_type='input',
                            subfolder='./subfolder/subsubfolder',
                            filename='filename.txt')
 
-    with self.assertRaises(pydantic.ValidationError) as cm:
-      _ = ComfyUIPathTriplet(comfy_api_url='not-a-valid-scheme://host:1234',
-                             folder_type='input',
-                             subfolder='subfolder',
-                             filename='filename.txt')
-    self.assertIn(
-        "Value error, URL 'not-a-valid-scheme://host:1234' is not a comfy API target URL",
-        str(cm.exception).strip())
-    with self.assertRaises(pydantic.ValidationError) as cm:
-      _ = ComfyUIPathTriplet(comfy_api_url='comfy+http://host:1234',
-                             folder_type='input',
-                             subfolder='subfolder',
-                             filename='filename.txt')
-    self.assertIn(
-        "Value error, URL 'comfy+http://host:1234' is not a comfy API target URL",
-        str(cm.exception).strip())
-    with self.assertRaises(pydantic.ValidationError) as cm:
-      _ = ComfyUIPathTriplet(comfy_api_url='comfy+https://host:1234',
-                             folder_type='input',
-                             subfolder='subfolder',
-                             filename='filename.txt')
-    self.assertIn(
-        "Value error, URL 'comfy+https://host:1234' is not a comfy API target URL",
-        str(cm.exception).strip())
-
-    with self.assertRaises(pydantic.ValidationError) as cm:
-      _ = ComfyUIPathTriplet(comfy_api_url='http:///whatever',
-                             folder_type='input',
-                             subfolder='subfolder',
-                             filename='filename.txt')
-    self.assertIn(
-        "Value error, URL 'http:///whatever' is not a comfy API target URL, because its hostname is empty",
-        str(cm.exception).strip())
-
   def test_ComfyUIPathTriplet_Folder(self):
     # Simple cases.
-    _ = ComfyUIPathTriplet(comfy_api_url='http://host:1234',
-                           folder_type='input',
+    _ = ComfyUIPathTriplet(folder_type='input',
                            subfolder='subfolder',
                            filename='filename.txt')
 
     with self.assertRaises(pydantic.ValidationError) as cm:
       _ = ComfyUIPathTriplet(
-          comfy_api_url='http://host:1234',
           folder_type='not-valid-folder-type',  # type: ignore
           subfolder='subfolder',
           filename='filename.txt')
@@ -117,8 +68,7 @@ class TestUrlUtils(unittest.IsolatedAsyncioTestCase):
                   str(cm.exception).strip())
 
     with self.assertRaises(pydantic.ValidationError) as cm:
-      _ = ComfyUIPathTriplet(comfy_api_url='http://host:1234',
-                             folder_type='input',
+      _ = ComfyUIPathTriplet(folder_type='input',
                              subfolder='subfolder',
                              filename='/filename.txt')
     self.assertIn(
@@ -126,16 +76,14 @@ class TestUrlUtils(unittest.IsolatedAsyncioTestCase):
         str(cm.exception).strip())
 
     with self.assertRaises(pydantic.ValidationError) as cm:
-      _ = ComfyUIPathTriplet(comfy_api_url='http://host:1234',
-                             folder_type='input',
+      _ = ComfyUIPathTriplet(folder_type='input',
                              subfolder='subfolder',
                              filename='')
     self.assertIn("Value error, filename '' must not be empty",
                   str(cm.exception).strip())
 
     with self.assertRaises(pydantic.ValidationError) as cm:
-      _ = ComfyUIPathTriplet(comfy_api_url='http://host:1234',
-                             folder_type='input',
+      _ = ComfyUIPathTriplet(folder_type='input',
                              subfolder='/subfolder',
                              filename='filename.txt')
     self.assertIn(
@@ -144,24 +92,19 @@ class TestUrlUtils(unittest.IsolatedAsyncioTestCase):
 
   def test_ComfyUIPathTripletEdges(self):
 
-    for comfy_api_url in [
-        'http://comfy_host:23534', 'http://comfy_host:23534/'
-    ]:
-      for folder_type in VALID_FOLDER_TYPES:
-        for subfolder, _ in VALID_SUBFOLDER_EDGES:
-          with self.subTest(folder_type=folder_type, subfolder=subfolder):
-            triplet = ComfyUIPathTriplet(comfy_api_url=comfy_api_url,
-                                         folder_type=folder_type,
+    for folder_type in VALID_FOLDER_TYPES:
+      for subfolder, _ in VALID_SUBFOLDER_EDGES:
+        with self.subTest(folder_type=folder_type, subfolder=subfolder):
+          triplet = ComfyUIPathTriplet(folder_type=folder_type,
+                                       subfolder=subfolder,
+                                       filename='remote-file.txt')
+          self.assertEqual(triplet.subfolder, subfolder)
+      for subfolder, expected_exception in INVALID_SUBFOLDER_EDGES:
+        with self.subTest(folder_type=folder_type, subfolder=subfolder):
+          with self.assertRaises(expected_exception):
+            triplet = ComfyUIPathTriplet(folder_type=folder_type,
                                          subfolder=subfolder,
                                          filename='remote-file.txt')
-            self.assertEqual(triplet.subfolder, subfolder)
-        for subfolder, expected_exception in INVALID_SUBFOLDER_EDGES:
-          with self.subTest(folder_type=folder_type, subfolder=subfolder):
-            with self.assertRaises(expected_exception):
-              triplet = ComfyUIPathTriplet(comfy_api_url=comfy_api_url,
-                                           folder_type=folder_type,
-                                           subfolder=subfolder,
-                                           filename='remote-file.txt')
 
 
 if __name__ == '__main__':

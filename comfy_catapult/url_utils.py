@@ -5,7 +5,6 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
-import warnings
 from typing import List, Literal
 from urllib.parse import ParseResult, urljoin, urlparse, urlunparse
 
@@ -21,26 +20,13 @@ VALID_COMFY_API_SCHEMES: List[ComfyAPIScheme] = ['http', 'https']
 VALID_FOLDER_TYPES: List[ComfyFolderType] = ['input', 'output', 'temp']
 
 
-def SmartURLJoin(base: str,
-                 url: str | None = None,
-                 *,
-                 path: str | None = None) -> str:
+def SmartURLJoin(base: str, url: str) -> str:
   """urljoin() but can handle relative paths even for custom schemes.
 
   See: https://github.com/python/cpython/issues/63028
 
   From: https://github.com/python/cpython/issues/63028#issuecomment-1564858715
   """
-  if path is not None:
-    warnings.warn(
-        'The path argument is deprecated and will be removed in a future version. Use the url argument instead.',
-        DeprecationWarning,
-        stacklevel=2)
-
-  url = url or path
-  if url is None:
-    raise ValueError('Either url or path must be provided')
-
   base_pr = urlparse(base)
   bscheme = base_pr.scheme
 
@@ -163,16 +149,9 @@ class ComfyUIPathTriplet(BaseModel):
   """
   model_config = ConfigDict(frozen=True)
 
-  comfy_api_url: str
   folder_type: ComfyFolderType
   subfolder: str
   filename: str
-
-  @field_validator('comfy_api_url')
-  @classmethod
-  def validate_comfy_api_url(cls, v: str):
-    v = ValidateIsComfyAPITargetURL(url=v)
-    return v
 
   @field_validator('folder_type')
   @classmethod
@@ -211,17 +190,3 @@ class ComfyUIPathTriplet(BaseModel):
     if include_folder_type:
       local_path = urljoin(f'{self.folder_type}/', local_path)
     return local_path
-
-  # def Normalized(self) -> 'ComfyUIPathTriplet':
-  #   subfolder_url = ToParseResult(url=self.subfolder)
-  #   subfolder = subfolder_url.path
-  #   subfolder = urljoin('', subfolder)
-  #   if subfolder.endswith('/'):
-  #     subfolder = subfolder[:-1]
-  #   if subfolder.startswith('./'):
-  #     subfolder = subfolder[2:]
-
-  #   return ComfyUIPathTriplet(comfy_api_url=self.comfy_api_url,
-  #                             folder_type=self.folder_type,
-  #                             subfolder=subfolder,
-  #                             filename=self.filename)

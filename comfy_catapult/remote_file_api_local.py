@@ -5,7 +5,7 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
-from typing import List
+from typing import List, Tuple
 
 import aioshutil
 from anyio import Path
@@ -107,7 +107,8 @@ class LocalRemoteFileAPI(RemoteFileAPIBase):
     await dst_path.parent.mkdir(parents=True, exist_ok=True)
     await aioshutil.copy(trusted_src_path, dst_path)
 
-  async def DownloadTriplet(self, *, untrusted_src_triplet: ComfyUIPathTriplet,
+  async def DownloadTriplet(self, *, untrusted_comfy_api_url: str,
+                            untrusted_src_triplet: ComfyUIPathTriplet,
                             dst_path: Path):
     # TODO: Maybe we can make a mapper that maps triplets to urls, and then
     # download the file from the URL. But this is not necessary right now,
@@ -117,7 +118,7 @@ class LocalRemoteFileAPI(RemoteFileAPIBase):
     raise NotImplementedError('Local files do not support triplets')
 
   async def UploadToTriplet(
-      self, *, src_triplet: ComfyUIPathTriplet,
+      self, *, src_triplet: ComfyUIPathTriplet, untrusted_comfy_api_url: str,
       untrusted_dst_triplet: ComfyUIPathTriplet) -> ComfyUIPathTriplet:
     # TODO: Maybe we can make a mapper that maps triplets to urls, and then
     # download the file from the URL. But this is not necessary right now,
@@ -126,10 +127,11 @@ class LocalRemoteFileAPI(RemoteFileAPIBase):
     # the RemoteAPIFileBase.
     raise NotImplementedError('Local files do not support triplets')
 
-  def TripletToURL(self, *, triplet: ComfyUIPathTriplet) -> str:
+  def TripletToURL(self, *, comfy_api_url: str,
+                   triplet: ComfyUIPathTriplet) -> str:
     raise NotImplementedError('Local files do not support triplets')
 
-  def URLToTriplet(self, *, url: str) -> ComfyUIPathTriplet:
+  def URLToTriplet(self, *, url: str) -> Tuple[str, ComfyUIPathTriplet]:
     raise NotImplementedError('Local files do not support triplets')
 
   def GetBases(self) -> list[str]:
