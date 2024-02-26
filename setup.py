@@ -17,7 +17,7 @@ with open('requirements.txt') as f:
 
 setup(
     name='comfy_catapult',
-    version='2.0.0',
+    version='2.0.0-alpha',
     packages=find_packages(exclude=['examples']),
     description='Programmatically schedule ComfyUI workflows',
     long_description=long_description,
