@@ -87,8 +87,8 @@ async def _TryParseRespAsModel(
 class ComfyAPIClient(ComfyAPIClientBase):
 
   def __init__(self,
-               *,
                comfy_api_url: str,
+               *,
                errors_dump_directory: Path | None = None):
     self._comfy_api_url = comfy_api_url
     self._session = aiohttp.ClientSession()
