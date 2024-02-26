@@ -285,6 +285,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
 
     with WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
+        resp.raise_for_status()
         return await resp.content.read()
 
   async def PostFree(self, *, unload_models: bool, free_memory: bool):
