@@ -470,7 +470,7 @@ class APIObjectInfo(RootModel[Dict[APIObjectKey, APIObjectInfoEntry]]):
 class APIUploadImageResp(BaseModel):
   name: str
   subfolder: str
-  type: str
+  type: ComfyFolderType
 
 
 ################################################################################
