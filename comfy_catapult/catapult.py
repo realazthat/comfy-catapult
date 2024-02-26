@@ -69,8 +69,8 @@ class _Guess(Generic[T]):
 class ComfyCatapult(ComfyCatapultBase):
 
   def __init__(self,
-               *,
                comfy_client: ComfyAPIClientBase,
+               *,
                debug_path: Path | None,
                debug_save_all: bool = False):
     """_summary_
