@@ -11,12 +11,12 @@ from urllib.parse import ParseResult
 from anyio import Path
 
 from comfy_catapult.api_client import ComfyAPIClient
-from comfy_catapult.comfy_schema import APIUploadImageResp
+from comfy_catapult.comfy_schema import (VALID_FOLDER_TYPES,
+                                         APIUploadImageResp,
+                                         ComfyUIPathTriplet)
 from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
-from comfy_catapult.url_utils import (VALID_COMFY_API_SCHEMES,
-                                      VALID_FOLDER_TYPES, ComfyUIPathTriplet,
-                                      SmartURLJoin, ToParseResult,
-                                      ValidateIsBasedURL,
+from comfy_catapult.url_utils import (VALID_COMFY_API_SCHEMES, SmartURLJoin,
+                                      ToParseResult, ValidateIsBasedURL,
                                       ValidateIsComfyAPITargetURL)
 
 VALID_COMFY_SCHEME_SCHEMES = ['comfy+http', 'comfy+https']

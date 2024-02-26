@@ -5,9 +5,10 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
-from typing import Any, Dict, List, NamedTuple
+from typing import Any, Dict, List, Literal, NamedTuple
+from urllib.parse import urljoin
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel
+from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 from typing_extensions import Annotated
 
 EXTRA = 'allow'
@@ -23,6 +24,8 @@ OutputType = Annotated[str, Field(alias='output_type')]
 NamedInputType = Annotated[str, Field(alias='input_type')]
 # This is a list of valid *values* for a combo input.
 ComboInputType = Annotated[List[Any], Field(alias='combo_input_class')]
+ComfyFolderType = Literal['input', 'output', 'temp']
+VALID_FOLDER_TYPES: List[ComfyFolderType] = ['input', 'output', 'temp']
 
 
 ################################################################################
@@ -505,3 +508,53 @@ class WSMessage(BaseModel):
 
 
 ################################################################################
+
+
+class ComfyUIPathTriplet(BaseModel):
+  """
+  Represents a folder_type/subfolder/filename triplet, which ComfyUI API and
+  some nodes use as file paths.
+  """
+  model_config = ConfigDict(frozen=True)
+
+  type: ComfyFolderType
+  subfolder: str
+  filename: str
+
+  @field_validator('type')
+  @classmethod
+  def validate_folder_type(cls, v: str):
+    if v not in VALID_FOLDER_TYPES:
+      raise ValueError(
+          f'folder_type {repr(v)} is not one of {VALID_FOLDER_TYPES}')
+    return v
+
+  @field_validator('subfolder')
+  @classmethod
+  def validate_subfolder(cls, v: str):
+    if v.startswith('/'):
+      raise ValueError(f'subfolder {repr(v)} must not start with a slash')
+    return v
+
+  @field_validator('filename')
+  @classmethod
+  def validate_filename(cls, v: str):
+    if '/' in v:
+      raise ValueError(f'filename {repr(v)} must not contain a slash')
+    if v == '':
+      raise ValueError(f'filename {repr(v)} must not be empty')
+    return v
+
+  def ToLocalPathStr(self, *, include_folder_type: bool) -> str:
+    """Converts this triplet to something like `input/subfolder/filename`.
+    """
+    subfolder = self.subfolder
+    if subfolder == '':
+      subfolder = '.'
+    if not subfolder.endswith('/'):
+      subfolder += '/'
+
+    local_path = urljoin(subfolder, self.filename)
+    if include_folder_type:
+      local_path = urljoin(f'{self.type}/', local_path)
+    return local_path

@@ -10,7 +10,7 @@ from typing import Tuple
 
 from anyio import Path
 
-from comfy_catapult.url_utils import ComfyUIPathTriplet
+from comfy_catapult.comfy_schema import ComfyUIPathTriplet
 
 
 class RemoteFileAPIBase(ABC):

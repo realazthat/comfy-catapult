@@ -10,8 +10,9 @@ from typing import Dict, List, Tuple
 
 from anyio import Path
 
+from comfy_catapult.comfy_schema import ComfyUIPathTriplet
 from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
-from comfy_catapult.url_utils import ComfyUIPathTriplet, IsWeaklyRelativeTo
+from comfy_catapult.url_utils import IsWeaklyRelativeTo
 
 
 class GenericRemoteFileAPI(RemoteFileAPIBase):
