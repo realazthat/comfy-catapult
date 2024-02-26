@@ -36,39 +36,39 @@ class TestUrlUtils(unittest.IsolatedAsyncioTestCase):
 
   def test_ComfyUIPathTriplet_Scheme(self):
     # Simple cases.
-    _ = ComfyUIPathTriplet(folder_type='input',
+    _ = ComfyUIPathTriplet(type='input',
                            subfolder='subfolder',
                            filename='filename.txt')
     # These should be OK
-    _ = ComfyUIPathTriplet(folder_type='input',
+    _ = ComfyUIPathTriplet(type='input',
                            subfolder='subfolder',
                            filename='filename.txt')
-    _ = ComfyUIPathTriplet(folder_type='input',
+    _ = ComfyUIPathTriplet(type='input',
                            subfolder='./subfolder',
                            filename='filename.txt')
-    _ = ComfyUIPathTriplet(folder_type='input',
+    _ = ComfyUIPathTriplet(type='input',
                            subfolder='./subfolder/',
                            filename='filename.txt')
-    _ = ComfyUIPathTriplet(folder_type='input',
+    _ = ComfyUIPathTriplet(type='input',
                            subfolder='./subfolder/subsubfolder',
                            filename='filename.txt')
 
   def test_ComfyUIPathTriplet_Folder(self):
     # Simple cases.
-    _ = ComfyUIPathTriplet(folder_type='input',
+    _ = ComfyUIPathTriplet(type='input',
                            subfolder='subfolder',
                            filename='filename.txt')
 
     with self.assertRaises(pydantic.ValidationError) as cm:
       _ = ComfyUIPathTriplet(
-          folder_type='not-valid-folder-type',  # type: ignore
+          type='not-valid-folder-type',  # type: ignore
           subfolder='subfolder',
           filename='filename.txt')
     self.assertIn("Input should be 'input', 'output' or 'temp'",
                   str(cm.exception).strip())
 
     with self.assertRaises(pydantic.ValidationError) as cm:
-      _ = ComfyUIPathTriplet(folder_type='input',
+      _ = ComfyUIPathTriplet(type='input',
                              subfolder='subfolder',
                              filename='/filename.txt')
     self.assertIn(
@@ -76,14 +76,12 @@ class TestUrlUtils(unittest.IsolatedAsyncioTestCase):
         str(cm.exception).strip())
 
     with self.assertRaises(pydantic.ValidationError) as cm:
-      _ = ComfyUIPathTriplet(folder_type='input',
-                             subfolder='subfolder',
-                             filename='')
+      _ = ComfyUIPathTriplet(type='input', subfolder='subfolder', filename='')
     self.assertIn("Value error, filename '' must not be empty",
                   str(cm.exception).strip())
 
     with self.assertRaises(pydantic.ValidationError) as cm:
-      _ = ComfyUIPathTriplet(folder_type='input',
+      _ = ComfyUIPathTriplet(type='input',
                              subfolder='/subfolder',
                              filename='filename.txt')
     self.assertIn(
@@ -95,14 +93,14 @@ class TestUrlUtils(unittest.IsolatedAsyncioTestCase):
     for folder_type in VALID_FOLDER_TYPES:
       for subfolder, _ in VALID_SUBFOLDER_EDGES:
         with self.subTest(folder_type=folder_type, subfolder=subfolder):
-          triplet = ComfyUIPathTriplet(folder_type=folder_type,
+          triplet = ComfyUIPathTriplet(type=folder_type,
                                        subfolder=subfolder,
                                        filename='remote-file.txt')
           self.assertEqual(triplet.subfolder, subfolder)
       for subfolder, expected_exception in INVALID_SUBFOLDER_EDGES:
         with self.subTest(folder_type=folder_type, subfolder=subfolder):
           with self.assertRaises(expected_exception):
-            triplet = ComfyUIPathTriplet(folder_type=folder_type,
+            triplet = ComfyUIPathTriplet(type=folder_type,
                                          subfolder=subfolder,
                                          filename='remote-file.txt')
 

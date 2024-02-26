@@ -95,7 +95,7 @@ def ComfySchemeURLToTriplet(
 
   comfy_api_url_pr = url_pr._replace(scheme=api_scheme, path='')
 
-  triplet = ComfyUIPathTriplet(folder_type=folder_type,
+  triplet = ComfyUIPathTriplet(type=folder_type,
                                subfolder=subfolder,
                                filename=filename)
   if inversion_check:
@@ -122,7 +122,7 @@ def TripletToComfySchemeURL(comfy_api_url: str,
   assert api_scheme in VALID_COMFY_API_SCHEMES
   # ComfyUIPathTriplet validation should have already caught this.
   # trunk-ignore(bandit/B101)
-  assert triplet.folder_type in VALID_FOLDER_TYPES
+  assert triplet.type in VALID_FOLDER_TYPES
   # ComfyUIPathTriplet validation should have already caught this.
   # trunk-ignore(bandit/B101)
   assert '/' not in triplet.filename
@@ -235,7 +235,7 @@ class ComfySchemeRemoteFileAPI(RemoteFileAPIBase):
 
     async with ComfyAPIClient(comfy_api_url=trusted_comfy_api_url) as client:
       data: bytes = await client.GetView(
-          folder_type=trusted_src_triplet.folder_type,
+          folder_type=trusted_src_triplet.type,
           subfolder=trusted_src_triplet.subfolder,
           filename=trusted_src_triplet.filename)
 
@@ -255,7 +255,7 @@ class ComfySchemeRemoteFileAPI(RemoteFileAPIBase):
 
     async with ComfyAPIClient(comfy_api_url=trusted_comfy_api_url) as client:
       resp: APIUploadImageResp = await client.PostUploadImage(
-          folder_type=trusted_dst_triplet.folder_type,
+          folder_type=trusted_dst_triplet.type,
           subfolder=trusted_dst_triplet.subfolder,
           filename=trusted_dst_triplet.filename,
           data=data,

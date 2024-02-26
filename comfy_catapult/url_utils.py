@@ -149,11 +149,11 @@ class ComfyUIPathTriplet(BaseModel):
   """
   model_config = ConfigDict(frozen=True)
 
-  folder_type: ComfyFolderType
+  type: ComfyFolderType
   subfolder: str
   filename: str
 
-  @field_validator('folder_type')
+  @field_validator('type')
   @classmethod
   def validate_folder_type(cls, v: str):
     if v not in VALID_FOLDER_TYPES:
@@ -188,5 +188,5 @@ class ComfyUIPathTriplet(BaseModel):
 
     local_path = urljoin(subfolder, self.filename)
     if include_folder_type:
-      local_path = urljoin(f'{self.folder_type}/', local_path)
+      local_path = urljoin(f'{self.type}/', local_path)
     return local_path

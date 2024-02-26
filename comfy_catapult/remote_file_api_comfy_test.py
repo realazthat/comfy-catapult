@@ -65,7 +65,7 @@ class TestRemoteFileApiComfy(IsolatedAsyncioTestCase):
         with self.subTest(folder_type=folder_type, subfolder=subfolder):
           await self._test_UploadFile(comfy_api_url=self._comfy_api_url,
                                       triplet=ComfyUIPathTriplet(
-                                          folder_type=folder_type,
+                                          type=folder_type,
                                           subfolder=subfolder,
                                           filename='remote-file.txt'))
 
@@ -98,7 +98,7 @@ class TestRemoteFileApiComfy(IsolatedAsyncioTestCase):
 
           await self._test_UploadToTriplet(comfy_api_url=self._comfy_api_url,
                                            triplet=ComfyUIPathTriplet(
-                                               folder_type=folder_type,
+                                               type=folder_type,
                                                subfolder=subfolder,
                                                filename='remote-file.txt'))
 
@@ -109,34 +109,34 @@ class TestRemoteFileApiComfy(IsolatedAsyncioTestCase):
     self.assertEqual(
         TripletToComfySchemeURL(comfy_api_url=comfy_api_url,
                                 triplet=ComfyUIPathTriplet(
-                                    folder_type='input',
+                                    type='input',
                                     subfolder='',
                                     filename='remote-file.txt')),
         SmartURLJoin(comfy_scheme_url, 'input/remote-file.txt'))
     with self.assertRaises(pydantic.ValidationError):
-      _ = ComfyUIPathTriplet(folder_type='input',
+      _ = ComfyUIPathTriplet(type='input',
                              subfolder='/',
                              filename='remote-file.txt')
 
     self.assertEqual(
         TripletToComfySchemeURL(comfy_api_url=comfy_api_url,
                                 triplet=ComfyUIPathTriplet(
-                                    folder_type='input',
+                                    type='input',
                                     subfolder='subfolder',
                                     filename='remote-file.txt')),
         SmartURLJoin(comfy_scheme_url, 'input/subfolder/remote-file.txt'))
     with self.assertRaises(pydantic.ValidationError):
-      _ = ComfyUIPathTriplet(folder_type='input',
+      _ = ComfyUIPathTriplet(type='input',
                              subfolder='/subfolder',
                              filename='remote-file.txt')
     with self.assertRaises(pydantic.ValidationError):
-      _ = ComfyUIPathTriplet(folder_type='input',
+      _ = ComfyUIPathTriplet(type='input',
                              subfolder='/subfolder/',
                              filename='remote-file.txt')
     self.assertEqual(
         TripletToComfySchemeURL(comfy_api_url=comfy_api_url,
                                 triplet=ComfyUIPathTriplet(
-                                    folder_type='input',
+                                    type='input',
                                     subfolder='subfolder/subsubfolder',
                                     filename='remote-file.txt')),
         SmartURLJoin(comfy_scheme_url,
@@ -151,21 +151,21 @@ class TestRemoteFileApiComfy(IsolatedAsyncioTestCase):
           self.assertEqual(
               TripletToComfySchemeURL(comfy_api_url=comfy_api_url,
                                       triplet=ComfyUIPathTriplet(
-                                          folder_type=folder_type,
+                                          type=folder_type,
                                           subfolder='',
                                           filename='remote-file.txt')),
               f'comfy+{comfy_api_url}/{folder_type}/remote-file.txt')
           self.assertEqual(
               TripletToComfySchemeURL(comfy_api_url=comfy_api_url,
                                       triplet=ComfyUIPathTriplet(
-                                          folder_type=folder_type,
+                                          type=folder_type,
                                           subfolder='subfolder',
                                           filename='remote-file.txt')),
               f'comfy+{comfy_api_url}/{folder_type}/subfolder/remote-file.txt')
           self.assertEqual(
               TripletToComfySchemeURL(comfy_api_url=comfy_api_url,
                                       triplet=ComfyUIPathTriplet(
-                                          folder_type=folder_type,
+                                          type=folder_type,
                                           subfolder='subfolder/subsubfolder',
                                           filename='remote-file.txt')),
               f'comfy+{comfy_api_url}/{folder_type}/subfolder/subsubfolder/remote-file.txt'
@@ -173,7 +173,7 @@ class TestRemoteFileApiComfy(IsolatedAsyncioTestCase):
           self.assertEqual(
               TripletToComfySchemeURL(comfy_api_url=comfy_api_url,
                                       triplet=ComfyUIPathTriplet(
-                                          folder_type=folder_type,
+                                          type=folder_type,
                                           subfolder='subfolder/subsubfolder/',
                                           filename='remote-file.txt')),
               f'comfy+{comfy_api_url}/{folder_type}/subfolder/subsubfolder/remote-file.txt'

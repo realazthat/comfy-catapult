@@ -209,7 +209,7 @@ async def DownloadPreviewImage(*, node_id: NodeID, job_history: APIHistoryEntry,
     raise Exception(
         f'Expected "type" to be "temp" or "output", got {folder_type}')
 
-  triplet = ComfyUIPathTriplet(folder_type=folder_type,
+  triplet = ComfyUIPathTriplet(type=folder_type,
                                subfolder=subfolder,
                                filename=filename)
   return await remote.DownloadTriplet(untrusted_comfy_api_url=comfy_api_url,
