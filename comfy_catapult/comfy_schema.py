@@ -180,7 +180,7 @@ class APIWorkflowTicket(BaseModel):
 ################################################################################
 
 
-class APIOutputUI(RootModel[Dict[OutputName, Any]]):
+class APIOutputUI(RootModel[Dict[OutputName, List[Any]]]):
   root: Dict[OutputName, List[Any]]
 
 
