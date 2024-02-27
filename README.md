@@ -89,15 +89,20 @@ async def RunExampleWorkflow(*, job_info: ExampleWorkflowInfo):
 
 ## Related Projects
 
-- [CushyStudio](https://github.com/rvion/CushyStudio)
-- [comfyui-deploy](https://github.com/BennyKok/comfyui-deploy).
-- [ComfyUI script_examples](https://github.com/comfyanonymous/ComfyUI/tree/master/script_examples).
-- [ComfyUI-to-Python-Extension](https://github.com/pydn/ComfyUI-to-Python-Extension).
-- [ComfyScript](https://github.com/Chaoses-Ib/ComfyScript).
-- [hordelib](https://pypi.org/project/hordelib/).
-- [ComfyUI_NetDist](https://github.com/city96/ComfyUI_NetDist).
-- [ComfyUI-Serving-Toolkit](https://github.com/matan1905/ComfyUI-Serving-Toolkit).
-- [comfyui-python-api](https://github.com/andreyryabtsev/comfyui-python-api).
+| Project                          | ComfyUI API Wrapper | Outsource Backend | Distribute Execution | Wrap Workflow | Studio |
+| -------------------------------- | ------------------- | ----------------- | -------------------- | ------------- | ------ |
+| [CushyStudio][2]                 | ?                   | ?                 | ?                    | ?             | Yes    |
+| [ComfyUI-Serving-Toolkit][3]     | X                   | ?                 | ?                    | Yes           | ?      |
+| [ComfyUI_NetDist][4]             | X                   | ?                 | Yes                  | ?             | ?      |
+| [ComfyUI script_examples][1]     | Yes                 | No                | No                   | No            | No     |
+| [comfyui-python-api][5]          | ?                   | ?                 | ?                    | Yes           | ?      |
+| [comfyui-deploy][6]              | ?                   | ?                 | ?                    | Yes           | ?      |
+| [ComfyUI-to-Python-Extension][7] | ?                   | ?                 | ?                    | Yes           | ?      |
+| [ComfyScript][8]                 | ?                   | ?                 | ?                    | Yes           | ?      |
+| [hordelib][9]                    | ?                   | Yes               | ?                    | ?             | ?      |
+| [comfyui-cloud][10]              | ?                   | Yes               | ?                    | ?             | ?      |
+
+**Outsource compute:**
 
 ## Getting Started
 
@@ -363,3 +368,14 @@ print(api_workflow.model_dump_json())
    back to the previous step.
 5. `git commit -m "..."`.
 6. Make a PR to `develop`.
+
+[1]: https://github.com/comfyanonymous/ComfyUI/tree/master/script_examples
+[2]: https://github.com/rvion/CushyStudio
+[3]: https://github.com/matan1905/ComfyUI-Serving-Toolkit
+[4]: https://github.com/city96/ComfyUI_NetDist
+[5]: https://github.com/andreyryabtsev/comfyui-python-api
+[6]: https://github.com/BennyKok/comfyui-deploy
+[7]: https://github.com/pydn/ComfyUI-to-Python-Extension
+[8]: https://github.com/Chaoses-Ib/ComfyScript
+[9]: https://pypi.org/project/hordelib/
+[10]: https://github.com/nathannlu/comfyui-cloud
