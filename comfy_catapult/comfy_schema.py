@@ -13,7 +13,7 @@ from typing_extensions import Annotated
 
 EXTRA = 'allow'
 
-NodeID = Annotated[str, Field(alias='node_id')]
+APINodeID = Annotated[str, Field(alias='node_id')]
 PromptID = Annotated[str, Field(alias='prompt_id')]
 ClientID = Annotated[str, Field(alias='client_id')]
 OutputName = Annotated[str, Field(alias='output_name')]
@@ -31,7 +31,7 @@ VALID_FOLDER_TYPES: List[ComfyFolderType] = ['input', 'output', 'temp']
 ################################################################################
 class APIWorkflowInConnection(NamedTuple):
   """Represents a connection between two nodes in a workflow. This is used in the input of a node."""
-  output_node_id: NodeID
+  output_node_id: APINodeID
   output_index: int
 
 
@@ -67,13 +67,13 @@ class APIWorkflowNodeInfo(BaseModel):
   meta: APIWorkflowNodeMeta | None = Field(None, alias='_meta')
 
 
-class APIWorkflow(RootModel[Dict[NodeID, APIWorkflowNodeInfo]]):
+class APIWorkflow(RootModel[Dict[APINodeID, APIWorkflowNodeInfo]]):
   """This is the API format, you get it from `Save (API Format)` in the UI.
 
 
   See test_data/sdxlturbo_example_api.json for an example of this format in json.
   """
-  root: Dict[NodeID, APIWorkflowNodeInfo]
+  root: Dict[APINodeID, APIWorkflowNodeInfo]
 
 
 ################################################################################
@@ -124,7 +124,7 @@ class APIQueueInfoEntry(NamedTuple):
   prompt_id: PromptID
   prompt: APIWorkflow
   extra_data: dict
-  outputs_to_execute: List[NodeID]
+  outputs_to_execute: List[APINodeID]
 
 
 class APIQueueInfo(BaseModel):
@@ -162,7 +162,7 @@ class NodeErrors(BaseModel):
   fields are added. They'll be stored dynamically.
   """
   class_type: str
-  dependent_outputs: List[NodeID]
+  dependent_outputs: List[APINodeID]
   errors: List[NodeErrorInfo]
 
 
@@ -174,7 +174,7 @@ class APIWorkflowTicket(BaseModel):
   extra: This is just to future proof the schema so it won't break if extra
   fields are added. They'll be stored dynamically.
   """
-  node_errors: Dict[NodeID, NodeErrors] | None = None
+  node_errors: Dict[APINodeID, NodeErrors] | None = None
   number: int | None = None
   prompt_id: PromptID | None = None
   error: str | None = None
@@ -229,7 +229,7 @@ class APIHistoryEntry(BaseModel):
   extra: This is just to future proof the schema so it won't break if extra
   fields are added. They'll be stored dynamically.
   """
-  outputs: Dict[NodeID, APIOutputUI] | None = None
+  outputs: Dict[APINodeID, APIOutputUI] | None = None
   prompt: APIQueueInfoEntry | None = None
   status: APIHistoryEntryStatus | None = None
 

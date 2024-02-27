@@ -12,7 +12,7 @@ from typing import Dict, List, NamedTuple, Sequence, Tuple
 
 from anyio import Path
 
-from comfy_catapult.comfy_schema import NodeID
+from comfy_catapult.comfy_schema import APINodeID
 
 
 class Progress(NamedTuple):
@@ -66,7 +66,7 @@ class ComfyCatapultBase(ABC):
       *,
       job_id: str,
       prepared_workflow: dict,
-      important: Sequence[NodeID],
+      important: Sequence[APINodeID],
       job_debug_path: Path | None = None,
   ) -> dict:
     """Schedule a ComfyUI workflow job.
@@ -76,7 +76,7 @@ class ComfyCatapultBase(ABC):
           be unique, and must be slugified! Use python-slugify to slugify the
           string.
         prepared_workflow (dict): Workflow to submit.
-        important (List[NodeID]): List of important nodes (e.g output nodes we
+        important (List[APINodeID]): List of important nodes (e.g output nodes we
           are interested in).
         job_debug_path (Path, optional): Path to save debug information. If
           None, will use sensible defaults.

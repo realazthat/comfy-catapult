@@ -21,9 +21,10 @@ from anyio import Path
 from pydantic import BaseModel
 from pydash import slugify
 
-from comfy_catapult.comfy_schema import (APIHistoryEntry, APIOutputUI,
-                                         APIWorkflow, APIWorkflowNodeInfo,
-                                         ComfyUIPathTriplet, NodeID)
+from comfy_catapult.comfy_schema import (APIHistoryEntry, APINodeID,
+                                         APIOutputUI, APIWorkflow,
+                                         APIWorkflowNodeInfo,
+                                         ComfyUIPathTriplet)
 from comfy_catapult.errors import MultipleNodesFound, NodeNotFound
 from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
 
@@ -32,13 +33,13 @@ logger = logging.getLogger(__name__)
 
 
 class NodeIDAndNode(NamedTuple):
-  node_id: NodeID
+  node_id: APINodeID
   node_info: APIWorkflowNodeInfo
 
 
 def FindNodesByTitle(*, workflow: APIWorkflow,
                      title: str) -> Generator[NodeIDAndNode, None, None]:
-  node_id: NodeID
+  node_id: APINodeID
   node_info: APIWorkflowNodeInfo
   for node_id, node_info in workflow.root.items():
     if node_info.meta is not None and node_info.meta.title == title:
@@ -71,10 +72,10 @@ def GetNodeByTitle(*, workflow: APIWorkflow, title: str) -> NodeIDAndNode:
 
 def FindNode(*, workflow: APIWorkflow,
              id_or_title: str) -> NodeIDAndNode | None:
-  id_node_id: NodeID | None = None
+  id_node_id: APINodeID | None = None
   # id_node_error: Exception | None = None
 
-  title_node_id: NodeID | None = None
+  title_node_id: APINodeID | None = None
   # title_node_error: Exception | None = None
 
   try:
@@ -85,7 +86,7 @@ def FindNode(*, workflow: APIWorkflow,
     pass
 
   try:
-    id_node_id = cast(NodeID, id_or_title)
+    id_node_id = cast(APINodeID, id_or_title)
     # node = workflow.root[id_node_id]
   except ValueError:
     # title_node_error = e
@@ -116,7 +117,7 @@ def GetNode(*, workflow: APIWorkflow, id_or_title: str) -> NodeIDAndNode:
   return node
 
 
-def GenerateNewNodeID(*, workflow: APIWorkflow) -> NodeID:
+def GenerateNewNodeID(*, workflow: APIWorkflow) -> APINodeID:
   all_keys = workflow.root.keys()
   max_integer = 0
 
@@ -127,10 +128,11 @@ def GenerateNewNodeID(*, workflow: APIWorkflow) -> NodeID:
     except ValueError:
       continue
 
-  return cast(NodeID, str(max_integer + 1))
+  return cast(APINodeID, str(max_integer + 1))
 
 
-async def DownloadPreviewImage(*, node_id: NodeID, job_history: APIHistoryEntry,
+async def DownloadPreviewImage(*, node_id: APINodeID,
+                               job_history: APIHistoryEntry,
                                field_path: Hashable | List[Hashable],
                                comfy_api_url: str, remote: RemoteFileAPIBase,
                                local_dst_path: Path):

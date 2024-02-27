@@ -28,9 +28,9 @@ from websockets import WebSocketClientProtocol, connect
 from comfy_catapult.api_client import ComfyAPIClientBase, YamlDump
 from comfy_catapult.catapult_base import ComfyCatapultBase, JobStatus, Progress
 from comfy_catapult.comfy_schema import (APIHistory, APIHistoryEntry,
-                                         APIHistoryEntryStatusNote,
+                                         APIHistoryEntryStatusNote, APINodeID,
                                          APIQueueInfo, APISystemStats,
-                                         APIWorkflowTicket, NodeID, WSMessage)
+                                         APIWorkflowTicket, WSMessage)
 from comfy_catapult.comfy_utils import TryParseAsModel
 from comfy_catapult.errors import NodesNotExecuted, WorkflowSubmissionError
 
@@ -46,7 +46,7 @@ class _Job:
 
   job_id: str
   prepared_workflow: dict
-  important_nodes: Tuple[NodeID, ...]
+  important_nodes: Tuple[APINodeID, ...]
   ticket: APIWorkflowTicket | None
   status: JobStatus
   # Exceptions that should be in status but aren't because they're not pickable
@@ -145,7 +145,7 @@ class ComfyCatapult(ComfyCatapultBase):
       *,
       job_id: str,
       prepared_workflow: dict,
-      important: Sequence[NodeID],
+      important: Sequence[APINodeID],
       job_debug_path: Path | None = None,
   ) -> dict:
     async with self._lock:
@@ -277,8 +277,8 @@ class ComfyCatapult(ComfyCatapultBase):
     ##########################################################################
     # Get outputs_to_execute, outputs_with_data, extra_data
     extra_data: dict | None = None
-    outputs_to_execute: List[NodeID] = []
-    outputs_with_data: List[NodeID] = []
+    outputs_to_execute: List[APINodeID] = []
+    outputs_with_data: List[APINodeID] = []
     if job_history.outputs is not None:
       outputs_with_data = list(job_history.outputs.keys())
     if job_history.prompt is not None:
@@ -316,7 +316,7 @@ class ComfyCatapult(ComfyCatapultBase):
         if node_id not in outputs_with_data
     ]
 
-    def _GetTitles(node_ids: List[NodeID]) -> List[str | None]:
+    def _GetTitles(node_ids: List[APINodeID]) -> List[str | None]:
       titles = []
       for node_id in node_ids:
         node_info: dict = prepared_workflow.get(node_id, {})

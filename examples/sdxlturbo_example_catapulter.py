@@ -21,10 +21,10 @@ from slugify import slugify
 from comfy_catapult.api_client import ComfyAPIClient, ComfyAPIClientBase
 from comfy_catapult.catapult import ComfyCatapult
 from comfy_catapult.catapult_base import ComfyCatapultBase
-from comfy_catapult.comfy_schema import (APIHistoryEntry, APIObjectInfo,
-                                         APIObjectInputTuple, APISystemStats,
-                                         APIWorkflow, APIWorkflowInConnection,
-                                         NodeID)
+from comfy_catapult.comfy_schema import (APIHistoryEntry, APINodeID,
+                                         APIObjectInfo, APIObjectInputTuple,
+                                         APISystemStats, APIWorkflow,
+                                         APIWorkflowInConnection)
 from comfy_catapult.comfy_utils import (DownloadPreviewImage, GetNodeByTitle,
                                         YamlDump)
 from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
@@ -50,7 +50,7 @@ class ExampleWorkflowInfo:
   # This should begin as a deep copy of the template.
   workflow_dict: dict
   # This will hold the node ids that we must have results for.
-  important: List[NodeID]
+  important: List[APINodeID]
 
   # Make this any string unique to this job.
   job_id: str
@@ -74,7 +74,7 @@ async def RunExampleWorkflow(*, job_info: ExampleWorkflowInfo):
 
   job_id: str = job_info.job_id
   workflow_dict: dict = job_info.workflow_dict
-  important: List[NodeID] = job_info.important
+  important: List[APINodeID] = job_info.important
 
   # Here the magic happens, the job is submitted to the ComfyUI server.
   job_info.job_history_dict = await job_info.catapult.Catapult(
