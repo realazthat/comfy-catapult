@@ -33,6 +33,37 @@ a program.
 
 ### Scheduling a job
 
+From [`comfy_catapult/catapult_base.py`](comfy_catapult/catapult_base.py):
+
+````py
+  async def Catapult(
+      self,
+      *,
+      job_id: str,
+      prepared_workflow: dict,
+      important: Sequence[APINodeID],
+      job_debug_path: Path | None = None,
+  ) -> dict:
+    """Schedule a ComfyUI workflow job.
+
+    Args:
+        job_id (str): A unique identifier for the job. Note: This string must
+          be unique, and must be slugified! Use python-slugify to slugify the
+          string.
+        prepared_workflow (dict): Workflow to submit.
+        important (List[APINodeID]): List of important nodes (e.g output nodes we
+          are interested in).
+        job_debug_path (Path, optional): Path to save debug information. If
+          None, will use sensible defaults.
+
+    Raises:
+        WorkflowSubmissionError: Failed to submit workflow.
+
+    Returns:
+        dict: The history of the job returned from the ComfyUI API.
+    """
+````
+
 From
 [`examples/sdxlturbo_example_catapulter.py`](examples/sdxlturbo_example_catapulter.py):
 

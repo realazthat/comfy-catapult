@@ -29,7 +29,7 @@ PyYAML==6.0.1
 rich==13.7.0
 ruamel.yaml==0.18.5
 ruamel.yaml.clib==0.2.8
-snipinator==1.0.1
+snipinator==1.0.2
 tomli==2.0.1
 uc-micro-py==1.0.2
 virtualenv==20.25.0
