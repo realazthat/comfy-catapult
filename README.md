@@ -33,7 +33,8 @@ a program.
 
 ### Scheduling a job
 
-From [`comfy_catapult/catapult_base.py`](comfy_catapult/catapult_base.py):
+From
+[`comfy_catapult/catapult_base.py`](comfy_catapult/catapult_base.py):
 
 ````py
   async def Catapult(
