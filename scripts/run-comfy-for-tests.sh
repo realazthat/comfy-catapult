@@ -69,9 +69,9 @@ ls -la "${CKPT_DIR}"
 echo "${CKPT_SHA256} ${CKPT_FILE}" | sha256sum --check --status
 docker cp "${CKPT_FILE}" "${COMFY_INSTANCE_NAME}:${DOCKER_CKPT_FILE}"
 
-docker exec -it "${COMFY_INSTANCE_NAME}" /bin/bash -c "ls -la ${DOCKER_CKPT_DIR}"
+docker exec "${COMFY_INSTANCE_NAME}" /bin/bash -c "ls -la ${DOCKER_CKPT_DIR}"
 
-docker exec -it "${COMFY_INSTANCE_NAME}" /bin/bash -c "echo \"${CKPT_SHA256} ${DOCKER_CKPT_FILE}\" | sha256sum --check --status"
+docker exec "${COMFY_INSTANCE_NAME}" /bin/bash -c "echo \"${CKPT_SHA256} ${DOCKER_CKPT_FILE}\" | sha256sum --check --status"
 
 while ! curl -s "http://localhost:41112/system_stats" > /dev/null; do
   echo -e "${YELLOW}Waiting for comfy to start${NC}"
