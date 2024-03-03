@@ -360,6 +360,11 @@ async def TryParseAsModel(
               max_lines=MAX_DUMP_LINES,
               path=error_dump_path /
               f'{slugify(str(model_type))}-input_content.yaml')
+        else:
+          error_line = str(e)
+          model_dump_yaml = YamlDump(model.model_dump())
+          input_content_yaml = YamlDump(content)
+
         msg = f'Warning: Error parsing {model_type} with strict=True: {error_line}'
         logger.error(
             f'{msg}:'
@@ -396,6 +401,12 @@ async def TryParseAsModel(
             max_lines=MAX_DUMP_LINES,
             path=error_dump_path / f'{slugify(str(model_type))}-errors.yaml')
         msg += '\nError details\n' + textwrap.indent(errors_yaml, prefix='  ')
+      else:
+        msg += '\nInput content\n' + textwrap.indent(YamlDump(content),
+                                                     prefix='  ')
+        msg += '\nError details\n' + textwrap.indent(YamlDump(e.errors()),
+                                                     prefix='  ')
+
       msg += f'\n{msg_summary}'
       raise Exception(msg) from e
 

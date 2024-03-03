@@ -8,6 +8,7 @@
 import asyncio
 import copy
 import json
+import logging
 import sys
 import uuid
 from dataclasses import dataclass
@@ -94,6 +95,7 @@ async def amain():
          indent=2,
          width=120,
          sort_dicts=False)
+  logging.basicConfig(level=logging.DEBUG, stream=sys.stderr)
 
   # Start a ComfyUI Client (provided in comfy_catapult.api_client).
   async with ComfyAPIClient(comfy_api_url=args.comfy_api_url) as comfy_client:

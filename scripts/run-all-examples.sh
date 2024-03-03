@@ -19,12 +19,13 @@ fi
 export COMFY_INSTALL_FILE_URL=${COMFY_INSTALL_FILE_URL:-""}
 
 VENV_PATH="${PWD}/.venv" source "${PROJ_PATH}/scripts/utilities/ensure-venv.sh"
+REQS="${PWD}/requirements.txt" source "${PROJ_PATH}/scripts/utilities/ensure-reqs.sh"
 
 export PYTHONPATH=${PYTHONPATH:-}
 export PYTHONPATH=${PYTHONPATH}:${PWD}
 
-python examples/using_pydantic.py
-python examples/add_a_node.py
+python -m examples.using_pydantic
+python -m examples.add_a_node
 
 ARGS=(
   "--comfy_install_file_url" "${COMFY_INSTALL_FILE_URL}"
@@ -35,10 +36,13 @@ ARGS=(
   "--negative_prompt" "dull, blurry, nsfw"
 )
 
+if [[ -n "${API_WORKFLOW_JSON_PATH-}" ]]; then
+  ARGS+=("--api_workflow_json_path" "${API_WORKFLOW_JSON_PATH}")
+fi
+
 if [[ -n "${CHECKPOINT_NAME-}" ]]; then
   ARGS+=("--ckpt_name" "${CHECKPOINT_NAME}")
 fi
-python examples/sdxlturbo_example_catapulter.py "${ARGS[@]}"
-
+python -m examples.sdxlturbo_example_catapulter "${ARGS[@]}"
 
 echo -e "${GREEN}All examples ran successfully${NC}"

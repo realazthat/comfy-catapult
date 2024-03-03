@@ -7,6 +7,7 @@
 
 import base64
 import json
+import logging
 import textwrap
 from typing import Any, Dict, List, Type, TypeVar
 from urllib.parse import urlencode, urlparse
@@ -23,7 +24,42 @@ from comfy_catapult.comfy_schema import (APIHistory, APIObjectInfo,
 from comfy_catapult.comfy_utils import TryParseAsModel, WatchVar, YamlDump
 from comfy_catapult.url_utils import JoinToBaseURL
 
+logger = logging.getLogger(__name__)
+
 T = TypeVar('T')
+
+
+async def _TryGetContent(*, resp: aiohttp.ClientResponse) -> str | Exception:
+  try:
+    return await resp.text(errors='replace')
+  except Exception as e:
+    logger.exception('Error getting content', exc_info=e, stack_info=True)
+    return e
+
+
+async def _RaiseForStatus(*,
+                          resp: aiohttp.ClientResponse,
+                          extra: Any | None = None):
+  """Same as raise_for_status(), but also dumps any content in the response into the exception"""
+  try:
+    resp.raise_for_status()
+  except aiohttp.ClientResponseError as e:
+    content_or_exc = await _TryGetContent(resp=resp)
+
+    message = e.message
+    if isinstance(content_or_exc, str):
+      message += f'\n\nContent (raw): {textwrap.indent(content_or_exc, prefix="  ")}'
+    else:
+      message += f'\n\nError getting content: {content_or_exc}'
+    if extra is not None:
+      message += f'\n\nExtra info: {textwrap.indent(YamlDump(extra), prefix="  ")}'
+
+    raise aiohttp.ClientResponseError(request_info=e.request_info,
+                                      history=e.history,
+                                      code=e.code,
+                                      status=e.status,
+                                      message=message,
+                                      headers=e.headers) from e
 
 
 async def _TryParseAsJson(*, content: str, json_type: Type[T]) -> T:
@@ -40,9 +76,6 @@ async def _TryParseAsJson(*, content: str, json_type: Type[T]) -> T:
 
 async def _TryParseRespAsJson(*, resp: aiohttp.ClientResponse,
                               json_type: Type[T]) -> T:
-  # Raise if error
-  resp.raise_for_status()
-
   content_bytes = b''
   content_str: str = ''
   content: T | None = None
@@ -56,11 +89,8 @@ async def _TryParseRespAsJson(*, resp: aiohttp.ClientResponse,
           f'\n\nContent (raw):\n{textwrap.indent(content_str, prefix="  ")}')
 
     content = await _TryParseAsJson(content=content_str, json_type=json_type)
-    if resp.status != 200:
-      raise Exception(
-          f'Error: {resp.status} {resp.reason}'
-          f'\n\nContent (yaml):\n{textwrap.indent(YamlDump(content), prefix="  ")}'
-      )
+    if resp.ok:
+      await _RaiseForStatus(resp=resp, extra=content)
     return content
   except Exception as e:
     contentb64 = base64.b64encode(content_bytes).decode('utf-8')
@@ -285,7 +315,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
 
     with WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
-        resp.raise_for_status()
+        await _RaiseForStatus(resp=resp)
         return await resp.content.read()
 
   async def PostFree(self, *, unload_models: bool, free_memory: bool):
@@ -293,7 +323,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'free'))
     with WatchVar(url=url.geturl()):
       async with self._session.post(url.geturl(), data=data) as resp:
-        resp.raise_for_status()
+        await _RaiseForStatus(resp=resp)
 
   async def PostInterrupt(self):
     # TODO(realazthat/comfy-catapult#5): change the API to take a prompt_id.

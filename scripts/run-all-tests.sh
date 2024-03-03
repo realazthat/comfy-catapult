@@ -27,3 +27,5 @@ find comfy_catapult -name "*_test.py" | while read -r TEST_FILE; do
   TEST_MODULE=$(echo "${TEST_FILE}" | sed -e 's/\//./g' -e 's/\.py$//')
   python -m "${TEST_MODULE}"
 done
+
+echo -e "${GREEN}All tests ran successfully${NC}"

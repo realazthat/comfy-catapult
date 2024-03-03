@@ -1,0 +1,59 @@
+name: build-and-test
+
+on:
+  push:
+    branches:
+    - master
+  pull_request:
+    branches:
+    - master
+env:
+  COMFY_API_URL: http://user:1@localhost:41112
+  CKPT_FILE: .models-for-tests/sd_xl_turbo_1.0_fp16.safetensors
+  CKPT_SHA256: e869ac7d6942cb327d68d5ed83a40447aadf20e0c3358d98b2cc9e270db0da26
+  MODEL_URL: https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-20.04
+
+    steps:
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+    - uses: actions/checkout@v4
+    - name: Install Bash (Ubuntu)
+      run: sudo apt-get update && sudo apt-get install -y bash
+    - name: Restore cached files
+      id: restore-cache
+      uses: actions/cache/restore@v4
+      with:
+        path: |
+          ${CKPT_FILE}
+        key: ${{ runner.os }}-ckpt-${CKPT_SHA256}
+    - name: Download large file
+      run: |
+        if echo "${CKPT_SHA256}  ${CKPT_FILE}" | sha256sum --check --status; then
+          echo "Cache miss - downloading file"
+          mkdir -p $(dirname "${CKPT_FILE}")
+          wget -q --continue --show-progress -e dotbytes="4M" -O "${CKPT_FILE}" "${MODEL_URL}"
+          echo "${CKPT_SHA256}  ${CKPT_FILE}" | sha256sum --check --status
+        else
+          echo "Cache hit - file already downloaded"
+        fi
+    - name: Save cached files
+      uses: actions/cache/save@v4
+      with:
+        path: |
+          ${CKPT_FILE}
+        key: ${{ steps.restore-cache.outputs.cache-primary-key }}
+    - name: Run ComfyUI for examples and tests
+      run: |
+        bash scripts/run-comfy-for-tests.sh
+    - name: Run examples
+      run: |
+        bash scripts/run-all-examples.sh
+    - name: Run tests
+      run: |
+        bash scripts/run-all-tests.sh
