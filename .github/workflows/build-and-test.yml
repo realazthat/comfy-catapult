@@ -4,9 +4,11 @@ on:
   push:
     branches:
       - master
+      - develop
   pull_request:
     branches:
       - master
+      - develop
 env:
   COMFY_API_URL: http://user:1@localhost:41112
   CKPT_FILE: .models-for-tests/sd_xl_turbo_1.0_fp16.safetensors
