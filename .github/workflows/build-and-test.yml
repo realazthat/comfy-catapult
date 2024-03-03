@@ -55,9 +55,6 @@ jobs:
       - name: Run ComfyUI for examples and tests
         run: |
           bash scripts/run-comfy-for-tests.sh
-      - name: Run examples
+      - name: Run everything
         run: |
-          bash scripts/run-all-examples.sh
-      - name: Run tests
-        run: |
-          bash scripts/run-all-tests.sh
+          bash scripts/pre.sh
