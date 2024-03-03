@@ -1,4 +1,5 @@
 name: build-and-test
+permissions: read-all
 
 on:
   push:
@@ -34,7 +35,7 @@ jobs:
         with:
           path: |
             ${CKPT_FILE}
-          key: ${{ runner.os }}-ckpt-${CKPT_SHA256}
+          key: ${{ runner.os }}-ckpt-${{ env.CKPT_SHA256 }}
       - name: Download large file
         run: |
           if ! echo "${CKPT_SHA256}  ${CKPT_FILE}" | sha256sum --check --status; then
