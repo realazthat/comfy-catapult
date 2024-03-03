@@ -37,7 +37,7 @@ jobs:
           key: ${{ runner.os }}-ckpt-${CKPT_SHA256}
       - name: Download large file
         run: |
-          if echo "${CKPT_SHA256}  ${CKPT_FILE}" | sha256sum --check --status; then
+          if ! echo "${CKPT_SHA256}  ${CKPT_FILE}" | sha256sum --check --status; then
             echo "Cache miss - downloading file"
             mkdir -p $(dirname "${CKPT_FILE}")
             wget -q --continue --show-progress -e dotbytes="4M" -O "${CKPT_FILE}" "${MODEL_URL}"
