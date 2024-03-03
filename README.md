@@ -13,6 +13,11 @@ SOURCE: `README.md.jinja2`.
 **Warning:** Very raw and unmaintained code. Use at your own risk. Mainly
 intended as a starting point.
 
+| Branch  | Status                    |
+| ------- | ------------------------- |
+| Master  | [![Build and Test][1]][2] |
+| Develop | [![Build and Test][3]][4] |
+
 ```
 ComfyUI API Endpoint <| <=  Comfy Catapult <=> HTTP Server <| <=  Public users
                      <|                                    <|
@@ -373,9 +378,15 @@ print(api_workflow.model_dump_json())
 
 ````
 
-## Known to work on
+## Requirements
 
-- **Python 3.11.4**, WSL2/Windows11, Ubuntu 22.04.2 LTS
+- Python 3.10+
+- ComfyUI server with API endpoint enabled.
+
+### Known to work on
+
+- **Python 3.10.0**, WSL2/Windows11, Ubuntu 22.04.2 LTS
+- **Python 3.10.0**, Ubuntu 22.04
 
 ## Limitations
 
@@ -401,10 +412,10 @@ print(api_workflow.model_dump_json())
 5. `git commit -m "..."`.
 6. Make a PR to `develop`.
 
-[1]: https://github.com/comfyanonymous/ComfyUI/tree/master/script_examples
-[2]: https://github.com/rvion/CushyStudio
-[3]: https://github.com/matan1905/ComfyUI-Serving-Toolkit
-[4]: https://github.com/city96/ComfyUI_NetDist
+[1]: https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml/badge.svg?branch=master
+[2]: https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
+[3]: https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml/badge.svg?branch=develop
+[4]: https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
 [5]: https://github.com/andreyryabtsev/comfyui-python-api
 [6]: https://github.com/BennyKok/comfyui-deploy
 [7]: https://github.com/pydn/ComfyUI-to-Python-Extension
