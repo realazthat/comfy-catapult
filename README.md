@@ -427,5 +427,5 @@ print(api_workflow.model_dump_json())
 [13]: https://pypi.org/project/comfy-catapult/
 [14]: https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v1.0.1/master
 [15]: https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v1.0.1/develop
-[16]: https://img.shields.io/github/last-commit/realazthat/snipinator/master
-[17]: https://img.shields.io/github/last-commit/realazthat/snipinator/develop
+[16]: https://img.shields.io/github/last-commit/realazthat/comfy-catapult/master
+[17]: https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop
