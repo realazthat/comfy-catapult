@@ -13,10 +13,10 @@ SOURCE: `README.md.jinja2`.
 **Warning:** Very raw and unmaintained code. Use at your own risk. Mainly
 intended as a starting point.
 
-| Branch  | Status                                                                      |
-| ------- | --------------------------------------------------------------------------- |
-| Master  | [![Build and Test][1]][2] ![GitHub License][11] [![PyPI - Version][12]][13] |
-| Develop | [![Build and Test][3]][4] ![GitHub License][11]                             |
+| Branch  | Status                                                                                          |
+| ------- | ----------------------------------------------------------------------------------------------- |
+| Master  | [![Build and Test][1]][2] ![GitHub License][11] [![PyPI - Version][12]][13] ![since tagged][14] |
+| Develop | [![Build and Test][3]][4] ![GitHub License][11] ![since tagged][15]                             |
 
 ```
 ComfyUI API Endpoint <| <=  Comfy Catapult <=> HTTP Server <| <=  Public users
@@ -425,3 +425,5 @@ print(api_workflow.model_dump_json())
 [11]: https://img.shields.io/github/license/realazthat/comfy-catapult
 [12]: https://img.shields.io/pypi/v/comfy-catapult
 [13]: https://pypi.org/project/comfy-catapult/
+[14]: https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v1.0.1/master
+[15]: https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v1.0.1/develop
