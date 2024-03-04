@@ -13,10 +13,12 @@ SOURCE: `README.md.jinja2`.
 **Warning:** Very raw and unmaintained code. Use at your own risk. Mainly
 intended as a starting point.
 
-| Branch  | Status                                                                                                             |
-| ------- | ------------------------------------------------------------------------------------------------------------------ |
-| Master  | [![Build and Test][1]][2] ![GitHub License][11] [![PyPI - Version][12]][13] ![since tagged][14] ![last commit][16] |
-| Develop | [![Build and Test][3]][4] ![GitHub License][11] ![since tagged][15] ![last commit][17]                             |
+![GitHub License][11] [![PyPI - Version][12]][13]
+
+| Branch  | Build Status              |                                        |
+| ------- | ------------------------- | -------------------------------------- |
+| Master  | [![Build and Test][1]][2] | ![since tagged][14] ![last commit][16] |
+| Develop | [![Build and Test][3]][4] | ![since tagged][15] ![last commit][17] |
 
 ```
 ComfyUI API Endpoint <| <=  Comfy Catapult <=> HTTP Server <| <=  Public users
