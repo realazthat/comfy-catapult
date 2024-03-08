@@ -13,7 +13,8 @@ SOURCE: `README.md.jinja2`.
 **Warning:** Very raw and unmaintained code. Use at your own risk. Mainly
 intended as a starting point.
 
-![GitHub License][11] [![PyPI - Version][12]][13] [![Python Version][18]][13]
+![Top language][19] ![GitHub License][11] [![PyPI - Version][12]][13]
+[![Python Version][18]][13]
 
 | Branch  | Build Status              |                                        |
 | ------- | ------------------------- | -------------------------------------- |
@@ -446,3 +447,4 @@ print(api_workflow.model_dump_json())
 [16]: https://img.shields.io/github/last-commit/realazthat/comfy-catapult/master
 [17]: https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop
 [18]: https://img.shields.io/pypi/pyversions/comfy-catapult
+[19]: https://img.shields.io/github/languages/top/realazthat/comfy-catapult.svg?&cacheSeconds=28800
