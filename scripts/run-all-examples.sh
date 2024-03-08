@@ -43,4 +43,9 @@ if [[ -n "${CHECKPOINT_NAME-}" ]]; then
 fi
 python -m examples.sdxlturbo_example_catapulter "${ARGS[@]}"
 
+# if tiv is a valid command
+if command -v tiv &> /dev/null; then
+  tiv -w 80 -h 80 "${PWD}/.deleteme/output.png"
+fi
+
 echo -e "${GREEN}All examples ran successfully${NC}"

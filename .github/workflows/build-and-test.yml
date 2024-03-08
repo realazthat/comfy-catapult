@@ -13,7 +13,7 @@ on:
       - develop
 env:
   COMFY_API_URL: http://user:1@localhost:41112
-  CKPT_FILE: ".cache/models-for-tests/sd_xl_turbo_1.0_fp16.safetensors"
+  CKPT_FILE: .cache/models-for-tests/sd_xl_turbo_1.0_fp16.safetensors
   CKPT_SHA256: e869ac7d6942cb327d68d5ed83a40447aadf20e0c3358d98b2cc9e270db0da26
   CKPT_URL: https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors
 
@@ -28,7 +28,15 @@ jobs:
           node-version: "20"
       - uses: actions/checkout@v4
       - name: Install Bash (Ubuntu)
-        run: sudo apt-get update && sudo apt-get install -y bash
+        run: sudo apt-get update && sudo apt-get install -y bash wget
+      - name: Install tiv
+        run: |
+          wget https://github.com/stefanhaustein/TerminalImageViewer/archive/8aca9afaf72c4f0d458db62b62b6401f75d6ee8d.zip
+          unzip 8aca9afaf72c4f0d458db62b62b6401f75d6ee8d.zip
+          cd TerminalImageViewer-8aca9afaf72c4f0d458db62b62b6401f75d6ee8d
+          cd src
+          make
+          sudo make install
       - name: Restore cached files
         id: restore-cache
         uses: actions/cache/restore@v4
