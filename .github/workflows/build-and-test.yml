@@ -20,6 +20,12 @@ env:
 jobs:
   build-and-test:
     runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        # See https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
+        python-version:
+        - file: 3.10.0
+          gh: 3.10.0
 
     steps:
       - name: Use Node.js
@@ -27,6 +33,15 @@ jobs:
         with:
           node-version: "20"
       - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version.gh }}
+      - name: Set up .python-version
+        run: |
+          echo "${{ matrix.python-version.file }}"
+          echo "${{ matrix.python-version.file }}" > .python-version
+          cat .python-version
       - name: Install Bash (Ubuntu)
         run: sudo apt-get update && sudo apt-get install -y bash wget
       - name: Install tiv
