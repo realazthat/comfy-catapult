@@ -16,10 +16,10 @@ intended as a starting point.
 ![Top language][19] ![GitHub License][11] [![PyPI - Version][12]][13]
 [![Python Version][18]][13]
 
-| Branch  | Build Status              |                                        |
-| ------- | ------------------------- | -------------------------------------- |
-| Master  | [![Build and Test][1]][2] | ![since tagged][14] ![last commit][16] |
-| Develop | [![Build and Test][3]][4] | ![since tagged][15] ![last commit][17] |
+| Branch  | Build Status              |                                              |
+| ------- | ------------------------- | -------------------------------------------- |
+| Master  | [![Build and Test][1]][2] | [![since tagged][14]][20] ![last commit][16] |
+| Develop | [![Build and Test][3]][4] | [![since tagged][15]][21] ![last commit][17] |
 
 ```
 ComfyUI API Endpoint <| <=  Comfy Catapult <=> HTTP Server <| <=  Public users
@@ -448,3 +448,5 @@ print(api_workflow.model_dump_json())
 [17]: https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop
 [18]: https://img.shields.io/pypi/pyversions/comfy-catapult
 [19]: https://img.shields.io/github/languages/top/realazthat/comfy-catapult.svg?&cacheSeconds=28800
+[20]: https://github.com/realazthat/snipinator/compare/v1.0.2...master
+[21]: https://github.com/realazthat/snipinator/compare/v1.0.2...develop
