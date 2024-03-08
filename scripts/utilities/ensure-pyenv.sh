@@ -7,7 +7,7 @@ source "${SCRIPT_DIR}/common.sh"
 
 # Make sure .python-version exists.
 if [[ ! -f "${PWD}/.python-version" ]]; then
-  [[ $0 == "${BASH_SOURCE}" ]] && EXIT="exit" || EXIT="return"
+  [[ $0 == "${BASH_SOURCE[0]}" ]] && EXIT="exit" || EXIT="return"
   echo -e "${RED}.python-version does not exist in ${PWD}${NC}"
   ${EXIT} 1
 fi

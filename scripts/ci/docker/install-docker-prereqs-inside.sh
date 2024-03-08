@@ -1,15 +1,16 @@
-# !/bin/bash
+#!/bin/bash
 # https://gist.github.com/mohanpedala/1e2ff5661761d3abd0385e8223e16425
 set -e -x -v -u -o pipefail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m' # No Color
+export RED GREEN NC
 
-if [ -z "$PYTHON_VERSION" ]; then
+if [[ -z "${PYTHON_VERSION}" ]]; then
 	echo -e "${RED}PYTHON_VERSION is not set${NC}"
-	[[ $0 == "$BASH_SOURCE" ]] && EXIT=exit || EXIT=return
-	$EXIT 1
+	[[ $0 == "${BASH_SOURCE[0]}" ]] && EXIT="exit" || EXIT="return"
+	${EXIT} 1
 fi
 
 # Update and Upgrade the system
@@ -29,7 +30,7 @@ apt-get install -y make libssl-dev zlib1g-dev libbz2-dev \
 YQ_VER=v4.40.5
 YQ_BIN=yq_linux_amd64
 YQ_URL="https://github.com/mikefarah/yq/releases/download/${YQ_VER}/${YQ_BIN}"
-wget "$YQ_URL" -O /usr/bin/yq && chmod +x /usr/bin/yq
+wget "${YQ_URL}" -O /usr/bin/yq && chmod +x /usr/bin/yq
 ################################################################################
 
 # Install pyenv
@@ -48,12 +49,12 @@ echo 'fi' >>~/.profile
 ################################################################################
 # Pre-install required python version.
 
-PYENV_ROOT="$HOME/.pyenv"
-PATH="$PYENV_ROOT/bin:$PATH"
+PYENV_ROOT="${HOME}/.pyenv"
+PATH="${PYENV_ROOT}/bin:${PATH}"
 eval "$(pyenv init --path)"
 eval "$(pyenv virtualenv-init -)"
 
-pyenv install --skip-existing "$PYTHON_VERSION"
+pyenv install --skip-existing "${PYTHON_VERSION}"
 ################################################################################
 
 # Clean up APT when done.

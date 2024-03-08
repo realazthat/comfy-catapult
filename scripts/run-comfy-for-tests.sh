@@ -27,7 +27,7 @@ CKPT_FILE="${CKPT_DIR}/sd_xl_turbo_1.0_fp16.safetensors"
 
 if ! echo "${CKPT_SHA256}  ${CKPT_FILE}" | sha256sum --check --status; then
   echo -e "${YELLOW}Downloading checkpoint${NC}"
-  mkdir -p $(dirname "${CKPT_FILE}")
+  mkdir -p "$(dirname "${CKPT_FILE}")"
   wget -q --continue --show-progress -e dotbytes="4M" -O "${CKPT_FILE}" "${CKPT_URL}"
   echo "${CKPT_SHA256}  ${CKPT_FILE}" | sha256sum --check --status
 else

@@ -10,9 +10,7 @@ export COMFY_API_URL=${COMFY_API_URL:-""}
 
 if [[ -z "${COMFY_API_URL}" ]]; then
   echo -e "${RED}COMFY_API_URL is not set${NC}"
-  # trunk-ignore(shellcheck/SC2128)
-  # trunk-ignore(shellcheck/SC2209)
-  [[ $0 == "${BASH_SOURCE}" ]] && EXIT=exit || EXIT=return
+  [[ $0 == "${BASH_SOURCE[0]}" ]] && EXIT="exit" || EXIT="return"
   ${EXIT} 1
 fi
 
