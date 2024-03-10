@@ -32,6 +32,8 @@ fi
 export PYENV_ROOT="${HOME}/.pyenv"
 export PATH="${PYENV_ROOT}/bin:${PATH}"
 
+CURRENT_PWD="${PWD}"
+
 # if PYENV_ROOT doesn't exist, install pyenv
 if [[ ! -d "${PYENV_ROOT}" ]]; then
   echo -e "${YELLOW}pyenv is not installed${NC}"
@@ -43,7 +45,7 @@ if [[ ! -d "${PYENV_ROOT}" ]]; then
   cd "${PYENV_ROOT}"
   ls
   cd "${PYENV_ROOT}" && src/configure && make -C src
-  cd "${PROJ_PATH}"
+  cd "${CURRENT_PWD}"
 fi
 
 
