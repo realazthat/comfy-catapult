@@ -20,7 +20,7 @@ if [[ -z "${WANTED_PYTHON_VERSION}" ]]; then
   ${EXIT} 1
 fi
 
-CURRENT_PYTHON_VERSION_STR=$(python --version)
+CURRENT_PYTHON_VERSION_STR=$(python --version||true)
 
 # Check if the current python matches the wanted python
 if [[ "${CURRENT_PYTHON_VERSION_STR}" == "Python ${WANTED_PYTHON_VERSION}" ]]; then
