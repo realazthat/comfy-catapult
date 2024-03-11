@@ -12,7 +12,6 @@ on:
       - master
       - develop
 env:
-  COMFY_API_URL: http://user:1@localhost:41112
   CKPT_FILE: .cache/models-for-tests/sd_xl_turbo_1.0_fp16.safetensors
   CKPT_SHA256: e869ac7d6942cb327d68d5ed83a40447aadf20e0c3358d98b2cc9e270db0da26
   CKPT_URL: https://huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors
@@ -24,8 +23,8 @@ jobs:
       matrix:
         # See https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
         python-version:
-        - file: 3.10.0
-          gh: 3.10.0
+          - file: 3.10.0
+            gh: 3.10.0
 
     steps:
       - name: Use Node.js
@@ -77,7 +76,12 @@ jobs:
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}
       - name: Run ComfyUI for examples and tests
         run: |
-          bash scripts/run-comfy-for-tests.sh
+          COMFY_INSTANCE_NAME="${{ github.repository }}"
+          COMFY_INSTANCE_NAME=$(echo "${COMFY_INSTANCE_NAME}" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9]/-/g' | tr -s '-')
+          COMFY_INSTANCE_NAME="${COMFY_INSTANCE_NAME}-comfy-test-instance"
+          COMFY_INSTANCE_NAME=${COMFY_INSTANCE_NAME} source scripts/run-comfy-for-tests.sh
+          echo "COMFY_API_URL=${COMFY_API_URL}" >> "${GITHUB_ENV}"
       - name: Run everything
         run: |
+          echo "${COMFY_API_URL}"
           bash scripts/pre.sh
