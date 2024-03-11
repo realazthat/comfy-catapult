@@ -57,7 +57,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: |
-            ${CKPT_FILE}
+            ${{ env.CKPT_FILE }}
           key: ${{ runner.os }}-ckpt-${{ env.CKPT_SHA256 }}
       - name: Download large file
         run: |
@@ -73,7 +73,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: |
-            ${CKPT_FILE}
+            ${{ env.CKPT_FILE }}
           key: ${{ steps.restore-cache.outputs.cache-primary-key }}
       - name: Run ComfyUI for examples and tests
         run: |
