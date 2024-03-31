@@ -13,15 +13,41 @@ from typing_extensions import Annotated
 
 EXTRA = 'allow'
 
-APINodeID = Annotated[str, Field(alias='node_id')]
-PromptID = Annotated[str, Field(alias='prompt_id')]
+APINodeID = Annotated[
+    str,
+    Field(alias='node_id', description='The ID of a node in a workflow.')]
+PromptID = Annotated[
+    str,
+    Field(
+        alias='prompt_id',
+        description=
+        'The ID of a prompt (submission of a api workflow to the server to be executed). You can choose this yourself when submitting.'
+    )]
 ClientID = Annotated[str, Field(alias='client_id')]
-OutputName = Annotated[str, Field(alias='output_name')]
+OutputName = Annotated[
+    str,
+    Field(
+        alias='output_name',
+        description=
+        'The name of an output in a node, in /history/, /history/{prompt_id} endpoints.'
+    )]
 # This is BOOLEAN, INT etc.
-OutputType = Annotated[str, Field(alias='output_type')]
+OutputType = Annotated[
+    str,
+    Field(
+        alias='output_type',
+        description=
+        'The type of a named output of a node, in /object_info endpoint, and also can be seen/found in {node,custom node} implementations.'
+    )]
 
 # This is BOOLEAN, INT etc.
-NamedInputType = Annotated[str, Field(alias='input_type')]
+NamedInputType = Annotated[
+    str,
+    Field(
+        alias='input_type',
+        description=
+        'The type of a named input of a node, in /object_info endpoint, and also can be seen/found in {node,custom node} implementations.'
+    )]
 # This is a list of valid *values* for a combo input.
 ComboInputType = Annotated[List[Any], Field(alias='combo_input_class')]
 ComfyFolderType = Literal['input', 'output', 'temp']
