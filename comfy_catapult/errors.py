@@ -13,7 +13,8 @@ from comfy_catapult.comfy_schema import APINodeID, APIWorkflowTicket
 
 class NodeNotFound(RuntimeError):
 
-  def __init__(self, *, node_id: APINodeID | None, title: str | None):
+  def __init__(self, *, node_id: APINodeID | int | None,
+               title: str | int | None):
     super().__init__(
         f'Node with title=={repr(title)}, node_id=={repr(node_id)} not found')
     self.node_id = node_id

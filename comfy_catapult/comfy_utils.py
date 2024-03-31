@@ -71,7 +71,7 @@ def GetNodeByTitle(*, workflow: APIWorkflow, title: str) -> NodeIDAndNode:
 
 
 def FindNode(*, workflow: APIWorkflow,
-             id_or_title: str) -> NodeIDAndNode | None:
+             id_or_title: int | str) -> NodeIDAndNode | None:
   id_node_id: APINodeID | None = None
   # id_node_error: Exception | None = None
 
@@ -79,15 +79,18 @@ def FindNode(*, workflow: APIWorkflow,
   # title_node_error: Exception | None = None
 
   try:
-    title_node_id, _ = GetNodeByTitle(workflow=workflow, title=id_or_title)
+    if isinstance(id_or_title, str):
+      title_node_id, _ = GetNodeByTitle(workflow=workflow, title=id_or_title)
 
   except NodeNotFound:
     # id_node_error = e
     pass
 
+  id_or_title_str = str(id_or_title)
   try:
-    id_node_id = cast(APINodeID, id_or_title)
-    # node = workflow.root[id_node_id]
+    id_node_id_: APINodeID = cast(APINodeID, id_or_title_str)
+    if id_node_id_ in workflow.root:
+      id_node_id = id_node_id_
   except ValueError:
     # title_node_error = e
     pass
@@ -95,9 +98,9 @@ def FindNode(*, workflow: APIWorkflow,
   if title_node_id is None and id_node_id is None:
     return None
   elif title_node_id is not None and id_node_id is not None:
-    raise MultipleNodesFound(search_titles=[id_or_title],
+    raise MultipleNodesFound(search_titles=[id_or_title_str],
                              search_nodes=[id_node_id],
-                             found_titles=[id_or_title],
+                             found_titles=[title_node_id],
                              found_nodes=[id_node_id])
   elif title_node_id is not None:
     return NodeIDAndNode(node_id=title_node_id,
@@ -110,7 +113,7 @@ def FindNode(*, workflow: APIWorkflow,
                          node_info=workflow.root[id_node_id])
 
 
-def GetNode(*, workflow: APIWorkflow, id_or_title: str) -> NodeIDAndNode:
+def GetNode(*, workflow: APIWorkflow, id_or_title: str | int) -> NodeIDAndNode:
   node = FindNode(workflow=workflow, id_or_title=id_or_title)
   if node is None:
     raise NodeNotFound(title=id_or_title, node_id=id_or_title)
