@@ -8,12 +8,13 @@
 from copy import deepcopy
 from typing import Sequence
 
-from comfy_catapult.comfy_schema import APIWorkflowTicket, NodeID
+from comfy_catapult.comfy_schema import APINodeID, APIWorkflowTicket
 
 
 class NodeNotFound(RuntimeError):
 
-  def __init__(self, *, node_id: NodeID | None, title: str | None):
+  def __init__(self, *, node_id: APINodeID | int | None,
+               title: str | int | None):
     super().__init__(
         f'Node with title=={repr(title)}, node_id=={repr(node_id)} not found')
     self.node_id = node_id
@@ -23,8 +24,8 @@ class NodeNotFound(RuntimeError):
 class MultipleNodesFound(RuntimeError):
 
   def __init__(self, *, search_titles: Sequence[str],
-               search_nodes: Sequence[NodeID], found_titles: Sequence[str],
-               found_nodes: Sequence[NodeID]):
+               search_nodes: Sequence[APINodeID], found_titles: Sequence[str],
+               found_nodes: Sequence[APINodeID]):
     super().__init__(
         f'Found multiple nodes with titles=={repr(found_titles)}, node_ids=={list(found_nodes)}'
         f' when searching for titles=={repr(search_titles)}, node_ids=={list(search_nodes)}'
@@ -37,7 +38,7 @@ class MultipleNodesFound(RuntimeError):
 
 class NodesNotExecuted(RuntimeError):
 
-  def __init__(self, *, nodes: Sequence[NodeID],
+  def __init__(self, *, nodes: Sequence[APINodeID],
                titles: Sequence[str | None] | None):
     if titles is None:
       titles = [None] * len(nodes)

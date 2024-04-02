@@ -75,7 +75,7 @@ repos:
   - id: insert-license
     args: [--license-filepath, .github/license-header.md]
     files: \.py$
-    exclude: .*__init__.py$
+    exclude: (^scripts/.*)|(.*__init__.py$)
 # From https://github.com/Lucas-C/pre-commit-hooks#useful-local-hooks
 - repo: local
   hooks:

@@ -7,11 +7,11 @@
 
 import dataclasses
 import datetime
-import sys
+import logging
 import textwrap
 from dataclasses import is_dataclass
 from typing import (Any, Generator, Hashable, List, Literal, NamedTuple, Type,
-                    TypeVar)
+                    TypeVar, cast)
 
 import aiofiles
 import pydantic_core
@@ -21,25 +21,25 @@ from anyio import Path
 from pydantic import BaseModel
 from pydash import slugify
 
-from comfy_catapult.comfy_schema import (APIHistoryEntry, APIOutputUI,
-                                         APIWorkflow, APIWorkflowNodeInfo,
-                                         NodeID)
+from comfy_catapult.comfy_schema import (APIHistoryEntry, APINodeID,
+                                         APIOutputUI, APIWorkflow,
+                                         APIWorkflowNodeInfo,
+                                         ComfyUIPathTriplet)
 from comfy_catapult.errors import MultipleNodesFound, NodeNotFound
 from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
-from comfy_catapult.url_utils import ComfyUIPathTriplet
 
 MAX_DUMP_LINES: int | None = 200
-DUMP_DIR: Path = Path('.logs/dumps')
+logger = logging.getLogger(__name__)
 
 
 class NodeIDAndNode(NamedTuple):
-  node_id: NodeID
+  node_id: APINodeID
   node_info: APIWorkflowNodeInfo
 
 
 def FindNodesByTitle(*, workflow: APIWorkflow,
                      title: str) -> Generator[NodeIDAndNode, None, None]:
-  node_id: NodeID
+  node_id: APINodeID
   node_info: APIWorkflowNodeInfo
   for node_id, node_info in workflow.root.items():
     if node_info.meta is not None and node_info.meta.title == title:
@@ -71,23 +71,26 @@ def GetNodeByTitle(*, workflow: APIWorkflow, title: str) -> NodeIDAndNode:
 
 
 def FindNode(*, workflow: APIWorkflow,
-             id_or_title: str) -> NodeIDAndNode | None:
-  id_node_id: NodeID | None = None
+             id_or_title: int | str) -> NodeIDAndNode | None:
+  id_node_id: APINodeID | None = None
   # id_node_error: Exception | None = None
 
-  title_node_id: NodeID | None = None
+  title_node_id: APINodeID | None = None
   # title_node_error: Exception | None = None
 
   try:
-    title_node_id, _ = GetNodeByTitle(workflow=workflow, title=id_or_title)
+    if isinstance(id_or_title, str):
+      title_node_id, _ = GetNodeByTitle(workflow=workflow, title=id_or_title)
 
   except NodeNotFound:
     # id_node_error = e
     pass
 
+  id_or_title_str = str(id_or_title)
   try:
-    id_node_id = NodeID(id_or_title)
-    # node = workflow.root[id_node_id]
+    id_node_id_: APINodeID = cast(APINodeID, id_or_title_str)
+    if id_node_id_ in workflow.root:
+      id_node_id = id_node_id_
   except ValueError:
     # title_node_error = e
     pass
@@ -95,9 +98,9 @@ def FindNode(*, workflow: APIWorkflow,
   if title_node_id is None and id_node_id is None:
     return None
   elif title_node_id is not None and id_node_id is not None:
-    raise MultipleNodesFound(search_titles=[id_or_title],
+    raise MultipleNodesFound(search_titles=[id_or_title_str],
                              search_nodes=[id_node_id],
-                             found_titles=[id_or_title],
+                             found_titles=[title_node_id],
                              found_nodes=[id_node_id])
   elif title_node_id is not None:
     return NodeIDAndNode(node_id=title_node_id,
@@ -110,14 +113,14 @@ def FindNode(*, workflow: APIWorkflow,
                          node_info=workflow.root[id_node_id])
 
 
-def GetNode(*, workflow: APIWorkflow, id_or_title: str) -> NodeIDAndNode:
+def GetNode(*, workflow: APIWorkflow, id_or_title: str | int) -> NodeIDAndNode:
   node = FindNode(workflow=workflow, id_or_title=id_or_title)
   if node is None:
     raise NodeNotFound(title=id_or_title, node_id=id_or_title)
   return node
 
 
-def GenerateNewNodeID(*, workflow: APIWorkflow) -> NodeID:
+def GenerateNewNodeID(*, workflow: APIWorkflow) -> APINodeID:
   all_keys = workflow.root.keys()
   max_integer = 0
 
@@ -128,10 +131,11 @@ def GenerateNewNodeID(*, workflow: APIWorkflow) -> NodeID:
     except ValueError:
       continue
 
-  return NodeID(str(max_integer + 1))
+  return cast(APINodeID, str(max_integer + 1))
 
 
-async def DownloadPreviewImage(*, node_id: NodeID, job_history: APIHistoryEntry,
+async def DownloadPreviewImage(*, node_id: APINodeID,
+                               job_history: APIHistoryEntry,
                                field_path: Hashable | List[Hashable],
                                comfy_api_url: str, remote: RemoteFileAPIBase,
                                local_dst_path: Path):
@@ -209,11 +213,11 @@ async def DownloadPreviewImage(*, node_id: NodeID, job_history: APIHistoryEntry,
     raise Exception(
         f'Expected "type" to be "temp" or "output", got {folder_type}')
 
-  triplet = ComfyUIPathTriplet(comfy_api_url=comfy_api_url,
-                               folder_type=folder_type,
+  triplet = ComfyUIPathTriplet(type=folder_type,
                                subfolder=subfolder,
                                filename=filename)
-  return await remote.DownloadTriplet(untrusted_src_triplet=triplet,
+  return await remote.DownloadTriplet(untrusted_comfy_api_url=comfy_api_url,
+                                      untrusted_src_triplet=triplet,
                                       dst_path=local_dst_path)
 
 
@@ -237,6 +241,7 @@ async def _GetNewPath(*, parent_path: Path) -> Path:
   while await path.exists():
     path = parent_path / f'{name}_{index}'
     index += 1
+  await path.mkdir(parents=True, exist_ok=True)
   return path
 
 
@@ -272,10 +277,6 @@ _BaseModelT = TypeVar('_BaseModelT', bound=BaseModel)
 
 def _IsDataclassInstance(instance):
   return is_dataclass(instance) and not isinstance(instance, type)
-
-
-def _IsNamedTuple(instance):
-  return isinstance(instance, tuple) and hasattr(instance, '_fields')
 
 
 class _ExtraFieldWarning(NamedTuple):
@@ -324,10 +325,11 @@ async def TryParseAsModel(
     *,
     content: Any,
     model_type: Type[_BaseModelT],
+    errors_dump_directory: Path | None,
     strict: Literal['yes', 'no', 'warn'] = 'warn') -> _BaseModelT:
 
-  async def _Internal():
-    dump_path: Path | None = None
+  async def _Internal(errors_dump_directory: Path | None):
+    error_dump_path: Path | None = None
 
     try:
       try:
@@ -341,68 +343,86 @@ async def TryParseAsModel(
         # succeeds. If it errors, then we'll go to the except below which
         # prints the error.
         model = model_type.model_validate(content, strict=False)
-        if dump_path is None:
-          dump_path = await _GetNewPath(parent_path=DUMP_DIR)
+        if error_dump_path is None and errors_dump_directory is not None:
+          error_dump_path = await _GetNewPath(parent_path=errors_dump_directory)
 
-        error_line = await BigErrorStrDump(
-            exception=e,
-            max_lines=MAX_DUMP_LINES,
-            path=dump_path / f'{slugify(str(model_type))}-error_str.txt')
+        if error_dump_path is not None:
+          error_line = await BigErrorStrDump(
+              exception=e,
+              max_lines=MAX_DUMP_LINES,
+              path=error_dump_path /
+              f'{slugify(str(model_type))}-error_str.txt')
 
-        model_dump_yaml = await BigYamlDump(
-            model.model_dump(),
-            max_lines=MAX_DUMP_LINES,
-            path=dump_path / f'{slugify(str(model_type))}-model_dump.yaml')
-        input_content_yaml = await BigYamlDump(
-            content,
-            max_lines=MAX_DUMP_LINES,
-            path=dump_path / f'{slugify(str(model_type))}-input_content.yaml')
+          model_dump_yaml = await BigYamlDump(
+              model.model_dump(),
+              max_lines=MAX_DUMP_LINES,
+              path=error_dump_path /
+              f'{slugify(str(model_type))}-model_dump.yaml')
+          input_content_yaml = await BigYamlDump(
+              content,
+              max_lines=MAX_DUMP_LINES,
+              path=error_dump_path /
+              f'{slugify(str(model_type))}-input_content.yaml')
+        else:
+          error_line = str(e)
+          model_dump_yaml = YamlDump(model.model_dump())
+          input_content_yaml = YamlDump(content)
+
         msg = f'Warning: Error parsing {model_type} with strict=True: {error_line}'
-        print(
+        logger.error(
             f'{msg}:'
             f'\n\n{textwrap.indent(str(e), prefix="  ")}'
             f'\nParsed Model:\n{textwrap.indent(model_dump_yaml, prefix="  ")}'
             f'\nInput content\n{textwrap.indent(input_content_yaml, prefix="  ")}'
-            f'\n{msg}',
-            file=sys.stderr)
+            f'\n{msg}')
         return model
     except pydantic_core.ValidationError as e:
       # It failed strictly or non-strictly. Print the error and raise.
 
-      if dump_path is None:
-        dump_path = await _GetNewPath(parent_path=DUMP_DIR)
-        await dump_path.mkdir(parents=True, exist_ok=True)
+      if error_dump_path is None and errors_dump_directory is not None:
+        error_dump_path = await _GetNewPath(parent_path=errors_dump_directory)
 
-      error_line = await BigErrorStrDump(
-          exception=e,
-          max_lines=MAX_DUMP_LINES,
-          path=dump_path / f'{slugify(str(model_type))}-error_str.txt')
-      msg = f'Error parsing {model_type}: {error_line}'
+      if error_dump_path is not None:
+        error_line = await BigErrorStrDump(
+            exception=e,
+            max_lines=MAX_DUMP_LINES,
+            path=error_dump_path / f'{slugify(str(model_type))}-error_str.txt')
+      else:
+        error_line = str(e)
+      msg_summary = f'Error parsing {model_type}: {error_line}'
+      msg = f'{msg_summary}'
+      if error_dump_path is not None:
+        input_content_yaml = await BigYamlDump(
+            content,
+            max_lines=MAX_DUMP_LINES,
+            path=error_dump_path /
+            f'{slugify(str(model_type))}-input_content.yaml')
+        msg += '\nInput content\n' + textwrap.indent(input_content_yaml,
+                                                     prefix='  ')
+        errors_yaml = await BigYamlDump(
+            e.errors(),
+            max_lines=MAX_DUMP_LINES,
+            path=error_dump_path / f'{slugify(str(model_type))}-errors.yaml')
+        msg += '\nError details\n' + textwrap.indent(errors_yaml, prefix='  ')
+      else:
+        msg += '\nInput content\n' + textwrap.indent(YamlDump(content),
+                                                     prefix='  ')
+        msg += '\nError details\n' + textwrap.indent(YamlDump(e.errors()),
+                                                     prefix='  ')
 
-      input_content_yaml = await BigYamlDump(
-          content,
-          max_lines=MAX_DUMP_LINES,
-          path=dump_path / f'{slugify(str(model_type))}-input_content.yaml')
-      errors_yaml = await BigYamlDump(e.errors(),
-                                      max_lines=MAX_DUMP_LINES,
-                                      path=dump_path /
-                                      f'{slugify(str(model_type))}-errors.yaml')
+      msg += f'\n{msg_summary}'
+      raise Exception(msg) from e
 
-      raise Exception(
-          f'{msg}'
-          f'\nInput content\n{textwrap.indent(input_content_yaml, prefix="  ")}'
-          f'\nError details\n{textwrap.indent(errors_yaml, prefix="  ")}'
-          f'\n{msg}') from e
-
-  model = await _Internal()
-  warnings = _WarnModelExtras(path=[], thing=model)
+  model = await _Internal(errors_dump_directory=errors_dump_directory)
+  extra_fields_warnings = _WarnModelExtras(path=[], thing=model)
   if strict == 'warn':
-    for warning in warnings:
-      print(warning.message, file=sys.stderr)
+    for warning in extra_fields_warnings:
+      logger.warn(warning.message)
   elif strict == 'yes':
-    for warning in warnings:
+    for warning in extra_fields_warnings:
       raise Exception(warning.message)
 
+  # TODO: Renable this or remove it.
   # model_dump: Dict[str, Any] = model.model_dump()
   # differences = list(diff(model_dump, content))
   # if len(differences) > 0:
@@ -416,7 +436,7 @@ async def TryParseAsModel(
   return model
 
 
-class _WatchVar:
+class WatchVar:
 
   def __init__(self, **kwargs):
     self._kwargs = kwargs
@@ -426,9 +446,9 @@ class _WatchVar:
 
   def __exit__(self, exc_type, exc, tb):
     if exc is not None:
-      print(
-          f'{type(self).__name__}: Error occurred, and you are watching these variables:',
-          file=sys.stderr)
+      logger.error(
+          f'{type(self).__name__}: Error occurred, and you are watching these variables:'
+      )
       for key, value in self._kwargs.items():
         value_lines = str(value).split('\n')
         if len(value_lines) > 1:
@@ -436,4 +456,4 @@ class _WatchVar:
         else:
           if isinstance(value, str):
             value = repr(value)
-        print(f'  {key}: {value}', file=sys.stderr)
+        logger.error(f'  {key}: {value}')

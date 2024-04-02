@@ -6,18 +6,11 @@
 # the license text.
 
 from abc import ABC, abstractmethod
-from urllib.parse import ParseResult
+from typing import Tuple
 
 from anyio import Path
 
-from comfy_catapult.url_utils import ComfyUIPathTriplet
-
-EMPTY_URL = ParseResult(scheme='',
-                        netloc='',
-                        path='',
-                        params='',
-                        query='',
-                        fragment='')
+from comfy_catapult.comfy_schema import ComfyUIPathTriplet
 
 
 class RemoteFileAPIBase(ABC):
@@ -38,7 +31,7 @@ class RemoteFileAPIBase(ABC):
     raise NotImplementedError()
 
   async def UploadToTriplet(
-      self, *, src_path: Path,
+      self, *, src_path: Path, untrusted_comfy_api_url: str,
       untrusted_dst_triplet: ComfyUIPathTriplet) -> ComfyUIPathTriplet:
     """Upload a file to a (comfy api server, folder_type, subfolder, filename).
 
@@ -57,17 +50,19 @@ class RemoteFileAPIBase(ABC):
     raise NotImplementedError()
 
   @abstractmethod
-  async def DownloadTriplet(self, *, untrusted_src_triplet: ComfyUIPathTriplet,
+  async def DownloadTriplet(self, *, untrusted_comfy_api_url: str,
+                            untrusted_src_triplet: ComfyUIPathTriplet,
                             dst_path: Path):
     raise NotImplementedError()
 
   @abstractmethod
-  def TripletToURL(self, *, triplet: ComfyUIPathTriplet) -> str:
+  def TripletToURL(self, *, comfy_api_url: str,
+                   triplet: ComfyUIPathTriplet) -> str:
     """Convert a triplet, that this API can handle, to a URL that this API can handle."""
     raise NotImplementedError()
 
   @abstractmethod
-  def URLToTriplet(self, *, url: str) -> ComfyUIPathTriplet:
+  def URLToTriplet(self, *, url: str) -> Tuple[str, ComfyUIPathTriplet]:
     """Convert a URL that this API can handle to a triplet, that this API can handle."""
     raise NotImplementedError()
 

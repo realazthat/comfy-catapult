@@ -1,21 +1,18 @@
 #!/bin/bash
-
 # https://gist.github.com/mohanpedala/1e2ff5661761d3abd0385e8223e16425
 set -e -x -v -u -o pipefail
 
 SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 source "${SCRIPT_DIR}/utilities/common.sh"
 
-VENV_PATH=.cache/scripts/.venv source "${PROJ_PATH}/scripts/utilities/ensure-venv.sh"
 
-REQS=${PROJ_PATH}/scripts/requirements-dev.txt source "${PROJ_PATH}/scripts/utilities/ensure-reqs.sh"
-
+EXTRA=dev bash scripts/utilities/pin-extra-reqs.sh
+EXTRA=prod bash scripts/utilities/pin-extra-reqs.sh
 bash scripts/format.sh
 bash scripts/gen-readme.sh
 bash scripts/run-all-tests.sh
-bash scripts/run-all-examples-as-modules.sh
-bash scripts/run-outside-ci.sh
-
-# pre-commit autoupdate
-pre-commit install
-pre-commit run --all-files
+bash scripts/run-all-examples.sh
+if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
+	bash scripts/precommit.sh
+  bash scripts/act.sh
+fi

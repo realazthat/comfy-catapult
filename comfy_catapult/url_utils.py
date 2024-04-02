@@ -8,31 +8,42 @@
 from typing import List, Literal
 from urllib.parse import ParseResult, urljoin, urlparse, urlunparse
 
-from pydantic import BaseModel, ConfigDict, field_validator
-
 from comfy_catapult.errors import (BasedURLValidationError,
                                    URLDirectoryValidationError,
                                    URLValidationError)
 
-ComfyFolderType = Literal['input', 'output', 'temp']
 ComfyAPIScheme = Literal['http', 'https']
 VALID_COMFY_API_SCHEMES: List[ComfyAPIScheme] = ['http', 'https']
-VALID_FOLDER_TYPES: List[ComfyFolderType] = ['input', 'output', 'temp']
 
 
-def SmartURLJoin(base: str, path: str) -> str:
+def SmartURLJoin(base: str, url: str) -> str:
   """urljoin() but can handle relative paths even for custom schemes.
 
   See: https://github.com/python/cpython/issues/63028
 
   From: https://github.com/python/cpython/issues/63028#issuecomment-1564858715
   """
-  parsed_base = urlparse(base)
-  new = parsed_base._replace(path=urljoin(parsed_base.path, path))
-  return urlunparse(new)
+  base_pr = urlparse(base)
+  bscheme = base_pr.scheme
+
+  url_pr = urlparse(url)
+  scheme = url_pr.scheme or bscheme
+  if bscheme != scheme:
+    return url
+
+  base_pr = base_pr._replace(scheme='http')
+  url_pr = url_pr._replace(scheme='http')
+
+  joined = urljoin(urlunparse(base_pr), urlunparse(url_pr))
+  joined_pr = urlparse(joined)
+  joined_pr = joined_pr._replace(scheme=scheme)
+  return urlunparse(joined_pr)
 
 
 def JoinToBaseURL(base: str, path: str) -> str:
+  """Takes a URL and appends the path to it.
+  
+  Always assumes the base is a directory. Always assumes the path is relative to that directory."""
   if not base.endswith('/'):
     base += '/'
   if path.startswith('/'):
@@ -125,74 +136,3 @@ def ValidateIsComfyAPITargetURL(url: str) -> str:
                      f' its hostname is empty')
 
   return url
-
-
-class ComfyUIPathTriplet(BaseModel):
-  """
-  Represents a folder_type/subfolder/filename triplet, which ComfyUI API and
-  some nodes use as file paths.
-  """
-  model_config = ConfigDict(frozen=True)
-
-  comfy_api_url: str
-  folder_type: ComfyFolderType
-  subfolder: str
-  filename: str
-
-  @field_validator('comfy_api_url')
-  @classmethod
-  def validate_comfy_api_url(cls, v: str):
-    v = ValidateIsComfyAPITargetURL(url=v)
-    return v
-
-  @field_validator('folder_type')
-  @classmethod
-  def validate_folder_type(cls, v: str):
-    if v not in VALID_FOLDER_TYPES:
-      raise ValueError(
-          f'folder_type {repr(v)} is not one of {VALID_FOLDER_TYPES}')
-    return v
-
-  @field_validator('subfolder')
-  @classmethod
-  def validate_subfolder(cls, v: str):
-    if v.startswith('/'):
-      raise ValueError(f'subfolder {repr(v)} must not start with a slash')
-    return v
-
-  @field_validator('filename')
-  @classmethod
-  def validate_filename(cls, v: str):
-    if '/' in v:
-      raise ValueError(f'filename {repr(v)} must not contain a slash')
-    if v == '':
-      raise ValueError(f'filename {repr(v)} must not be empty')
-    return v
-
-  def ToLocalPathStr(self, *, include_folder_type: bool) -> str:
-    """Converts this triplet to something like `input/subfolder/filename`.
-    """
-    subfolder = self.subfolder
-    if subfolder == '':
-      subfolder = '.'
-    if not subfolder.endswith('/'):
-      subfolder += '/'
-
-    local_path = urljoin(subfolder, self.filename)
-    if include_folder_type:
-      local_path = urljoin(f'{self.folder_type}/', local_path)
-    return local_path
-
-  # def Normalized(self) -> 'ComfyUIPathTriplet':
-  #   subfolder_url = ToParseResult(url=self.subfolder)
-  #   subfolder = subfolder_url.path
-  #   subfolder = urljoin('', subfolder)
-  #   if subfolder.endswith('/'):
-  #     subfolder = subfolder[:-1]
-  #   if subfolder.startswith('./'):
-  #     subfolder = subfolder[2:]
-
-  #   return ComfyUIPathTriplet(comfy_api_url=self.comfy_api_url,
-  #                             folder_type=self.folder_type,
-  #                             subfolder=subfolder,
-  #                             filename=self.filename)

@@ -5,30 +5,59 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
-from typing import Any, Dict, List, NamedTuple
+from typing import Any, Dict, List, Literal, NamedTuple
+from urllib.parse import urljoin
 
-from pydantic import BaseModel, ConfigDict, Field, RootModel
+from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 from typing_extensions import Annotated
 
 EXTRA = 'allow'
 
-NodeID = Annotated[str, Field(alias='node_id')]
-PromptID = Annotated[str, Field(alias='prompt_id')]
+APINodeID = Annotated[
+    str,
+    Field(alias='node_id', description='The ID of a node in a workflow.')]
+PromptID = Annotated[
+    str,
+    Field(
+        alias='prompt_id',
+        description=
+        'The ID of a prompt (submission of a api workflow to the server to be executed). You can choose this yourself when submitting.'
+    )]
 ClientID = Annotated[str, Field(alias='client_id')]
-OutputName = Annotated[str, Field(alias='output_name')]
+OutputName = Annotated[
+    str,
+    Field(
+        alias='output_name',
+        description=
+        'The name of an output in a node, in /history/, /history/{prompt_id} endpoints.'
+    )]
 # This is BOOLEAN, INT etc.
-OutputType = Annotated[str, Field(alias='output_type')]
+OutputType = Annotated[
+    str,
+    Field(
+        alias='output_type',
+        description=
+        'The type of a named output of a node, in /object_info endpoint, and also can be seen/found in {node,custom node} implementations.'
+    )]
 
 # This is BOOLEAN, INT etc.
-NamedInputType = Annotated[str, Field(alias='input_type')]
+NamedInputType = Annotated[
+    str,
+    Field(
+        alias='input_type',
+        description=
+        'The type of a named input of a node, in /object_info endpoint, and also can be seen/found in {node,custom node} implementations.'
+    )]
 # This is a list of valid *values* for a combo input.
 ComboInputType = Annotated[List[Any], Field(alias='combo_input_class')]
+ComfyFolderType = Literal['input', 'output', 'temp']
+VALID_FOLDER_TYPES: List[ComfyFolderType] = ['input', 'output', 'temp']
 
 
 ################################################################################
 class APIWorkflowInConnection(NamedTuple):
   """Represents a connection between two nodes in a workflow. This is used in the input of a node."""
-  output_node_id: NodeID
+  output_node_id: APINodeID
   output_index: int
 
 
@@ -64,13 +93,13 @@ class APIWorkflowNodeInfo(BaseModel):
   meta: APIWorkflowNodeMeta | None = Field(None, alias='_meta')
 
 
-class APIWorkflow(RootModel[Dict[NodeID, APIWorkflowNodeInfo]]):
+class APIWorkflow(RootModel[Dict[APINodeID, APIWorkflowNodeInfo]]):
   """This is the API format, you get it from `Save (API Format)` in the UI.
 
 
   See test_data/sdxlturbo_example_api.json for an example of this format in json.
   """
-  root: Dict[NodeID, APIWorkflowNodeInfo]
+  root: Dict[APINodeID, APIWorkflowNodeInfo]
 
 
 ################################################################################
@@ -121,7 +150,7 @@ class APIQueueInfoEntry(NamedTuple):
   prompt_id: PromptID
   prompt: APIWorkflow
   extra_data: dict
-  outputs_to_execute: List[NodeID]
+  outputs_to_execute: List[APINodeID]
 
 
 class APIQueueInfo(BaseModel):
@@ -159,7 +188,7 @@ class NodeErrors(BaseModel):
   fields are added. They'll be stored dynamically.
   """
   class_type: str
-  dependent_outputs: List[NodeID]
+  dependent_outputs: List[APINodeID]
   errors: List[NodeErrorInfo]
 
 
@@ -171,7 +200,7 @@ class APIWorkflowTicket(BaseModel):
   extra: This is just to future proof the schema so it won't break if extra
   fields are added. They'll be stored dynamically.
   """
-  node_errors: Dict[NodeID, NodeErrors] | None = None
+  node_errors: Dict[APINodeID, NodeErrors] | None = None
   number: int | None = None
   prompt_id: PromptID | None = None
   error: str | None = None
@@ -180,7 +209,7 @@ class APIWorkflowTicket(BaseModel):
 ################################################################################
 
 
-class APIOutputUI(RootModel[Dict[OutputName, Any]]):
+class APIOutputUI(RootModel[Dict[OutputName, List[Any]]]):
   root: Dict[OutputName, List[Any]]
 
 
@@ -226,7 +255,7 @@ class APIHistoryEntry(BaseModel):
   extra: This is just to future proof the schema so it won't break if extra
   fields are added. They'll be stored dynamically.
   """
-  outputs: Dict[NodeID, APIOutputUI] | None = None
+  outputs: Dict[APINodeID, APIOutputUI] | None = None
   prompt: APIQueueInfoEntry | None = None
   status: APIHistoryEntryStatus | None = None
 
@@ -467,7 +496,7 @@ class APIObjectInfo(RootModel[Dict[APIObjectKey, APIObjectInfoEntry]]):
 class APIUploadImageResp(BaseModel):
   name: str
   subfolder: str
-  type: str
+  type: ComfyFolderType
 
 
 ################################################################################
@@ -505,3 +534,53 @@ class WSMessage(BaseModel):
 
 
 ################################################################################
+
+
+class ComfyUIPathTriplet(BaseModel):
+  """
+  Represents a folder_type/subfolder/filename triplet, which ComfyUI API and
+  some nodes use as file paths.
+  """
+  model_config = ConfigDict(frozen=True)
+
+  type: ComfyFolderType
+  subfolder: str
+  filename: str
+
+  @field_validator('type')
+  @classmethod
+  def validate_folder_type(cls, v: str):
+    if v not in VALID_FOLDER_TYPES:
+      raise ValueError(
+          f'folder_type {repr(v)} is not one of {VALID_FOLDER_TYPES}')
+    return v
+
+  @field_validator('subfolder')
+  @classmethod
+  def validate_subfolder(cls, v: str):
+    if v.startswith('/'):
+      raise ValueError(f'subfolder {repr(v)} must not start with a slash')
+    return v
+
+  @field_validator('filename')
+  @classmethod
+  def validate_filename(cls, v: str):
+    if '/' in v:
+      raise ValueError(f'filename {repr(v)} must not contain a slash')
+    if v == '':
+      raise ValueError(f'filename {repr(v)} must not be empty')
+    return v
+
+  def ToLocalPathStr(self, *, include_folder_type: bool) -> str:
+    """Converts this triplet to something like `input/subfolder/filename`.
+    """
+    subfolder = self.subfolder
+    if subfolder == '':
+      subfolder = '.'
+    if not subfolder.endswith('/'):
+      subfolder += '/'
+
+    local_path = urljoin(subfolder, self.filename)
+    if include_folder_type:
+      local_path = urljoin(f'{self.type}/', local_path)
+    return local_path
