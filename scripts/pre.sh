@@ -5,9 +5,9 @@ set -e -x -v -u -o pipefail
 SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 source "${SCRIPT_DIR}/utilities/common.sh"
 
-VENV_PATH=.cache/scripts/.venv source "${PROJ_PATH}/scripts/utilities/ensure-venv.sh"
-REQS=${PROJ_PATH}/scripts/requirements-dev.txt source "${PROJ_PATH}/scripts/utilities/ensure-reqs.sh"
 
+EXTRA=dev bash scripts/utilities/pin-extra-reqs.sh
+EXTRA=prod bash scripts/utilities/pin-extra-reqs.sh
 bash scripts/format.sh
 bash scripts/gen-readme.sh
 bash scripts/run-all-tests.sh

@@ -1,6 +1,10 @@
 <!-- Note: This file is a jinja2 template of a Markdown file.                -->
-
-<!-- Note: This is so that we can include working examples.                  -->
+<!--
+{% set last_unstable_release=shell('tomlq -r \'.["tool"]["comfy-catapult-project-metadata"]["last_unstable_release"]\' pyproject.toml',
+                                   include_args=False) | trim %}
+{% set last_stable_release=shell('tomlq -r \'.["tool"]["comfy-catapult-project-metadata"]["last_stable_release"]\' pyproject.toml',
+                                 include_args=False) | trim %}
+-->
 
 # README
 
@@ -221,42 +225,71 @@ From [`{{ path('examples/add_a_node.py') }}`](examples/add_a_node.py):
 
 ## TODO
 
-- [ ]  Helpers should support remote/cloud storage for ComfyUI input/output/model
-  directories (Currently only supports local paths).
-- [ ]  ETA Estimator.
-- [ ]  Make sure the schema can parse the formats even if the format adds new
-  fields.
+- [ ] Helpers should support remote/cloud storage for ComfyUI input/output/model
+      directories (Currently only supports local paths).
+- [ ] ETA Estimator.
+- [ ] Make sure the schema can parse the formats even if the format adds new
+      fields.
 
 ## Contributions
 
-1. Fork the `develop` branch.
+### Development environment: Linux-like
+
+- For running `pre.sh` (Linux-like environment).
+  - Requires `pyenv`, or an exact matching version of python as in
+    [`{{path('.python-version')}}`](./.python-version).
+  - `jq`, ([installation](https://jqlang.github.io/jq/)) required for
+    [yq](https://github.com/kislyuk/yq), which is itself required for our
+    `{{path('README.md')}}` generation, which uses `tomlq` (from the
+    [yq](https://github.com/kislyuk/yq) package) to include version strings from
+    `{{path('pyproject.toml')}}`.
+  - `bash`, `grep`, `awk`, `sed` `xxd`, `git`, `xxhash` (for tests/workflows).
+  - Requires nodejs (for act).
+  - Requires Go (to run act).
+  - docker (for act).
+
+### Commit Process
+
+1. (Optionally) Fork the `develop` branch.
 2. Stage your files: `git add path/to/file.py`.
-3. `bash scripts/pre.sh`, this will format, lint, and test the code. Note, that
-   you will need a `COMFY_API_URL` environment variable set to a ComfyUI server
-   for the tests.
-4. `git status` check if anything changed, if so, `git add` the changes, and go
-   back to the previous step.
+3. `bash scripts/pre.sh`, this will format, lint, and test the code.
+4. `git status` check if anything changed (generated `{{path('README.md')}}` for
+   example), if so, `git add` the changes, and go back to the previous step.
 5. `git commit -m "..."`.
-6. Make a PR to `develop`.
+6. Make a PR to `develop` (or push to develop if you have the rights).
 
 ## Release Process
 
-1. Bump the version in setup.py, following semantic versioning principles.
-2. Change any reference to the old version (or tag) in the README.md to the new
-   version.
-3. Commit changes: Commit these changes with a message like "Prepare release
-   X.Y.Z". (See the contributions section [above](#contributions)).
-4. Tag the release: Create a git tag for the release with
+These instructions are for maintainers of the project.
+
+1. `develop` branch: Run `bash {{path('scripts/pre.sh')}}` to ensure everything
+   is in order.
+2. `develop` branch: Bump the version in `{{path('pyproject.toml')}}`, following
+   semantic versioning principles. Also modify the `last_unstable_release` and
+   `last_stable_release` in the `[tool.comfy-catapult-project-metadata]` table
+   as appropriate.
+3. `develop` branch: Commit these changes with a message like "Prepare release
+   X.Y.Z". (See the contributions section [above](#commit-process)).
+4. `master` branch: Merge the `develop` branch into the `master` branch:
+   `git checkout master && git merge develop --no-ff`.
+5. `master` branch: Tag the release: Create a git tag for the release with
    `git tag -a vX.Y.Z -m "Version X.Y.Z"`.
-5. Push to GitHub: Push the commit and tags to GitHub with `git push` and
-   `git push --tags`.
 6. Publish to PyPI: Publish the release to PyPI with
    `bash scripts/deploy-to-pypi.sh`.
+7. Push to GitHub: Push the commit and tags to GitHub with `git push` and
+   `git push --tags`.
+8. `git checkout develop && git merge master` The `--no-ff` option adds a commit
+   to the master branch for the merge, so refork the develop branch from the
+   master branch.
 
-[1]: https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml/badge.svg?branch=master
-[2]: https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
-[3]: https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml/badge.svg?branch=develop
-[4]: https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
+[1]:
+  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml/badge.svg?branch=master
+[2]:
+  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
+[3]:
+  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml/badge.svg?branch=develop
+[4]:
+  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
 [5]: https://github.com/andreyryabtsev/comfyui-python-api
 [6]: https://github.com/BennyKok/comfyui-deploy
 [7]: https://github.com/pydn/ComfyUI-to-Python-Extension
@@ -266,11 +299,17 @@ From [`{{ path('examples/add_a_node.py') }}`](examples/add_a_node.py):
 [11]: https://img.shields.io/github/license/realazthat/comfy-catapult
 [12]: https://img.shields.io/pypi/v/comfy-catapult
 [13]: https://pypi.org/project/comfy-catapult/
-[14]: https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v1.0.2/master
-[15]: https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v1.0.2/develop
+[14]:
+  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v{{last_stable_release}}/master
+[15]:
+  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v{{last_stable_release}}/develop
 [16]: https://img.shields.io/github/last-commit/realazthat/comfy-catapult/master
-[17]: https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop
+[17]:
+  https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop
 [18]: https://img.shields.io/pypi/pyversions/comfy-catapult
-[19]: https://img.shields.io/github/languages/top/realazthat/comfy-catapult.svg?&cacheSeconds=28800
-[20]: https://github.com/realazthat/comfy-catapult/compare/v1.0.2...master
-[21]: https://github.com/realazthat/comfy-catapult/compare/v1.0.2...develop
+[19]:
+  https://img.shields.io/github/languages/top/realazthat/comfy-catapult.svg?&cacheSeconds=28800
+[20]:
+  https://github.com/realazthat/comfy-catapult/compare/v{{last_stable_release}}...master
+[21]:
+  https://github.com/realazthat/comfy-catapult/compare/v{{last_stable_release}}...develop

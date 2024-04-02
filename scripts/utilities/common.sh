@@ -17,6 +17,8 @@ RED='\033[0;31m'
 export RED
 GREEN='\033[0;32m'
 export GREEN
+BLUE='\033[0;34m'
+export BLUE
 YELLOW='\033[0;33m'
 export YELLOW
 NC='\033[0m' # No Color

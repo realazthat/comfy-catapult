@@ -49,7 +49,7 @@ if [[ ! -d "${PYENV_ROOT}" ]]; then
 fi
 
 
-eval "$(pyenv init --path)"
+eval "$(pyenv init --path||true)"
 # eval "$(pyenv virtualenv-init -)"
 
 

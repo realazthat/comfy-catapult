@@ -16,6 +16,7 @@ if [[ -z "${VENV_PATH}" ]]; then
 fi
 
 echo -e "${GREEN}Found ${VENV_PATH}/bin/activate${NC}"
+# trunk-ignore(shellcheck/SC1091)
 source "${VENV_PATH}/bin/activate"
 
 source "${PROJ_PATH}/scripts/utilities/ensure-py-version.sh"

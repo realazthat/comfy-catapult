@@ -16,8 +16,12 @@ fi
 
 export COMFY_INSTALL_FILE_URL=${COMFY_INSTALL_FILE_URL:-""}
 
-VENV_PATH="${PWD}/.venv" source "${PROJ_PATH}/scripts/utilities/ensure-venv.sh"
-REQS="${PWD}/requirements.txt" source "${PROJ_PATH}/scripts/utilities/ensure-reqs.sh"
+VENV_PATH=${PWD}/.venv source "${PROJ_PATH}/scripts/utilities/ensure-venv.sh"
+TOML=${PROJ_PATH}/pyproject.toml EXTRA=prod \
+  DEV_VENV_PATH="${PWD}/.cache/scripts/.venv" \
+  TARGET_VENV_PATH="${PWD}/.venv" \
+  bash "${PROJ_PATH}/scripts/utilities/ensure-reqs.sh"
+
 
 export PYTHONPATH=${PYTHONPATH:-}
 export PYTHONPATH=${PYTHONPATH}:${PWD}

@@ -27,22 +27,21 @@ jobs:
             gh: 3.10.0
 
     steps:
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
       - uses: actions/checkout@v4
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version.gh }}
+      - name: Install nvm
+        run: |
+          curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
       - name: Set up .python-version
         run: |
           echo "${{ matrix.python-version.file }}"
           echo "${{ matrix.python-version.file }}" > .python-version
           cat .python-version
       - name: Install Bash (Ubuntu)
-        run: sudo apt-get update && sudo apt-get install -y bash wget
+        run: sudo apt-get update && sudo apt-get install -y bash wget grep git xxhash
       - name: Install tiv
         run: |
           wget https://github.com/stefanhaustein/TerminalImageViewer/archive/8aca9afaf72c4f0d458db62b62b6401f75d6ee8d.zip
