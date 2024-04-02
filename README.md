@@ -474,9 +474,9 @@ These instructions are for maintainers of the project.
 [12]: https://img.shields.io/pypi/v/comfy-catapult
 [13]: https://pypi.org/project/comfy-catapult/
 [14]:
-  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v1.0.2/master
+  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.0.0/master
 [15]:
-  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v1.0.2/develop
+  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.0.0/develop
 [16]: https://img.shields.io/github/last-commit/realazthat/comfy-catapult/master
 [17]:
   https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop
@@ -484,6 +484,6 @@ These instructions are for maintainers of the project.
 [19]:
   https://img.shields.io/github/languages/top/realazthat/comfy-catapult.svg?&cacheSeconds=28800
 [20]:
-  https://github.com/realazthat/comfy-catapult/compare/v1.0.2...master
+  https://github.com/realazthat/comfy-catapult/compare/v2.0.0...master
 [21]:
-  https://github.com/realazthat/comfy-catapult/compare/v1.0.2...develop
+  https://github.com/realazthat/comfy-catapult/compare/v2.0.0...develop

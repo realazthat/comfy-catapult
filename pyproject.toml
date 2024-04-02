@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "comfy_catapult"
-version = "2.0.0-alpha"
+version = "2.0.0"
 description = "Programmatically schedule ComfyUI workflows."
 authors = [{name = "AYF", email = "realazthat@gmail.com"}]
 license = {file = "LICENSE.md"}
@@ -159,8 +159,8 @@ Documentation = "https://github.com/realazthat/comfy-catapult"
 Repository = "https://github.com/realazthat/comfy-catapult"
 
 [tool.comfy-catapult-project-metadata]
-last_unstable_release = "1.0.2"
-last_stable_release = "1.0.2"
+last_unstable_release = "2.0.0"
+last_stable_release = "2.0.0"
 
 [tool.setuptools.packages.find]
 where = ["."]
