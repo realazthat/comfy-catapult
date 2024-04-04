@@ -143,6 +143,8 @@ async def RunExampleWorkflow(*, job_info: ExampleWorkflowInfo):
 | [ComfyScript][8]                 | ?                   | ?                 | ?                    | Yes           | ?      |
 | [hordelib][9]                    | ?                   | Yes               | ?                    | ?             | ?      |
 | [comfyui-cloud][10]              | ?                   | Yes               | ?                    | ?             | ?      |
+| [comfy_runner][22]               | ?                   | ?                 | ?                    | ?             | ?      |
+| [ComfyUI-ComfyRun][23]           | ?                   | ?                 | ?                    | ?             | ?      |
 
 **Outsource compute:**
 
@@ -488,3 +490,5 @@ These instructions are for maintainers of the project.
   https://github.com/realazthat/comfy-catapult/compare/v2.0.0...master
 [21]:
   https://github.com/realazthat/comfy-catapult/compare/v2.0.0...develop
+[22]: https://github.com/piyushK52/comfy_runner
+[23]: https://github.com/thecooltechguy/ComfyUI-ComfyRun
