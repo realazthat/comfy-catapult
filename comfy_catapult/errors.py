@@ -8,7 +8,7 @@
 from copy import deepcopy
 from typing import Sequence
 
-from comfy_catapult.comfy_schema import APINodeID, APIWorkflowTicket
+from .comfy_schema import APINodeID, APIWorkflowTicket
 
 
 class NodeNotFound(RuntimeError):

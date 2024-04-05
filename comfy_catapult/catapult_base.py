@@ -12,7 +12,7 @@ from typing import Dict, List, NamedTuple, Sequence, Tuple
 
 from anyio import Path
 
-from comfy_catapult.comfy_schema import APINodeID
+from .comfy_schema import APINodeID
 
 
 class Progress(NamedTuple):

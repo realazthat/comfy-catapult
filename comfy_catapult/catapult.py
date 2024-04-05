@@ -25,14 +25,13 @@ from anyio import Path
 from slugify import slugify
 from websockets import WebSocketClientProtocol, connect
 
-from comfy_catapult.api_client import ComfyAPIClientBase, YamlDump
-from comfy_catapult.catapult_base import ComfyCatapultBase, JobStatus, Progress
-from comfy_catapult.comfy_schema import (APIHistory, APIHistoryEntry,
-                                         APIHistoryEntryStatusNote, APINodeID,
-                                         APIQueueInfo, APISystemStats,
-                                         APIWorkflowTicket, WSMessage)
-from comfy_catapult.comfy_utils import TryParseAsModel
-from comfy_catapult.errors import NodesNotExecuted, WorkflowSubmissionError
+from .api_client import ComfyAPIClientBase, YamlDump
+from .catapult_base import ComfyCatapultBase, JobStatus, Progress
+from .comfy_schema import (APIHistory, APIHistoryEntry,
+                           APIHistoryEntryStatusNote, APINodeID, APIQueueInfo,
+                           APISystemStats, APIWorkflowTicket, WSMessage)
+from .comfy_utils import TryParseAsModel
+from .errors import NodesNotExecuted, WorkflowSubmissionError
 
 logger = logging.getLogger(__name__)
 

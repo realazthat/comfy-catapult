@@ -16,13 +16,12 @@ import aiohttp
 from anyio import Path
 from pydantic import BaseModel
 
-from comfy_catapult.api_client_base import ComfyAPIClientBase
-from comfy_catapult.comfy_schema import (APIHistory, APIObjectInfo,
-                                         APIQueueInfo, APISystemStats,
-                                         APIUploadImageResp, APIWorkflowTicket,
-                                         ClientID, PromptID)
-from comfy_catapult.comfy_utils import TryParseAsModel, WatchVar, YamlDump
-from comfy_catapult.url_utils import JoinToBaseURL
+from .api_client_base import ComfyAPIClientBase
+from .comfy_schema import (APIHistory, APIObjectInfo, APIQueueInfo,
+                           APISystemStats, APIUploadImageResp,
+                           APIWorkflowTicket, ClientID, PromptID)
+from .comfy_utils import TryParseAsModel, WatchVar, YamlDump
+from .url_utils import JoinToBaseURL
 
 logger = logging.getLogger(__name__)
 

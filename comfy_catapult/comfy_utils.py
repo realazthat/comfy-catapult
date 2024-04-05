@@ -21,12 +21,11 @@ from anyio import Path
 from pydantic import BaseModel
 from pydash import slugify
 
-from comfy_catapult.comfy_schema import (APIHistoryEntry, APINodeID,
-                                         APIOutputUI, APIWorkflow,
-                                         APIWorkflowNodeInfo,
-                                         ComfyUIPathTriplet)
-from comfy_catapult.errors import MultipleNodesFound, NodeNotFound
-from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
+from .comfy_schema import (APIHistoryEntry, APINodeID, APIOutputUI,
+                           APIWorkflow, APIWorkflowNodeInfo,
+                           ComfyUIPathTriplet)
+from .errors import MultipleNodesFound, NodeNotFound
+from .remote_file_api_base import RemoteFileAPIBase
 
 MAX_DUMP_LINES: int | None = 200
 logger = logging.getLogger(__name__)

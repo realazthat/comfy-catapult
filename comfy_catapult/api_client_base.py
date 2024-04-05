@@ -8,10 +8,9 @@
 from abc import ABC, abstractmethod
 from typing import List
 
-from comfy_catapult.comfy_schema import (APIHistory, APIObjectInfo,
-                                         APIQueueInfo, APISystemStats,
-                                         APIUploadImageResp, APIWorkflowTicket,
-                                         ClientID, PromptID)
+from .comfy_schema import (APIHistory, APIObjectInfo, APIQueueInfo,
+                           APISystemStats, APIUploadImageResp,
+                           APIWorkflowTicket, ClientID, PromptID)
 
 
 class ComfyAPIClientBase(ABC):
