@@ -85,14 +85,18 @@ class ComfyAPIClientBase(ABC):
         prompt_workflow (dict): The API workflow, you can generate this with
           the ComfyUI web interface, as explained in `README.md`:
           1. Open settings (gear box in the corner).
-          2. Enable the ability to export in the API format, `Enable Dev mode Options`.
+          2. Enable the ability to export in the API format,
+            `Enable Dev mode Options`.
           3. Click new menu item `Save (API format)`.
-        prompt_id (PromptID | None): If you want to set the prompt id. If you
-          leave this empty, the server will generate a prompt id for you.
         number (int, optional): Where to insert into the queue. -1 means to
           insert to the front of the queue. Default is None, which uses the
           default on the server, which is also equivalent to -1.
-        client_id (ClientID | None, optional): _description_. Defaults to None.
+        client_id (ClientID | None): If you want to set the client id. ComfyUI
+          will use this to resume connections, and filter out websockets events
+          and similar etc. If you leave this empty, the server will generate a
+          client id for you.
+        prompt_id (PromptID | None): If you want to set the prompt id. If you
+          leave this empty, the server will generate a prompt id for you.
         extra_data (dict | None, optional): Extra data associated with the
           prompt/job. Defaults to None.
 
@@ -115,14 +119,18 @@ class ComfyAPIClientBase(ABC):
         prompt_workflow (dict): The API workflow, you can generate this with
           the ComfyUI web interface, as explained in `README.md`:
           1. Open settings (gear box in the corner).
-          2. Enable the ability to export in the API format, `Enable Dev mode Options`.
+          2. Enable the ability to export in the API format,
+            `Enable Dev mode Options`.
           3. Click new menu item `Save (API format)`.
-        prompt_id (PromptID | None): If you want to set the prompt id. If you
-          leave this empty, the server will generate a prompt id for you.
         number (int, optional): Where to insert into the queue. -1 means to
           insert to the front of the queue. Default is None, which uses the
           default on the server, which is also equivalent to -1.
-        client_id (ClientID | None, optional): _description_. Defaults to None.
+        client_id (ClientID | None): If you want to set the client id. ComfyUI
+          will use this to resume connections, and filter out websockets events
+          and similar etc. If you leave this empty, the server will generate a
+          client id for you.
+        prompt_id (PromptID | None): If you want to set the prompt id. If you
+          leave this empty, the server will generate a prompt id for you.
         extra_data (dict | None, optional): Extra data associated with the
           prompt/job. Defaults to None.
 
