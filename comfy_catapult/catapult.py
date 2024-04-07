@@ -174,7 +174,8 @@ class ComfyCatapult(ComfyCatapultBase):
                            pending=None,
                            success=None,
                            errored=None,
-                           cancelled=None),
+                           cancelled=None,
+                           errors=[]),
           errors=[],
           remote_job_status=_Job.RemoteStatus.PENDING_OR_RUNNING,
           job_debug_path=job_debug_path)

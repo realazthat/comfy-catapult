@@ -34,7 +34,7 @@ class JobStatus(NamedTuple):
   success: datetime.datetime | None
   errored: datetime.datetime | None
   cancelled: datetime.datetime | None
-  errors: List[ExceptionInfo] = []
+  errors: List[ExceptionInfo]
   job_history: dict | None = None
 
   def IsDone(self) -> bool:
