@@ -62,10 +62,10 @@ API**
 
 <div align="center">
 
-| Branch  | Build Status              |                                              |
-| ------- | ------------------------- | -------------------------------------------- |
-| Master  | [![Build and Test][1]][2] | [![since tagged][14]][20] ![last commit][16] |
-| Develop | [![Build and Test][3]][4] | [![since tagged][15]][21] ![last commit][17] |
+| Branch        | Build Status              | Commits Since             | Last Commit        |
+| ------------- | ------------------------- | ------------------------- | ------------------ |
+| [Master][27]  | [![Build and Test][1]][2] | [![since tagged][14]][20] | ![last commit][16] |
+| [Develop][28] | [![Build and Test][3]][4] | [![since tagged][15]][21] | ![last commit][17] |
 
 </div>
 
@@ -117,10 +117,10 @@ pip install git+https://github.com/realazthat/comfy-catapult.git@v2.0.0
 
 | Project                          | ComfyUI API Wrapper | Outsource Backend | Distribute Execution | Wrap Workflow | Studio |
 | -------------------------------- | ------------------- | ----------------- | -------------------- | ------------- | ------ |
-| [CushyStudio][2]                 | ?                   | ?                 | ?                    | ?             | Yes    |
-| [ComfyUI-Serving-Toolkit][3]     | X                   | ?                 | ?                    | Yes           | ?      |
-| [ComfyUI_NetDist][4]             | X                   | ?                 | Yes                  | ?             | ?      |
-| [ComfyUI script_examples][1]     | Yes                 | No                | No                   | No            | No     |
+| [CushyStudio][31]                 | ?                   | ?                 | ?                    | ?             | Yes    |
+| [ComfyUI-Serving-Toolkit][30]     | X                   | ?                 | ?                    | Yes           | ?      |
+| [ComfyUI_NetDist][29]             | X                   | ?                 | Yes                  | ?             | ?      |
+| [ComfyUI script_examples][32]     | Yes                 | No                | No                   | No            | No     |
 | [comfyui-python-api][5]          | ?                   | ?                 | ?                    | Yes           | ?      |
 | [comfyui-deploy][6]              | ?                   | ?                 | ?                    | Yes           | ?      |
 | [ComfyUI-to-Python-Extension][7] | ?                   | ?                 | ?                    | Yes           | ?      |
@@ -526,11 +526,11 @@ These instructions are for maintainers of the project.
 9. `git push origin develop` Push the develop branch to GitHub.
 
 [1]:
-  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml/badge.svg?branch=master
+  https://img.shields.io/github/actions/workflow/status/realazthat/comfy-catapult/build-and-test.yml?branch=master&style=plastic
 [2]:
   https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
 [3]:
-  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml/badge.svg?branch=develop
+  https://img.shields.io/github/actions/workflow/status/realazthat/comfy-catapult/build-and-test.yml?branch=develop&style=plastic
 [4]:
   https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
 [5]: https://github.com/andreyryabtsev/comfyui-python-api
@@ -539,20 +539,20 @@ These instructions are for maintainers of the project.
 [8]: https://github.com/Chaoses-Ib/ComfyScript
 [9]: https://pypi.org/project/hordelib/
 [10]: https://github.com/nathannlu/comfyui-cloud
-[11]: https://img.shields.io/github/license/realazthat/comfy-catapult
-[12]: https://img.shields.io/pypi/v/comfy_catapult
+[11]: https://img.shields.io/github/license/realazthat/comfy-catapult?style=plastic&color=0A1E1E
+[12]: https://img.shields.io/pypi/v/comfy_catapult?style=plastic&color=0A1E1E
 [13]: https://pypi.org/project/comfy_catapult/
 [14]:
-  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.0.0/master
+  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.0.0/master?style=plastic&color=0A1E1E
 [15]:
-  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.0.0/develop
+  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.0.0/develop?style=plastic&color=0A1E1E
 [16]:
-  https://img.shields.io/github/last-commit/realazthat/comfy-catapult/master
+  https://img.shields.io/github/last-commit/realazthat/comfy-catapult/master?style=plastic&color=0A1E1E
 [17]:
-  https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop
-[18]: https://img.shields.io/pypi/pyversions/comfy_catapult
+  https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop?style=plastic&color=0A1E1E
+[18]: https://img.shields.io/pypi/pyversions/comfy_catapult?style=plastic&color=0A1E1E
 [19]:
-  https://img.shields.io/github/languages/top/realazthat/comfy-catapult.svg?&cacheSeconds=28800
+  https://img.shields.io/github/languages/top/realazthat/comfy-catapult.svg?style=plastic&color=0A1E1E&cacheSeconds=28800
 [20]:
   https://github.com/realazthat/comfy-catapult/compare/v2.0.0...master
 [21]:
@@ -570,3 +570,9 @@ These instructions are for maintainers of the project.
 
 [26]:
   https://img.shields.io/badge/Platform-Linux-0A1E1E?style=plastic&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWxhcHRvcC1taW5pbWFsIj48cmVjdCB3aWR0aD0iMTgiIGhlaWdodD0iMTIiIHg9IjMiIHk9IjQiIHJ4PSIyIiByeT0iMiIvPjxsaW5lIHgxPSIyIiB4Mj0iMjIiIHkxPSIyMCIgeTI9IjIwIi8+PC9zdmc+
+[27]: https://github.com/realazthat/comfy-catapult/tree/master
+[28]: htttps://github.com/realazthat/comfy-catapult/tree/develop
+[29]: https://github.com/city96/ComfyUI_NetDist
+[30]: https://github.com/matan1905/ComfyUI-Serving-Toolkit
+[31]: https://github.com/rvion/CushyStudio
+[32]: https://github.com/comfyanonymous/ComfyUI/tree/89d0e9abeb31e44cccef46537cd10d8812130ef3/script_examples "Permalink"
