@@ -5,7 +5,16 @@ set -e -x -v -u -o pipefail
 SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 source "${SCRIPT_DIR}/common.sh"
 
-source "${PROJ_PATH}/scripts/utilities/ensure-pyenv.sh"
+PYTHON_VERSION_PATH=${PYTHON_VERSION_PATH:-${PWD}/.python-version}
+
+if [[ -z "${PYTHON_VERSION_PATH}" ]]; then
+  echo -e "${RED}PYTHON_VERSION_PATH is not set. Please set it in the calling script${NC}"
+  [[ $0 == "${BASH_SOURCE[0]}" ]] && EXIT="exit" || EXIT="return"
+  ${EXIT} 1
+fi
+
+PYTHON_VERSION_PATH=${PYTHON_VERSION_PATH} \
+  source "${PROJ_PATH}/scripts/utilities/ensure-pyenv.sh"
 
 VENV_PATH=${VENV_PATH:-""}
 
@@ -27,8 +36,14 @@ if [[ -f "${VENV_PATH}/bin/activate" ]]; then
   fi
 fi
 
+PYTHON_VERSION_DIRECTORY=$(dirname "${PYTHON_VERSION_PATH}")
+CURRENT_PWD="${PWD}"
+cd "${PYTHON_VERSION_DIRECTORY}"
+source "${PROJ_PATH}/scripts/utilities/ensure-py-version.sh"
+
 pip install virtualenv
 python -m virtualenv "${VENV_PATH}"
 echo -e "${GREEN}Created ${VENV_PATH}${NC}"
+cd "${CURRENT_PWD}"
 
 source "${PROJ_PATH}/scripts/utilities/load-venv.sh"

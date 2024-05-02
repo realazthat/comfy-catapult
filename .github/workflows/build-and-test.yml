@@ -40,8 +40,16 @@ jobs:
           echo "${{ matrix.python-version.file }}"
           echo "${{ matrix.python-version.file }}" > .python-version
           cat .python-version
-      - name: Install Bash (Ubuntu)
-        run: sudo apt-get update && sudo apt-get install -y bash wget grep git xxhash
+      - name: Get Dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y jq
+          pip install yq
+          APT_DEPS=$(python -m yq -r -c '.dev | keys | join(" ")' .github/dependencies.yml)
+          echo "APT_DEPS=${APT_DEPS}" >> $GITHUB_ENV
+      - name: Install Dependencies (Ubuntu)
+        run: |
+          # See project/.github/dependencies.yml for a list of dependencies.
+          sudo apt-get update && sudo apt-get install -y ${APT_DEPS}
       - name: Install tiv
         run: |
           wget https://github.com/stefanhaustein/TerminalImageViewer/archive/8aca9afaf72c4f0d458db62b62b6401f75d6ee8d.zip

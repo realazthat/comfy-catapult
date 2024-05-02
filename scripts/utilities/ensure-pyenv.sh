@@ -5,14 +5,22 @@ set -e -x -v -u -o pipefail
 SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 source "${SCRIPT_DIR}/common.sh"
 
-# Make sure .python-version exists.
-if [[ ! -f "${PWD}/.python-version" ]]; then
+PYTHON_VERSION_PATH=${PYTHON_VERSION_PATH:-}
+
+if [[ -z "${PYTHON_VERSION_PATH}" ]]; then
+  echo -e "${RED}PYTHON_VERSION_PATH is not set. Please set it in the calling script${NC}"
   [[ $0 == "${BASH_SOURCE[0]}" ]] && EXIT="exit" || EXIT="return"
-  echo -e "${RED}.python-version does not exist in ${PWD}${NC}"
   ${EXIT} 1
 fi
 
-WANTED_PYTHON_VERSION=$(cat "${PWD}/.python-version")
+# Make sure .python-version exists.
+if [[ ! -f "${PYTHON_VERSION_PATH}" ]]; then
+  [[ $0 == "${BASH_SOURCE[0]}" ]] && EXIT="exit" || EXIT="return"
+  echo -e "${RED}.python-version does not exist at ${PYTHON_VERSION_PATH}${NC}"
+  ${EXIT} 1
+fi
+
+WANTED_PYTHON_VERSION=$(cat "${PYTHON_VERSION_PATH}")
 
 if [[ -z "${WANTED_PYTHON_VERSION}" ]]; then
   echo -e "${RED}WANTED_PYTHON_VERSION is not set, check .python-version${NC}"
@@ -64,6 +72,4 @@ WHICH_PYTHON=$(command -v python)
 echo -e "${YELLOW}WHICH_PYTHON: ${WHICH_PYTHON}${NC}"
 ls ~/.pyenv/versions/
 
-source "${PROJ_PATH}/scripts/utilities/ensure-py-version.sh"
-
-echo -e "${GREEN}Python is ready${NC}"
+echo -e "${GREEN}pyenv is installed and the requested .python-version is installed${NC}"

@@ -5,6 +5,7 @@ set -e -x -v -u -o pipefail
 SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 source "${SCRIPT_DIR}/utilities/common.sh"
 
+export TOML="${PROJ_PATH}/pyproject.toml"
 
 # This variable will be 1 when we are the ideal version in the GH action matrix.
 IDEAL="0"

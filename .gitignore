@@ -11,3 +11,4 @@ comfy_catapult.egg-info/
 **/.deleteme*
 .scrap/
 dist/
+node_modules/

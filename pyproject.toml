@@ -136,7 +136,7 @@ dev = [
   "ruamel-yaml-clib==0.2.8",
   "six==1.16.0",
   "sniffio==1.3.1",
-  "snipinator==1.1.0",
+  "snipinator==1.4.0",
   "text-unidecode==1.3",
   "toml==0.10.2",
   "toml-sort==0.23.1",
