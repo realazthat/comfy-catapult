@@ -6,7 +6,8 @@ SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 source "${SCRIPT_DIR}/utilities/common.sh"
 
 # COMFY_IMAGE_NAME=ghcr.io/ai-dock/comfyui:pytorch-2.1.2-py3.10-cuda-12.1.0-runtime-22.04
-COMFY_IMAGE_NAME=ghcr.io/ai-dock/comfyui:pytorch-2.2.0-py3.10-cpu-22.04
+COMFY_IMAGE_NAME=ghcr.io/ai-dock/comfyui:pytorch-2.2.2-py3.10-cpu-22.04-719fb2c
+
 # PROVISIONING_SCRIPT="${PWD}/scripts/provisioning-for-tests.sh"
 CURRENT_DIR_NAME=$(basename "${PWD}")
 CURRENT_DIR_SLUGIFIED=$(echo "${CURRENT_DIR_NAME}" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9]/-/g' | tr -s '-')
