@@ -571,7 +571,7 @@ These instructions are for maintainers of the project.
 [26]:
   https://img.shields.io/badge/Platform-Linux-0A1E1E?style=plastic&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWxhcHRvcC1taW5pbWFsIj48cmVjdCB3aWR0aD0iMTgiIGhlaWdodD0iMTIiIHg9IjMiIHk9IjQiIHJ4PSIyIiByeT0iMiIvPjxsaW5lIHgxPSIyIiB4Mj0iMjIiIHkxPSIyMCIgeTI9IjIwIi8+PC9zdmc+
 [27]: https://github.com/realazthat/comfy-catapult/tree/master
-[28]: htttps://github.com/realazthat/comfy-catapult/tree/develop
+[28]: https://github.com/realazthat/comfy-catapult/tree/develop
 [29]: https://github.com/city96/ComfyUI_NetDist
 [30]: https://github.com/matan1905/ComfyUI-Serving-Toolkit
 [31]: https://github.com/rvion/CushyStudio
