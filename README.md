@@ -117,10 +117,10 @@ pip install git+https://github.com/realazthat/comfy-catapult.git@v2.0.0
 
 | Project                          | ComfyUI API Wrapper | Outsource Backend | Distribute Execution | Wrap Workflow | Studio |
 | -------------------------------- | ------------------- | ----------------- | -------------------- | ------------- | ------ |
-| [CushyStudio][31]                 | ?                   | ?                 | ?                    | ?             | Yes    |
-| [ComfyUI-Serving-Toolkit][30]     | X                   | ?                 | ?                    | Yes           | ?      |
-| [ComfyUI_NetDist][29]             | X                   | ?                 | Yes                  | ?             | ?      |
-| [ComfyUI script_examples][32]     | Yes                 | No                | No                   | No            | No     |
+| [CushyStudio][31]                | ?                   | ?                 | ?                    | ?             | Yes    |
+| [ComfyUI-Serving-Toolkit][30]    | X                   | ?                 | ?                    | Yes           | ?      |
+| [ComfyUI_NetDist][29]            | X                   | ?                 | Yes                  | ?             | ?      |
+| [ComfyUI script_examples][32]    | Yes                 | No                | No                   | No            | No     |
 | [comfyui-python-api][5]          | ?                   | ?                 | ?                    | Yes           | ?      |
 | [comfyui-deploy][6]              | ?                   | ?                 | ?                    | Yes           | ?      |
 | [ComfyUI-to-Python-Extension][7] | ?                   | ?                 | ?                    | Yes           | ?      |
@@ -539,8 +539,10 @@ These instructions are for maintainers of the project.
 [8]: https://github.com/Chaoses-Ib/ComfyScript
 [9]: https://pypi.org/project/hordelib/
 [10]: https://github.com/nathannlu/comfyui-cloud
-[11]: https://img.shields.io/github/license/realazthat/comfy-catapult?style=plastic&color=0A1E1E
-[12]: https://img.shields.io/pypi/v/comfy_catapult?style=plastic&color=0A1E1E
+[11]:
+  https://img.shields.io/github/license/realazthat/comfy-catapult?style=plastic&color=0A1E1E
+[12]:
+  https://img.shields.io/pypi/v/comfy_catapult?style=plastic&color=0A1E1E
 [13]: https://pypi.org/project/comfy_catapult/
 [14]:
   https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.0.0/master?style=plastic&color=0A1E1E
@@ -550,7 +552,8 @@ These instructions are for maintainers of the project.
   https://img.shields.io/github/last-commit/realazthat/comfy-catapult/master?style=plastic&color=0A1E1E
 [17]:
   https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop?style=plastic&color=0A1E1E
-[18]: https://img.shields.io/pypi/pyversions/comfy_catapult?style=plastic&color=0A1E1E
+[18]:
+  https://img.shields.io/pypi/pyversions/comfy_catapult?style=plastic&color=0A1E1E
 [19]:
   https://img.shields.io/github/languages/top/realazthat/comfy-catapult.svg?style=plastic&color=0A1E1E&cacheSeconds=28800
 [20]:
@@ -569,4 +572,6 @@ These instructions are for maintainers of the project.
 [29]: https://github.com/city96/ComfyUI_NetDist
 [30]: https://github.com/matan1905/ComfyUI-Serving-Toolkit
 [31]: https://github.com/rvion/CushyStudio
-[32]: https://github.com/comfyanonymous/ComfyUI/tree/89d0e9abeb31e44cccef46537cd10d8812130ef3/script_examples "Permalink"
+[32]:
+  https://github.com/comfyanonymous/ComfyUI/tree/89d0e9abeb31e44cccef46537cd10d8812130ef3/script_examples
+  "Permalink"
