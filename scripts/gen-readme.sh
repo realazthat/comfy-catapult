@@ -13,6 +13,8 @@ TOML=${PROJ_PATH}/pyproject.toml EXTRA=dev \
   bash "${PROJ_PATH}/scripts/utilities/ensure-reqs.sh"
 ################################################################################
 
+bash scripts/format.sh
+
 touch "${PROJ_PATH}/README.md"
 python -m snipinator.cli \
   -t "${PROJ_PATH}/README.md.jinja2" \
