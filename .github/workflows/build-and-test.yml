@@ -85,7 +85,7 @@ jobs:
         run: |
           COMFY_INSTANCE_NAME="${{ github.repository }}"
           COMFY_INSTANCE_NAME=$(echo "${COMFY_INSTANCE_NAME}" | tr '[:upper:]' '[:lower:]' | sed -e 's/[^a-z0-9]/-/g' | tr -s '-')
-          COMFY_INSTANCE_NAME="${COMFY_INSTANCE_NAME}-comfy-test-instance"
+          COMFY_INSTANCE_NAME="comfy-test-instance-${COMFY_INSTANCE_NAME}"
           COMFY_INSTANCE_NAME=${COMFY_INSTANCE_NAME} source scripts/run-comfy-for-tests.sh
           echo "COMFY_API_URL=${COMFY_API_URL}" >> "${GITHUB_ENV}"
       - name: Run everything
