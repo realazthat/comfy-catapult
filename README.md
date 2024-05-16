@@ -508,8 +508,8 @@ These instructions are for maintainers of the project.
    everything is in order.
 2. `develop` branch: Bump the version in
    [./pyproject.toml](./pyproject.toml), following semantic versioning
-   principles. Also modify the `last_unstable_release` and `last_stable_release`
-   in the `[tool.comfy-catapult-project-metadata]` table as appropriate.
+   principles. Also modify the `last_release` and `last_stable_release` in the
+   `[tool.comfy_catapult-project-metadata]` table as appropriate.
 3. `develop` branch: Commit these changes with a message like "Prepare release
    X.Y.Z". (See the contributions section [above](#commit-process)).
 4. `master` branch: Merge the `develop` branch into the `master` branch:

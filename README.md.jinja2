@@ -3,9 +3,9 @@
 {% set project_name='comfy-catapult' %}
 {% set project_name_proper='Comfy Catapult' %}
 {% set pypi_project_name='comfy_catapult' %}
-{% set last_unstable_release=shell('tomlq -r \'.["tool"]["comfy-catapult-project-metadata"]["last_unstable_release"]\' pyproject.toml',
+{% set last_release=shell('tomlq -r -e \'.["tool"]["comfy_catapult-project-metadata"]["last_release"]\' pyproject.toml',
                                    include_args=False) | trim %}
-{% set last_stable_release=shell('tomlq -r \'.["tool"]["comfy-catapult-project-metadata"]["last_stable_release"]\' pyproject.toml',
+{% set last_stable_release=shell('tomlq -r -e \'.["tool"]["comfy_catapult-project-metadata"]["last_stable_release"]\' pyproject.toml',
                                  include_args=False) | trim %}
 {% set tested_python_versions=shell('python -m yq -r -c \'[.jobs["build-and-test"]["strategy"]["matrix"]["python-version"][].gh] | join(", ")\' .github/workflows/build-and-test.yml',
                                  include_args=False) | trim %}
@@ -327,8 +327,8 @@ These instructions are for maintainers of the project.
    everything is in order.
 2. `develop` branch: Bump the version in
    {{path('./pyproject.toml', link='md')}}, following semantic versioning
-   principles. Also modify the `last_unstable_release` and `last_stable_release`
-   in the `[tool.comfy-catapult-project-metadata]` table as appropriate.
+   principles. Also modify the `last_release` and `last_stable_release` in the
+   `[tool.comfy_catapult-project-metadata]` table as appropriate.
 3. `develop` branch: Commit these changes with a message like "Prepare release
    X.Y.Z". (See the contributions section [above](#commit-process)).
 4. `master` branch: Merge the `develop` branch into the `master` branch:
