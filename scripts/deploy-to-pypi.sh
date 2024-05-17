@@ -11,9 +11,6 @@ TOML=${PROJ_PATH}/pyproject.toml EXTRA=dev \
   TARGET_VENV_PATH="${PWD}/.cache/scripts/.venv" \
   bash "${PROJ_PATH}/scripts/utilities/ensure-reqs.sh"
 
-pip install twine
-
 rm -Rf dist
-
 python -m build
 twine upload dist/*
