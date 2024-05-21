@@ -203,7 +203,7 @@ class APIWorkflowTicket(BaseModel):
   node_errors: Dict[APINodeID, NodeErrors] | None = None
   number: int | None = None
   prompt_id: PromptID | None = None
-  error: str | None = None
+  error: NodeErrorInfo | str | None = None
 
 
 ################################################################################
