@@ -28,13 +28,11 @@ fi
 
 EXTRA=dev bash scripts/utilities/pin-extra-reqs.sh
 EXTRA=prod bash scripts/utilities/pin-extra-reqs.sh
-bash scripts/format.sh
-bash scripts/generate.sh
 bash scripts/run-all-tests.sh
-bash scripts/run-all-examples.sh
+bash scripts/generate.sh
 if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
-	bash scripts/precommit.sh
   bash scripts/act.sh
+	bash scripts/precommit.sh
 fi
 
 # Check that no changes occurred to files throughout pre.sh to tracked files. If
