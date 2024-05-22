@@ -11,7 +11,11 @@ from typing import Sequence
 from .comfy_schema import APINodeID, APIWorkflowTicket
 
 
-class NodeNotFound(RuntimeError):
+class CatapultRuntimeError(RuntimeError):
+  pass
+
+
+class NodeNotFound(CatapultRuntimeError):
 
   def __init__(self, *, node_id: APINodeID | int | None,
                title: str | int | None):
@@ -21,7 +25,7 @@ class NodeNotFound(RuntimeError):
     self.title = title
 
 
-class MultipleNodesFound(RuntimeError):
+class MultipleNodesFound(CatapultRuntimeError):
 
   def __init__(self, *, search_titles: Sequence[str],
                search_nodes: Sequence[APINodeID], found_titles: Sequence[str],
@@ -36,7 +40,7 @@ class MultipleNodesFound(RuntimeError):
     self.found_node_ids = list(found_nodes)
 
 
-class NodesNotExecuted(RuntimeError):
+class NodesNotExecuted(CatapultRuntimeError):
 
   def __init__(self, *, nodes: Sequence[APINodeID],
                titles: Sequence[str | None] | None):
@@ -53,13 +57,17 @@ class NodesNotExecuted(RuntimeError):
     self.titles = list(titles)
 
 
-class WorkflowSubmissionError(RuntimeError):
+class WorkflowSubmissionError(CatapultRuntimeError):
 
   def __init__(self, msg, *, prepared_workflow: dict,
                ticket: APIWorkflowTicket):
     super().__init__(msg)
     self.prepared_workflow: dict = deepcopy(prepared_workflow)
     self.ticket: APIWorkflowTicket = deepcopy(ticket)
+
+
+class JobFailed(CatapultRuntimeError):
+  pass
 
 
 class URLValidationError(ValueError):

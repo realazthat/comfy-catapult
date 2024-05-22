@@ -31,7 +31,7 @@ from .comfy_schema import (APIHistory, APIHistoryEntry,
                            APIHistoryEntryStatusNote, APINodeID, APIQueueInfo,
                            APISystemStats, APIWorkflowTicket, WSMessage)
 from .comfy_utils import TryParseAsModel
-from .errors import NodesNotExecuted, WorkflowSubmissionError
+from .errors import JobFailed, NodesNotExecuted, WorkflowSubmissionError
 
 logger = logging.getLogger(__name__)
 
@@ -298,7 +298,7 @@ class ComfyCatapult(ComfyCatapultBase):
         # TODO: Turn all Exception into a subclass of Exception.
         # TODO: Make all exceptions going forward contain the metadata that
         # NodesNotExecuted does.
-        raise Exception('Job has failed'
+        raise JobFailed('Job has failed'
                         f'\n  status: {repr(job_history.status)}'
                         f'\n  notes:' + '\n'.join(notes))
 
