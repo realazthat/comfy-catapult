@@ -144,7 +144,7 @@ From
       job_id: str,
       prepared_workflow: dict,
       important: Sequence[APINodeID],
-      job_debug_path: Path | None = None,
+      job_debug_path: Optional[Path] = None,
   ) -> dict:
     """Schedule a ComfyUI workflow job.
 

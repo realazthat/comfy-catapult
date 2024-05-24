@@ -8,7 +8,7 @@
 import asyncio
 import datetime
 from abc import ABC, abstractmethod
-from typing import Dict, List, NamedTuple, Sequence, Tuple
+from typing import Dict, List, NamedTuple, Optional, Sequence, Tuple
 
 from anyio import Path
 
@@ -20,22 +20,23 @@ class Progress(NamedTuple):
   max_value: int
 
 
+class ExceptionInfo(NamedTuple):
+  type: str
+  message: str
+  traceback: str
+  attributes: Dict[str, str]
+
+
 class JobStatus(NamedTuple):
 
-  class ExceptionInfo(NamedTuple):
-    type: str
-    message: str
-    traceback: str
-    attributes: Dict[str, str]
-
-  scheduled: datetime.datetime | None
-  pending: datetime.datetime | None
-  running: datetime.datetime | None
-  success: datetime.datetime | None
-  errored: datetime.datetime | None
-  cancelled: datetime.datetime | None
+  scheduled: Optional[datetime.datetime]
+  pending: Optional[datetime.datetime]
+  running: Optional[datetime.datetime]
+  success: Optional[datetime.datetime]
+  errored: Optional[datetime.datetime]
+  cancelled: Optional[datetime.datetime]
   errors: List[ExceptionInfo]
-  job_history: dict | None = None
+  job_history: Optional[dict] = None
 
   def IsDone(self) -> bool:
     return (self.success is not None or self.errored is not None
@@ -67,7 +68,7 @@ class ComfyCatapultBase(ABC):
       job_id: str,
       prepared_workflow: dict,
       important: Sequence[APINodeID],
-      job_debug_path: Path | None = None,
+      job_debug_path: Optional[Path] = None,
   ) -> dict:
     """Schedule a ComfyUI workflow job.
 
@@ -91,7 +92,7 @@ class ComfyCatapultBase(ABC):
 
   @abstractmethod
   async def GetStatus(self, *,
-                      job_id: str) -> Tuple[JobStatus, asyncio.Future[dict]]:
+                      job_id: str) -> 'Tuple[JobStatus, asyncio.Future[dict]]':
     """Get the status of a job.
 
     Args:

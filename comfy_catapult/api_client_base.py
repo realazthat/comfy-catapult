@@ -6,7 +6,7 @@
 # the license text.
 
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
 from .comfy_schema import (APIHistory, APIObjectInfo, APIQueueInfo,
                            APISystemStats, APIUploadImageResp,
@@ -75,10 +75,10 @@ class ComfyAPIClientBase(ABC):
   async def PostPromptRaw(self,
                           *,
                           prompt_workflow: dict,
-                          number: int | None = None,
-                          client_id: ClientID | None = None,
-                          prompt_id: PromptID | None = None,
-                          extra_data: dict | None = None) -> dict:
+                          number: Optional[int] = None,
+                          client_id: Optional[ClientID] = None,
+                          prompt_id: Optional[PromptID] = None,
+                          extra_data: Optional[dict] = None) -> dict:
     """See `ComfyUI/server.py` `@routes.post("/prompt")`.
 
     Args:
@@ -109,10 +109,10 @@ class ComfyAPIClientBase(ABC):
   async def PostPrompt(self,
                        *,
                        prompt_workflow: dict,
-                       number: int | None = None,
-                       client_id: ClientID | None = None,
-                       prompt_id: PromptID | None = None,
-                       extra_data: dict | None = None) -> APIWorkflowTicket:
+                       number: Optional[int] = None,
+                       client_id: Optional[ClientID] = None,
+                       prompt_id: Optional[PromptID] = None,
+                       extra_data: Optional[dict] = None) -> APIWorkflowTicket:
     """See `ComfyUI/server.py` `@routes.post("/prompt")`.
 
     Args:
@@ -142,15 +142,15 @@ class ComfyAPIClientBase(ABC):
   @abstractmethod
   async def GetHistoryRaw(self,
                           *,
-                          prompt_id: PromptID | None = None,
-                          max_items: int | None = None) -> dict:
+                          prompt_id: Optional[PromptID] = None,
+                          max_items: Optional[int] = None) -> dict:
     raise NotImplementedError()
 
   @abstractmethod
   async def GetHistory(self,
                        *,
-                       prompt_id: PromptID | None = None,
-                       max_items: int | None = None) -> APIHistory:
+                       prompt_id: Optional[PromptID] = None,
+                       max_items: Optional[int] = None) -> APIHistory:
     raise NotImplementedError()
 
   @abstractmethod

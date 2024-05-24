@@ -67,6 +67,6 @@ class RemoteFileAPIBase(ABC):
     raise NotImplementedError()
 
   @abstractmethod
-  def GetBases(self) -> list[str]:
+  def GetBases(self) -> 'list[str]':
     """Return a list of base URLs that this API can handle."""
     raise NotImplementedError()

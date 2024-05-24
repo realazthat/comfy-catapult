@@ -6,7 +6,7 @@
 # the license text.
 
 from copy import deepcopy
-from typing import Sequence
+from typing import Optional, Sequence, Union
 
 from .comfy_schema import APINodeID, APIWorkflowTicket
 
@@ -17,8 +17,8 @@ class CatapultRuntimeError(RuntimeError):
 
 class NodeNotFound(CatapultRuntimeError):
 
-  def __init__(self, *, node_id: APINodeID | int | None,
-               title: str | int | None):
+  def __init__(self, *, node_id: Union[APINodeID, int, None],
+               title: Union[str, int, None]):
     super().__init__(
         f'Node with title=={repr(title)}, node_id=={repr(node_id)} not found')
     self.node_id = node_id
@@ -43,7 +43,7 @@ class MultipleNodesFound(CatapultRuntimeError):
 class NodesNotExecuted(CatapultRuntimeError):
 
   def __init__(self, *, nodes: Sequence[APINodeID],
-               titles: Sequence[str | None] | None):
+               titles: Optional[Sequence[Optional[str]]]):
     if titles is None:
       titles = [None] * len(nodes)
     if len(nodes) != len(titles):

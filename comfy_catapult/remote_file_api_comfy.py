@@ -5,10 +5,11 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple, cast
 from urllib.parse import ParseResult
 
 from anyio import Path
+from typing_extensions import Literal
 
 from .api_client import ComfyAPIClient
 from .comfy_schema import (VALID_FOLDER_TYPES, APIUploadImageResp,
@@ -21,7 +22,7 @@ VALID_COMFY_SCHEME_SCHEMES = ['comfy+http', 'comfy+https']
 
 
 def _ValidateComfyAPITargetURL(url: str, *,
-                               any_api_targets: List[str] | None) -> str:
+                               any_api_targets: Optional[List[str]]) -> str:
   url_pr = ToParseResult(url=url)
   if url_pr.scheme not in VALID_COMFY_API_SCHEMES:
     raise ValueError(
@@ -35,7 +36,7 @@ def _ValidateComfyAPITargetURL(url: str, *,
   return url
 
 
-def _ValidateComfySchemeURL(url: str, *, any_bases: List[str] | None) -> str:
+def _ValidateComfySchemeURL(url: str, *, any_bases: Optional[List[str]]) -> str:
   url_pr = ToParseResult(url=url)
   if url_pr.scheme not in VALID_COMFY_SCHEME_SCHEMES:
     raise ValueError(
@@ -84,11 +85,13 @@ def ComfySchemeURLToTriplet(
   # /folder_type//subfolder/subsubfolder/filename => ('folder_type', '/subfolder/subsubfolder', 'filename')
   # /folder_type/subfolder/subsubfolder//filename => ('folder_type', 'subfolder/subsubfolder/', 'filename')
 
-  folder_type, _, rest = url_path[1:].partition('/')
-  if folder_type not in VALID_FOLDER_TYPES:
+  folder_type_str: str
+  folder_type_str, _, rest = url_path[1:].partition('/')
+  if folder_type_str not in VALID_FOLDER_TYPES:
     raise ValueError(
         f'URL {repr(url)} path {repr(url_path)} does not start with one of {VALID_FOLDER_TYPES}'
     )
+  folder_type = cast(Literal['input', 'output', 'temp'], folder_type_str)
   subfolder, _, filename = rest.rpartition('/')
 
   comfy_api_url_pr = url_pr._replace(scheme=api_scheme, path='')
@@ -164,7 +167,7 @@ class ComfySchemeRemoteFileAPI(RemoteFileAPIBase):
   endpoints.
   """
 
-  def __init__(self, *, comfy_api_urls: List[str] | None, overwrite: bool):
+  def __init__(self, *, comfy_api_urls: Optional[List[str]], overwrite: bool):
     """Upload and download files from the ComfyUI API directly.
 
     Args:
@@ -177,7 +180,7 @@ class ComfySchemeRemoteFileAPI(RemoteFileAPIBase):
           that file name.
     """
     super().__init__()
-    self._comfy_api_urls: List[str] | None = None
+    self._comfy_api_urls: Optional[List[str]] = None
     if comfy_api_urls is not None:
       self._comfy_api_urls = [
           _ValidateComfyAPITargetURL(url, any_api_targets=None)
@@ -273,7 +276,7 @@ class ComfySchemeRemoteFileAPI(RemoteFileAPIBase):
   def URLToTriplet(self, *, url: str) -> Tuple[str, ComfyUIPathTriplet]:
     return ComfySchemeURLToTriplet(url=url)
 
-  def GetBases(self) -> list[str]:
+  def GetBases(self) -> 'list[str]':
     if self._comfy_api_urls is None:
       return [f'comfy+{scheme}://' for scheme in VALID_COMFY_API_SCHEMES]
 

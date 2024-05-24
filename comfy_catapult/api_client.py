@@ -9,7 +9,7 @@ import base64
 import json
 import logging
 import textwrap
-from typing import Any, Dict, List, Type, TypeVar
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 from urllib.parse import urlencode, urlparse
 
 import aiohttp
@@ -28,7 +28,8 @@ logger = logging.getLogger(__name__)
 T = TypeVar('T')
 
 
-async def _TryGetContent(*, resp: aiohttp.ClientResponse) -> str | Exception:
+async def _TryGetContent(*,
+                         resp: aiohttp.ClientResponse) -> Union[str, Exception]:
   try:
     return await resp.text(errors='replace')
   except Exception as e:
@@ -38,7 +39,7 @@ async def _TryGetContent(*, resp: aiohttp.ClientResponse) -> str | Exception:
 
 async def _RaiseForStatus(*,
                           resp: aiohttp.ClientResponse,
-                          extra: Any | None = None):
+                          extra: Optional[Any] = None):
   """Same as raise_for_status(), but also dumps any content in the response into the exception"""
   try:
     resp.raise_for_status()
@@ -77,7 +78,7 @@ async def _TryParseRespAsJson(*, resp: aiohttp.ClientResponse,
                               json_type: Type[T]) -> T:
   content_bytes = b''
   content_str: str = ''
-  content: T | None = None
+  content: Optional[T] = None
   try:
     content_bytes = await resp.content.read()
     content_str = content_bytes.decode('utf-8')
@@ -106,7 +107,7 @@ _BaseModelT = TypeVar('_BaseModelT', bound=BaseModel)
 
 async def _TryParseRespAsModel(
     *, resp: aiohttp.ClientResponse, model_type: Type[_BaseModelT],
-    errors_dump_directory: Path | None) -> _BaseModelT:
+    errors_dump_directory: Optional[Path]) -> _BaseModelT:
   content: Any = await _TryParseRespAsJson(resp=resp, json_type=dict)
   return await TryParseAsModel(content=content,
                                model_type=model_type,
@@ -118,7 +119,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
   def __init__(self,
                comfy_api_url: str,
                *,
-               errors_dump_directory: Path | None = None):
+               errors_dump_directory: Optional[Path] = None):
     self._comfy_api_url = comfy_api_url
     self._session = aiohttp.ClientSession()
     self._errors_dump_directory = errors_dump_directory
@@ -176,10 +177,10 @@ class ComfyAPIClient(ComfyAPIClientBase):
   async def PostPromptRaw(self,
                           *,
                           prompt_workflow: dict,
-                          number: int | None = None,
-                          client_id: ClientID | None = None,
-                          prompt_id: PromptID | None = None,
-                          extra_data: dict | None = None) -> dict:
+                          number: Optional[int] = None,
+                          client_id: Optional[ClientID] = None,
+                          prompt_id: Optional[PromptID] = None,
+                          extra_data: Optional[dict] = None) -> dict:
     body: Dict[str, Any] = {'prompt': prompt_workflow}
 
     if number is not None:
@@ -200,10 +201,10 @@ class ComfyAPIClient(ComfyAPIClientBase):
   async def PostPrompt(self,
                        *,
                        prompt_workflow: dict,
-                       number: int | None = None,
-                       client_id: ClientID | None = None,
-                       prompt_id: PromptID | None = None,
-                       extra_data: dict | None = None) -> APIWorkflowTicket:
+                       number: Optional[int] = None,
+                       client_id: Optional[ClientID] = None,
+                       prompt_id: Optional[PromptID] = None,
+                       extra_data: Optional[dict] = None) -> APIWorkflowTicket:
     ticket = await self.PostPromptRaw(prompt_workflow=prompt_workflow,
                                       number=number,
                                       client_id=client_id,
@@ -216,8 +217,8 @@ class ComfyAPIClient(ComfyAPIClientBase):
 
   async def GetHistoryRaw(self,
                           *,
-                          prompt_id: PromptID | None = None,
-                          max_items: int | None = None) -> dict:
+                          prompt_id: Optional[PromptID] = None,
+                          max_items: Optional[int] = None) -> dict:
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'history'))
     if max_items is not None:
       url = url._replace(query=f'max_items={max_items}')
@@ -230,8 +231,8 @@ class ComfyAPIClient(ComfyAPIClientBase):
 
   async def GetHistory(self,
                        *,
-                       prompt_id: PromptID | None = None,
-                       max_items: int | None = None) -> APIHistory:
+                       prompt_id: Optional[PromptID] = None,
+                       max_items: Optional[int] = None) -> APIHistory:
     history = await self.GetHistoryRaw(prompt_id=prompt_id, max_items=max_items)
     return await TryParseAsModel(
         content=history,
