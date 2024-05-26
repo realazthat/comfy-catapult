@@ -36,7 +36,14 @@ class JobStatus(NamedTuple):
   errored: Optional[datetime.datetime]
   cancelled: Optional[datetime.datetime]
   errors: List[ExceptionInfo]
+
+  system_stats_check: Optional[datetime.datetime] = None
+  """Last time system stats were successfully checked (while this job is not done)."""
+  queue_check: Optional[datetime.datetime] = None
+  """Last time /queue/job_id was successfully checked for (while this job is not done)."""
+
   job_history: Optional[dict] = None
+  """The history of the job. This is only set when the job is done and the history is successfully retrieved."""
 
   def IsDone(self) -> bool:
     return (self.success is not None or self.errored is not None
