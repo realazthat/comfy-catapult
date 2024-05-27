@@ -11,3 +11,6 @@ comfy_catapult.egg-info/
 **/.deleteme*
 .scrap/
 dist/
+node_modules/
+.mypy_cache/
+.ruff_cache/

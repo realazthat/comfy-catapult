@@ -10,9 +10,9 @@ from typing import List, Tuple
 import aioshutil
 from anyio import Path
 
-from comfy_catapult.comfy_schema import ComfyUIPathTriplet
-from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
-from comfy_catapult.url_utils import ToParseResult, ValidateIsBasedURL
+from .comfy_schema import ComfyUIPathTriplet
+from .remote_file_api_base import RemoteFileAPIBase
+from .url_utils import ToParseResult, ValidateIsBasedURL
 
 
 async def _LocalFileURLToLocalPath(url: str) -> Path:
@@ -118,7 +118,7 @@ class LocalRemoteFileAPI(RemoteFileAPIBase):
     raise NotImplementedError('Local files do not support triplets')
 
   async def UploadToTriplet(
-      self, *, src_triplet: ComfyUIPathTriplet, untrusted_comfy_api_url: str,
+      self, *, src_path: Path, untrusted_comfy_api_url: str,
       untrusted_dst_triplet: ComfyUIPathTriplet) -> ComfyUIPathTriplet:
     # TODO: Maybe we can make a mapper that maps triplets to urls, and then
     # download the file from the URL. But this is not necessary right now,
@@ -134,5 +134,5 @@ class LocalRemoteFileAPI(RemoteFileAPIBase):
   def URLToTriplet(self, *, url: str) -> Tuple[str, ComfyUIPathTriplet]:
     raise NotImplementedError('Local files do not support triplets')
 
-  def GetBases(self) -> list[str]:
+  def GetBases(self) -> 'list[str]':
     return list(self._upload_to_bases + self._download_from_bases)

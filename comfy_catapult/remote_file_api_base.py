@@ -10,7 +10,7 @@ from typing import Tuple
 
 from anyio import Path
 
-from comfy_catapult.comfy_schema import ComfyUIPathTriplet
+from .comfy_schema import ComfyUIPathTriplet
 
 
 class RemoteFileAPIBase(ABC):
@@ -67,6 +67,6 @@ class RemoteFileAPIBase(ABC):
     raise NotImplementedError()
 
   @abstractmethod
-  def GetBases(self) -> list[str]:
+  def GetBases(self) -> 'list[str]':
     """Return a list of base URLs that this API can handle."""
     raise NotImplementedError()

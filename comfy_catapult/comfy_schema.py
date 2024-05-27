@@ -5,13 +5,13 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
-from typing import Any, Dict, List, Literal, NamedTuple
+from typing import Any, Dict, List, Literal, NamedTuple, Optional, Union
 from urllib.parse import urljoin
 
 from pydantic import BaseModel, ConfigDict, Field, RootModel, field_validator
 from typing_extensions import Annotated
 
-EXTRA = 'allow'
+EXTRA: Union[Literal['allow', 'ignore', 'forbid'], None] = 'allow'
 
 APINodeID = Annotated[
     str,
@@ -74,7 +74,7 @@ class APIWorkflowNodeMeta(BaseModel):
   extra: This is just to future proof the schema so it won't break if extra
   fields are added. They'll be stored dynamically.
   """
-  title: str | None = None
+  title: Optional[str] = None
 
 
 class APIWorkflowNodeInfo(BaseModel):
@@ -88,9 +88,9 @@ class APIWorkflowNodeInfo(BaseModel):
   fields are added. They'll be stored dynamically.
   """
 
-  inputs: Dict[str, str | int | float | bool | APIWorkflowInConnection | dict]
+  inputs: Dict[str, Union[str, int, float, bool, APIWorkflowInConnection, dict]]
   class_type: str
-  meta: APIWorkflowNodeMeta | None = Field(None, alias='_meta')
+  meta: Optional[APIWorkflowNodeMeta] = Field(None, alias='_meta')
 
 
 class APIWorkflow(RootModel[Dict[APINodeID, APIWorkflowNodeInfo]]):
@@ -111,9 +111,9 @@ class APISystemStatsSystem(BaseModel):
   fields are added. They'll be stored dynamically.
   """
 
-  os: str | None = None
-  python_version: str | None = None
-  embedded_python: bool | None = None
+  os: Optional[str] = None
+  python_version: Optional[str] = None
+  embedded_python: Optional[bool] = None
 
 
 class APISystemStatsDevice(BaseModel):
@@ -123,13 +123,13 @@ class APISystemStatsDevice(BaseModel):
   extra: This is just to future proof the schema so it won't break if extra
   fields are added. They'll be stored dynamically.
   """
-  name: str | None = None
-  type: str | None = None
-  index: int | None = None
-  vram_total: int | None = None
-  vram_free: int | None = None
-  torch_vram_total: int | None = None
-  torch_vram_free: int | None = None
+  name: Optional[str] = None
+  type: Optional[str] = None
+  index: Optional[int] = None
+  vram_total: Optional[int] = None
+  vram_free: Optional[int] = None
+  torch_vram_total: Optional[int] = None
+  torch_vram_free: Optional[int] = None
 
 
 class APISystemStats(BaseModel):
@@ -140,8 +140,8 @@ class APISystemStats(BaseModel):
   extra: This is just to future proof the schema so it won't break if extra
   fields are added. They'll be stored dynamically.
   """
-  system: APISystemStatsSystem | None = None
-  devices: List[APISystemStatsDevice] | None = None
+  system: Optional[APISystemStatsSystem] = None
+  devices: Optional[List[APISystemStatsDevice]] = None
 
 
 ################################################################################
@@ -200,10 +200,10 @@ class APIWorkflowTicket(BaseModel):
   extra: This is just to future proof the schema so it won't break if extra
   fields are added. They'll be stored dynamically.
   """
-  node_errors: Dict[APINodeID, NodeErrors] | None = None
-  number: int | None = None
-  prompt_id: PromptID | None = None
-  error: str | None = None
+  node_errors: Optional[Dict[APINodeID, NodeErrors]] = None
+  number: Optional[int] = None
+  prompt_id: Optional[PromptID] = None
+  error: Union[NodeErrorInfo, str, None] = None
 
 
 ################################################################################
@@ -243,9 +243,9 @@ class APIHistoryEntryStatus(BaseModel):
   extra: This is just to future proof the schema so it won't break if extra
   fields are added. They'll be stored dynamically.
   """
-  status_str: str | None = None
-  completed: bool | None = None
-  messages: List[APIHistoryEntryStatusNote] | None = None
+  status_str: Optional[str] = None
+  completed: Optional[bool] = None
+  messages: Optional[List[APIHistoryEntryStatusNote]] = None
 
 
 class APIHistoryEntry(BaseModel):
@@ -255,9 +255,9 @@ class APIHistoryEntry(BaseModel):
   extra: This is just to future proof the schema so it won't break if extra
   fields are added. They'll be stored dynamically.
   """
-  outputs: Dict[APINodeID, APIOutputUI] | None = None
-  prompt: APIQueueInfoEntry | None = None
-  status: APIHistoryEntryStatus | None = None
+  outputs: Optional[Dict[APINodeID, APIOutputUI]] = None
+  prompt: Optional[APIQueueInfoEntry] = None
+  status: Optional[APIHistoryEntryStatus] = None
 
 
 class APIHistory(RootModel[Dict[PromptID, APIHistoryEntry]]):
@@ -305,11 +305,11 @@ class APIObjectInputInfo(BaseModel):
   I allow extra here because I don't know what the keys are, and they seem to
   vary quite a bit.
   """
-  default: Any | None = None
-  min: Any | None = None
-  max: Any | None = None
-  step: Any | None = None
-  round: Any | None = None
+  default: Optional[Any] = None
+  min: Optional[Any] = None
+  max: Optional[Any] = None
+  step: Optional[Any] = None
+  round: Optional[Any] = None
   # Note: Everything else is going to be in the extra dict. Access it with the
   # `extra` attribute.
 
@@ -326,9 +326,9 @@ class APIObjectInputTuple(NamedTuple):
 
     First item in the list/tuple is the type, second is the optional info.
   """
-  type: NamedInputType | ComboInputType
+  type: Union[NamedInputType, ComboInputType]
   # For some reason, when type=='*', this is an empty string.
-  info: APIObjectInputInfo | str | None = None
+  info: Union[APIObjectInputInfo, str, None] = None
 
 
 class APIObjectInput(BaseModel):
@@ -351,14 +351,16 @@ class APIObjectInput(BaseModel):
   fields are added. They'll be stored dynamically.
   """
 
-  required: Dict[str, APIObjectInputTuple | NamedInputType] | None = None
+  required: Optional[Dict[str, Union[APIObjectInputTuple,
+                                     NamedInputType]]] = None
   """
   For some reason, when type=='*', it just shows the type without a
   `[type, {... limits}] tuple, so I allowed NamedInputType.
   """
 
-  optional: Dict[str, APIObjectInputTuple | NamedInputType] | None = None
-  hidden: Dict[str, APIObjectInputTuple | NamedInputType] | None = None
+  optional: Optional[Dict[str, Union[APIObjectInputTuple,
+                                     NamedInputType]]] = None
+  hidden: Optional[Dict[str, Union[APIObjectInputTuple, NamedInputType]]] = None
 
 
 class APIObjectInfoEntry(BaseModel):
@@ -395,9 +397,9 @@ class APIObjectInfoEntry(BaseModel):
   fields are added. They'll be stored dynamically.
   """
   input: APIObjectInput
-  output: OutputType | List[OutputType | List[OutputType]]
+  output: Union[OutputType, List[Union[OutputType, List[OutputType]]]]
   output_is_list: List[bool]
-  output_name: OutputName | List[OutputName]
+  output_name: Union[OutputName, List[OutputName]]
   name: str
   display_name: str
   description: str
@@ -517,8 +519,8 @@ class WSExecutingData(BaseModel):
   extra: This is just to future proof the schema so it won't break if extra
   fields are added. They'll be stored dynamically.
   """
-  node: str | None = None
-  prompt_id: PromptID | None = None
+  node: Optional[str] = None
+  prompt_id: Optional[PromptID] = None
 
 
 class WSMessage(BaseModel):

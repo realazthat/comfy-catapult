@@ -10,9 +10,9 @@ from typing import Dict, List, Tuple
 
 from anyio import Path
 
-from comfy_catapult.comfy_schema import ComfyUIPathTriplet
-from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
-from comfy_catapult.url_utils import IsWeaklyRelativeTo
+from .comfy_schema import ComfyUIPathTriplet
+from .remote_file_api_base import RemoteFileAPIBase
+from .url_utils import IsWeaklyRelativeTo
 
 
 class GenericRemoteFileAPI(RemoteFileAPIBase):
@@ -21,21 +21,21 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
 
   def __init__(self):
     super().__init__()
-    self._base_to_api: Dict[str, List[RemoteFileAPIBase]] = defaultdict(list)
+    self._base_to_apis: Dict[str, List[RemoteFileAPIBase]] = defaultdict(list)
 
   def Register(self, api: RemoteFileAPIBase):
     for base in api.GetBases():
-      self._base_to_api[base].append(api)
+      self._base_to_apis[base].append(api)
 
   def _GetAPIsForURL(self, *, url: str) -> List[RemoteFileAPIBase]:
-    apis = []
-    for base, api in self._base_to_api.items():
+    apis: List[RemoteFileAPIBase] = []
+    for base, apis in self._base_to_apis.items():
       if IsWeaklyRelativeTo(base=base, url=url):
-        apis.append(api)
+        apis.extend(apis)
     if apis:
       return apis
     raise ValueError(f'URL {url} is not relative to any of'
-                     f' {self._base_to_api.keys()}, there is no API registered'
+                     f' {self._base_to_apis.keys()}, there is no API registered'
                      f' to handle such URLs')
 
   def _GetAPIsForTriplet(
@@ -43,7 +43,7 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
       triplet: ComfyUIPathTriplet) -> List[RemoteFileAPIBase]:
     relevant_apis = []
     convered_urls = []
-    for base, base_apis in self._base_to_api.items():
+    for base, base_apis in self._base_to_apis.items():
       for api in base_apis:
         try:
           url = api.TripletToURL(comfy_api_url=comfy_api_url, triplet=triplet)
@@ -147,5 +147,5 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
           raise
     raise AssertionError('unreachable')
 
-  def GetBases(self) -> list[str]:
-    return list(self._base_to_api.keys())
+  def GetBases(self) -> 'list[str]':
+    return list(self._base_to_apis.keys())

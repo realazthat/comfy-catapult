@@ -10,8 +10,8 @@ import datetime
 import logging
 import textwrap
 from dataclasses import is_dataclass
-from typing import (Any, Generator, Hashable, List, Literal, NamedTuple, Type,
-                    TypeVar, cast)
+from typing import (Any, Generator, Hashable, List, Literal, NamedTuple,
+                    Optional, Type, TypeVar, Union, cast)
 
 import aiofiles
 import pydantic_core
@@ -21,14 +21,13 @@ from anyio import Path
 from pydantic import BaseModel
 from pydash import slugify
 
-from comfy_catapult.comfy_schema import (APIHistoryEntry, APINodeID,
-                                         APIOutputUI, APIWorkflow,
-                                         APIWorkflowNodeInfo,
-                                         ComfyUIPathTriplet)
-from comfy_catapult.errors import MultipleNodesFound, NodeNotFound
-from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
+from .comfy_schema import (APIHistoryEntry, APINodeID, APIOutputUI,
+                           APIWorkflow, APIWorkflowNodeInfo,
+                           ComfyUIPathTriplet)
+from .errors import MultipleNodesFound, NodeNotFound
+from .remote_file_api_base import RemoteFileAPIBase
 
-MAX_DUMP_LINES: int | None = 200
+MAX_DUMP_LINES: Optional[int] = 200
 logger = logging.getLogger(__name__)
 
 
@@ -47,7 +46,7 @@ def FindNodesByTitle(*, workflow: APIWorkflow,
 
 
 def FindNodeByTitle(*, workflow: APIWorkflow,
-                    title: str) -> NodeIDAndNode | None:
+                    title: str) -> Optional[NodeIDAndNode]:
   for (node_id, node_info) in FindNodesByTitle(workflow=workflow, title=title):
     return NodeIDAndNode(node_id=node_id, node_info=node_info)
   return None
@@ -71,12 +70,12 @@ def GetNodeByTitle(*, workflow: APIWorkflow, title: str) -> NodeIDAndNode:
 
 
 def FindNode(*, workflow: APIWorkflow,
-             id_or_title: int | str) -> NodeIDAndNode | None:
-  id_node_id: APINodeID | None = None
-  # id_node_error: Exception | None = None
+             id_or_title: Union[int, str]) -> Optional[NodeIDAndNode]:
+  id_node_id: Optional[APINodeID] = None
+  # id_node_error: Optional[Exception] = None
 
-  title_node_id: APINodeID | None = None
-  # title_node_error: Exception | None = None
+  title_node_id: Optional[APINodeID] = None
+  # title_node_error: Optional[Exception] = None
 
   try:
     if isinstance(id_or_title, str):
@@ -113,7 +112,8 @@ def FindNode(*, workflow: APIWorkflow,
                          node_info=workflow.root[id_node_id])
 
 
-def GetNode(*, workflow: APIWorkflow, id_or_title: str | int) -> NodeIDAndNode:
+def GetNode(*, workflow: APIWorkflow, id_or_title: Union[str,
+                                                         int]) -> NodeIDAndNode:
   node = FindNode(workflow=workflow, id_or_title=id_or_title)
   if node is None:
     raise NodeNotFound(title=id_or_title, node_id=id_or_title)
@@ -136,7 +136,7 @@ def GenerateNewNodeID(*, workflow: APIWorkflow) -> APINodeID:
 
 async def DownloadPreviewImage(*, node_id: APINodeID,
                                job_history: APIHistoryEntry,
-                               field_path: Hashable | List[Hashable],
+                               field_path: Union[Hashable, List[Hashable]],
                                comfy_api_url: str, remote: RemoteFileAPIBase,
                                local_dst_path: Path):
   """Downloads something that looks like an Preview Image node's outputs.
@@ -245,7 +245,8 @@ async def _GetNewPath(*, parent_path: Path) -> Path:
   return path
 
 
-async def BigYamlDump(data: Any, *, max_lines: int | None, path: Path) -> str:
+async def BigYamlDump(data: Any, *, max_lines: Optional[int],
+                      path: Path) -> str:
   yaml_str = YamlDump(data)
   line_count = len(yaml_str.splitlines())
   if max_lines is None or line_count <= max_lines:
@@ -257,7 +258,7 @@ async def BigYamlDump(data: Any, *, max_lines: int | None, path: Path) -> str:
   return f'Too large, see {repr(str(path))}'
 
 
-async def BigErrorStrDump(exception: Exception, max_lines: int | None,
+async def BigErrorStrDump(exception: Exception, max_lines: Optional[int],
                           path: Path) -> str:
   if max_lines is None:
     return str(exception)
@@ -325,11 +326,11 @@ async def TryParseAsModel(
     *,
     content: Any,
     model_type: Type[_BaseModelT],
-    errors_dump_directory: Path | None,
+    errors_dump_directory: Optional[Path],
     strict: Literal['yes', 'no', 'warn'] = 'warn') -> _BaseModelT:
 
-  async def _Internal(errors_dump_directory: Path | None):
-    error_dump_path: Path | None = None
+  async def _Internal(errors_dump_directory: Optional[Path]):
+    error_dump_path: Optional[Path] = None
 
     try:
       try:

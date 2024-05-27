@@ -17,7 +17,7 @@ import uuid
 from copy import deepcopy
 from dataclasses import dataclass
 from pprint import pformat
-from typing import Any, Dict, Generic, List, Sequence, Tuple, TypeVar
+from typing import Any, Dict, Generic, List, Optional, Sequence, Tuple, TypeVar
 from urllib.parse import ParseResult, urlparse
 
 import aiofiles
@@ -25,14 +25,14 @@ from anyio import Path
 from slugify import slugify
 from websockets import WebSocketClientProtocol, connect
 
-from comfy_catapult.api_client import ComfyAPIClientBase, YamlDump
-from comfy_catapult.catapult_base import ComfyCatapultBase, JobStatus, Progress
-from comfy_catapult.comfy_schema import (APIHistory, APIHistoryEntry,
-                                         APIHistoryEntryStatusNote, APINodeID,
-                                         APIQueueInfo, APISystemStats,
-                                         APIWorkflowTicket, WSMessage)
-from comfy_catapult.comfy_utils import TryParseAsModel
-from comfy_catapult.errors import NodesNotExecuted, WorkflowSubmissionError
+from .api_client import ComfyAPIClientBase
+from .catapult_base import (ComfyCatapultBase, ExceptionInfo, JobStatus,
+                            Progress)
+from .comfy_schema import (APIHistory, APIHistoryEntry,
+                           APIHistoryEntryStatusNote, APINodeID, APIQueueInfo,
+                           APISystemStats, APIWorkflowTicket, WSMessage)
+from .comfy_utils import TryParseAsModel, YamlDump
+from .errors import JobFailed, NodesNotExecuted, WorkflowSubmissionError
 
 logger = logging.getLogger(__name__)
 
@@ -47,14 +47,14 @@ class _Job:
   job_id: str
   prepared_workflow: dict
   important_nodes: Tuple[APINodeID, ...]
-  ticket: APIWorkflowTicket | None
+  ticket: Optional[APIWorkflowTicket]
   status: JobStatus
   # Exceptions that should be in status but aren't because they're not pickable
   # or deepcopyable.
   errors: List[Exception]
-  future: asyncio.Future[dict]
+  future: 'asyncio.Future[dict]'
   remote_job_status: RemoteStatus
-  job_debug_path: Path | None
+  job_debug_path: Optional[Path]
 
 
 T = TypeVar('T')
@@ -62,7 +62,7 @@ T = TypeVar('T')
 
 @dataclass
 class _Guess(Generic[T]):
-  value: T | None
+  value: Optional[T]
   updated: datetime.datetime
 
 
@@ -71,7 +71,7 @@ class ComfyCatapult(ComfyCatapultBase):
   def __init__(self,
                comfy_client: ComfyAPIClientBase,
                *,
-               debug_path: Path | None,
+               debug_path: Optional[Path],
                debug_save_all: bool = False):
     """_summary_
 
@@ -146,7 +146,7 @@ class ComfyCatapult(ComfyCatapultBase):
       job_id: str,
       prepared_workflow: dict,
       important: Sequence[APINodeID],
-      job_debug_path: Path | None = None,
+      job_debug_path: Optional[Path] = None,
   ) -> dict:
     async with self._lock:
       if job_id in self._jobs:
@@ -162,8 +162,8 @@ class ComfyCatapult(ComfyCatapultBase):
     if job_debug_path is not None:
       await job_debug_path.mkdir(parents=True, exist_ok=True)
 
+    future: asyncio.Future[dict] = asyncio.Future()
     async with self._lock:
-      future = asyncio.Future()
       self._jobs[job_id] = _Job(
           job_id=job_id,
           prepared_workflow=prepared_workflow,
@@ -175,7 +175,8 @@ class ComfyCatapult(ComfyCatapultBase):
                            pending=None,
                            success=None,
                            errored=None,
-                           cancelled=None),
+                           cancelled=None,
+                           errors=[]),
           errors=[],
           remote_job_status=_Job.RemoteStatus.PENDING_OR_RUNNING,
           job_debug_path=job_debug_path)
@@ -211,7 +212,7 @@ class ComfyCatapult(ComfyCatapultBase):
       return await future
 
   async def GetStatus(self, *,
-                      job_id: str) -> Tuple[JobStatus, asyncio.Future[dict]]:
+                      job_id: str) -> 'Tuple[JobStatus, asyncio.Future[dict]]':
     async with self._lock:
       if job_id not in self._jobs:
         raise KeyError(f'Job id {repr(job_id)} not found')
@@ -228,8 +229,8 @@ class ComfyCatapult(ComfyCatapultBase):
   async def CancelJob(self, *, job_id: str):
     async with _JobContext(job_id=job_id, comfy=self):
       async with self._lock:
-        ticket: APIWorkflowTicket | None = self._jobs[job_id].ticket
-        prompt_id: str | None = None
+        ticket: Optional[APIWorkflowTicket] = self._jobs[job_id].ticket
+        prompt_id: Optional[str] = None
         if ticket is not None:
           prompt_id = ticket.prompt_id
         remote_job_status = self._jobs[job_id].remote_job_status
@@ -259,8 +260,8 @@ class ComfyCatapult(ComfyCatapultBase):
 
     async with self._lock:
       prepared_workflow: dict = deepcopy(self._jobs[job_id].prepared_workflow)
-      ticket: APIWorkflowTicket | None = deepcopy(self._jobs[job_id].ticket)
-      prompt_id: str | None = None
+      ticket: Optional[APIWorkflowTicket] = deepcopy(self._jobs[job_id].ticket)
+      prompt_id: Optional[str] = None
       if ticket is not None:
         prompt_id = ticket.prompt_id
       important_nodes = deepcopy(self._jobs[job_id].important_nodes)
@@ -272,11 +273,11 @@ class ComfyCatapult(ComfyCatapultBase):
     job_history: APIHistoryEntry = history.root[prompt_id]
     async with self._lock:
       self._jobs[job_id].status = self._jobs[job_id].status._replace(
-          job_history=job_history)
+          job_history=job_history.model_dump())
 
     ##########################################################################
     # Get outputs_to_execute, outputs_with_data, extra_data
-    extra_data: dict | None = None
+    extra_data: Optional[dict] = None
     outputs_to_execute: List[APINodeID] = []
     outputs_with_data: List[APINodeID] = []
     if job_history.outputs is not None:
@@ -298,7 +299,7 @@ class ComfyCatapult(ComfyCatapultBase):
         # TODO: Turn all Exception into a subclass of Exception.
         # TODO: Make all exceptions going forward contain the metadata that
         # NodesNotExecuted does.
-        raise Exception('Job has failed'
+        raise JobFailed('Job has failed'
                         f'\n  status: {repr(job_history.status)}'
                         f'\n  notes:' + '\n'.join(notes))
 
@@ -316,12 +317,12 @@ class ComfyCatapult(ComfyCatapultBase):
         if node_id not in outputs_with_data
     ]
 
-    def _GetTitles(node_ids: List[APINodeID]) -> List[str | None]:
+    def _GetTitles(node_ids: List[APINodeID]) -> List[Optional[str]]:
       titles = []
       for node_id in node_ids:
         node_info: dict = prepared_workflow.get(node_id, {})
         meta: dict = node_info.get('_meta', {})
-        title: str | None = meta.get('title', None)
+        title: Optional[str] = meta.get('title', None)
         titles.append(title)
       return titles
 
@@ -357,10 +358,33 @@ class ComfyCatapult(ComfyCatapultBase):
   async def _Poll(self):
     ############################################################################
     await self._CheckError()
+    await self._PollFutures()
+    ############################################################################
+    await self._PollSystemStats()
+    ############################################################################
+    prompt_id_2_status: Dict[str, str] = {}
+    await self._PollQueue(prompt_id_2_status)
+
+    ############################################################################
+    prompt_info: dict = await self._comfy_client.GetPromptRaw()
+
+    exec_info = prompt_info['exec_info']
+    queue_remaining = exec_info['queue_remaining']
+    if not isinstance(queue_remaining, int):
+      raise AssertionError(
+          f'queue_remaining must be int, not {type(queue_remaining)}')
+    logger.info('queue_remaining: %s', queue_remaining)
+    ############################################################################
+    # Check the /history endpoint to see if there are any updates on our jobs.
+    await self._PollHistory(prompt_id_2_status=prompt_id_2_status)
+
+  async def _PollFutures(self):
     ############################################################################
     # Make sure any hanging future that is done matches the job status.
     done_futures_jobs: List[str] = []
     async with self._lock:
+      job_id: str
+      job: _Job
       for job_id, job in self._jobs.items():
         if job.future.done() and not job.status.IsDone():
           done_futures_jobs.append(job_id)
@@ -371,13 +395,24 @@ class ComfyCatapult(ComfyCatapultBase):
           # See if an error occurred.
           job.future.result()
           job.status = job.status._replace(success=self._Now())
-    ############################################################################
+
+  async def _PollSystemStats(self):
     system_stats: APISystemStats = await self._comfy_client.GetSystemStats()
     logger.info('system_stats: %s', YamlDump(system_stats.model_dump()))
-    ############################################################################
+    for job_id in await self._GetJobIDs():
+      async with _JobContext(job_id=job_id, comfy=self):
+        async with self._lock:
+          job = self._jobs[job_id]
+          if job.status.IsDone():
+            continue
+          if job.status.system_stats_check is None:
+            job.status = job.status._replace(system_stats_check=self._Now())
+
+  async def _PollQueue(self, prompt_id_2_status: Dict[str, str]):
+    """Check /queue endpoint and update job status.
+    """
     queue_info: APIQueueInfo = await self._comfy_client.GetQueue()
 
-    prompt_id_2_status: Dict[str, str] = {}
     for pending in queue_info.queue_running:
       prompt_id_2_status[pending.prompt_id] = 'running'
     for running in queue_info.queue_pending:
@@ -394,74 +429,66 @@ class ComfyCatapult(ComfyCatapultBase):
 
     for prompt_id, status in prompt_id_2_status.items():
       async with self._lock:
-        job_id = self._prompt_id_index.get(prompt_id, None)
-        if job_id is None:
+        if prompt_id not in self._prompt_id_index:
           continue
-        job: _Job = self._jobs[job_id]
+        job_id = self._prompt_id_index[prompt_id]
+        async with _JobContext(job_id=job_id, comfy=self):
+          job: _Job = self._jobs[job_id]
 
-        if status == 'pending' and job.status.pending is None:
-          job.status = job.status._replace(pending=self._Now())
+          if status == 'pending' and job.status.pending is None:
+            job.status = job.status._replace(pending=self._Now())
 
-        if status == 'running' and job.status.running is None:
-          job.status = job.status._replace(running=self._Now())
-          self._guess_currently_running_job_id = _Guess(value=job_id,
-                                                        updated=self._Now())
-          self._guess_currently_running_node_id = _Guess(value=None,
-                                                         updated=self._Now())
-          self._guess_currently_running_node_progress = _Guess(
-              value=None, updated=self._Now())
+          if status == 'running' and job.status.running is None:
+            job.status = job.status._replace(running=self._Now())
+            self._guess_currently_running_job_id = _Guess(value=job_id,
+                                                          updated=self._Now())
+            self._guess_currently_running_node_id = _Guess(value=None,
+                                                           updated=self._Now())
+            self._guess_currently_running_node_progress = _Guess(
+                value=None, updated=self._Now())
+          job.status = job.status._replace(queue_check=self._Now())
 
     # TODO: Reenable this or remove it.
     # print('self._jobs:', file=sys.stderr)
     # pprint(self._jobs, indent=2, stream=sys.stderr)
 
-    ############################################################################
-    prompt_info: dict = await self._comfy_client.GetPromptRaw()
-
-    exec_info = prompt_info['exec_info']
-    queue_remaining = exec_info['queue_remaining']
-    if not isinstance(queue_remaining, int):
-      raise AssertionError(
-          f'queue_remaining must be int, not {type(queue_remaining)}')
-    logger.info('queue_remaining: %s', queue_remaining)
-    ############################################################################
-    # Check the /history endpoint to see if there are any updates on our jobs.
-
+  async def _PollHistory(self, prompt_id_2_status: Dict[str, str]):
     # Update job.remote_job_status.
     for job_id in await self._GetJobIDs():
-      async with self._lock:
-        new_remote_job_status = (_Job.RemoteStatus.NONE
-                                 if job_id not in prompt_id_2_status else
-                                 _Job.RemoteStatus.PENDING_OR_RUNNING)
-        self._jobs[job_id].remote_job_status = new_remote_job_status
+      async with _JobContext(job_id=job_id, comfy=self) as job_context:
+        async with self._lock:
+          new_remote_job_status = (_Job.RemoteStatus.NONE
+                                   if job_id not in prompt_id_2_status else
+                                   _Job.RemoteStatus.PENDING_OR_RUNNING)
+          self._jobs[job_id].remote_job_status = new_remote_job_status
 
     # Update job.job_history.
     for job_id in await self._GetJobIDs():
-      async with self._lock:
-        if job_id in prompt_id_2_status:
-          # In this case, it's pending or running, not going to be in the
-          # `/history` endpoint.
-          continue
-
-        if self._jobs[job_id].status.job_history is not None:
-          # We already have the job history.
-          continue
-
-        ticket: APIWorkflowTicket | None = self._jobs[job_id].ticket
-        prompt_id: str | None = None
-        if ticket is not None:
-          prompt_id = ticket.prompt_id
-
-        if prompt_id is None:
-          # This should never happen, but :shrug:.
-          continue
-        job_debug_path = self._jobs[job_id].job_debug_path
-        errors_dump_directory: Path | None = None
-        if job_debug_path is not None:
-          errors_dump_directory = job_debug_path / 'errors'
-
-      ##########################################################################
       async with _JobContext(job_id=job_id, comfy=self) as job_context:
+        async with self._lock:
+          if job_id in prompt_id_2_status:
+            # In this case, it's pending or running, not going to be in the
+            # `/history` endpoint.
+            continue
+
+          if self._jobs[job_id].status.job_history is not None:
+            # We already have the job history.
+            continue
+
+          ticket: Optional[APIWorkflowTicket] = self._jobs[job_id].ticket
+          prompt_id: Optional[str] = None
+          if ticket is not None:
+            prompt_id = ticket.prompt_id
+
+          if prompt_id is None:
+            # This should never happen, but :shrug:.
+            continue
+          job_debug_path = self._jobs[job_id].job_debug_path
+          errors_dump_directory: Optional[Path] = None
+          if job_debug_path is not None:
+            errors_dump_directory = job_debug_path / 'errors'
+
+        ########################################################################
         history_raw: dict = await self._comfy_client.GetHistoryRaw(
             prompt_id=prompt_id)
         await job_context.WatchVar(history_raw=history_raw)
@@ -472,7 +499,7 @@ class ComfyCatapult(ComfyCatapultBase):
         await self._ReceivedJobHistory(job_id=job_id,
                                        history=history,
                                        job_context=job_context)
-      ##########################################################################
+        ########################################################################
 
   def _Now(self) -> datetime.datetime:
     return datetime.datetime.now(datetime.timezone.utc)
@@ -487,6 +514,10 @@ class ComfyCatapult(ComfyCatapultBase):
       pass
 
   async def _LoopWS(self, *, ws: WebSocketClientProtocol):
+    prompt_id: Optional[str]
+    node_id: Optional[str]
+    node_type: Optional[str]
+
     while True:
       try:
         logger.debug('websocket recv')
@@ -495,7 +526,7 @@ class ComfyCatapult(ComfyCatapultBase):
           logger.debug('websocket type(out): %s', type(out))
           continue
         logger.debug('websocket raw: %s', YamlDump(out))
-        errors_dump_directory: Path | None = None
+        errors_dump_directory: Optional[Path] = None
         async with self._lock:
           if self._debug_path is not None:
             errors_dump_directory = self._debug_path / 'errors'
@@ -515,7 +546,7 @@ class ComfyCatapult(ComfyCatapultBase):
           await self._Record()
         elif message.type == 'executing' and 'node' in message.data and 'prompt_id' in message.data:
           prompt_id = message.data.get('prompt_id', None)
-          node_id: str | None = message.data.get('node', None)
+          node_id = message.data.get('node', None)
           async with self._lock:
             job_id = self._prompt_id_index.get(
                 prompt_id, None) if prompt_id is not None else None
@@ -549,8 +580,8 @@ class ComfyCatapult(ComfyCatapultBase):
 
         elif message.type == 'executed' and 'node' in message.data and 'output_ui' in message.data and 'prompt_id' in message.data:
           # Finished a single node?
-          prompt_id: str | None = message.data.get('prompt_id', None)
-          node_id: str | None = message.data.get('node', None)
+          prompt_id = message.data.get('prompt_id', None)
+          node_id = message.data.get('node', None)
           # output_ui = message.data['output_ui']
           async with self._lock:
             job_id = self._prompt_id_index.get(
@@ -570,10 +601,10 @@ class ComfyCatapult(ComfyCatapultBase):
                 value=None, updated=self._Now())
           await self._Record()
         elif message.type in ['execution_interrupted', 'execution_error']:
-          prompt_id: str | None = message.data.get('prompt_id', None)
-          node_id: str | None = message.data.get('node_id', None)
-          node_type: str | None = message.data.get('node_type', None)
-          # executed: list | None = message.data.get('executed', None)
+          prompt_id = message.data.get('prompt_id', None)
+          node_id = message.data.get('node_id', None)
+          node_type = message.data.get('node_type', None)
+          # executed: Optional[list] = message.data.get('executed', None)
           async with self._lock:
             job_id = self._prompt_id_index.get(
                 prompt_id, None) if prompt_id is not None else None
@@ -581,12 +612,16 @@ class ComfyCatapult(ComfyCatapultBase):
               job = self._jobs[job_id]
               if not job.status.IsDone():
                 now = self._Now()
+
                 job.status = job.status._replace(
                     errored=now,
                     errors=job.status.errors + [
-                        Exception(
-                            f'Node {repr(node_id)} of type {repr(node_type)} errored: {repr(message.data)}'
-                        )
+                        ExceptionInfo(
+                            type=str(node_type),
+                            message=
+                            f'Node {repr(node_id)} of type {repr(node_type)} errored:\n{YamlDump(message.data)}',
+                            traceback='',
+                            attributes={})
                     ])
             self._guess_currently_running_job_id = _Guess(value=None,
                                                           updated=self._Now())
@@ -694,7 +729,7 @@ class _JobContext:
       self._watch_vars[name] = value
     async with self._comfy._lock:
       job = self._comfy._jobs[self._job_id]
-      job_debug_path: Path | None = job.job_debug_path
+      job_debug_path: Optional[Path] = job.job_debug_path
     if job_debug_path is None:
       return
     if self._comfy._debug_save_all:
@@ -718,19 +753,19 @@ class _JobContext:
           job.future.set_exception(exc_value)
         if not job.status.IsDone():
           job.errors += [exc_value]
-          exc_info = JobStatus.ExceptionInfo(
-              type=exc_type.__name__,
-              message=str(exc_value),
-              traceback=''.join(
-                  tb.format_exception(exc_type, exc_value, traceback)),
-              attributes={
-                  k: str(v)
-                  for k, v in exc_value.__dict__.items()
-              })
+          exc_info = ExceptionInfo(type=exc_type.__name__,
+                                   message=str(exc_value),
+                                   traceback=''.join(
+                                       tb.format_exception(
+                                           exc_type, exc_value, traceback)),
+                                   attributes={
+                                       k: str(v)
+                                       for k, v in exc_value.__dict__.items()
+                                   })
           job.status = job.status._replace(errored=self._comfy._Now(),
                                            errors=job.status.errors +
                                            [exc_info])
-        job_debug_path: Path | None = job.job_debug_path
+        job_debug_path: Optional[Path] = job.job_debug_path
         status = deepcopy(job.status)
         workflow = deepcopy(job.prepared_workflow)
         ticket = deepcopy(job.ticket)

@@ -1,23 +1,70 @@
 <!-- Note: This file is a jinja2 template of a Markdown file.                -->
 <!--
-{% set last_unstable_release=shell('tomlq -r \'.["tool"]["comfy-catapult-project-metadata"]["last_unstable_release"]\' pyproject.toml',
+{% set project_name='comfy-catapult' %}
+{% set project_name_proper='Comfy Catapult' %}
+{% set pypi_project_name='comfy_catapult' %}
+{% set last_release=shell('tomlq -r -e \'.["tool"]["comfy_catapult-project-metadata"]["last_release"]\' pyproject.toml',
                                    include_args=False) | trim %}
-{% set last_stable_release=shell('tomlq -r \'.["tool"]["comfy-catapult-project-metadata"]["last_stable_release"]\' pyproject.toml',
+{% set last_stable_release=shell('tomlq -r -e \'.["tool"]["comfy_catapult-project-metadata"]["last_stable_release"]\' pyproject.toml',
                                  include_args=False) | trim %}
+{% set tested_python_versions=shell('python -m yq -r -c \'[.jobs["build-and-test"]["strategy"]["matrix"]["python-version"][].gh] | join(", ")\' .github/workflows/build-and-test.yml',
+                                 include_args=False) | trim %}
+{% set badge_color='0A1E1E' %}
 -->
 
-# README
+# <div align="center">![{{ project_name_proper }}][24]</div>
 
-**Warning:** Very raw and unmaintained code. Use at your own risk. Mainly
-intended as a starting point.
+<div align="center">
+<!-- Icons from https://lucide.dev/icons/users -->
+<!-- Icons from https://lucide.dev/icons/laptop-minimal -->
+
+![**Audience:** Developers][25] ![**Platform:** Linux][26]
+
+</div>
+
+<p align="center">
+  <strong>
+    <a href="https://github.com/realazthat/{{project_name}}">🏠Home</a>
+    &nbsp;&bull;&nbsp;
+    <a href="#-features">🎇Features</a>
+    &nbsp;&bull;&nbsp;
+    <a href="#-installation">🔨Installation</a>
+    &nbsp;&bull;&nbsp;
+    <a href="#-usage">🚜Usage</a>
+    &nbsp;&bull;&nbsp;
+    <a href="#-documentation">📘Documentation</a>
+    &nbsp;&bull;&nbsp;
+    <a href="#-api">🤖API</a>
+  </strong>
+</p>
+<p align="center">
+  <strong>
+    <a href="#-requirements">✅Requirements</a>
+    &nbsp;&bull;&nbsp;
+    <a href="#-limitations">🚸Limitations</a>
+  </strong>
+</p>
+
+<div align="center">
 
 ![Top language][19] ![GitHub License][11] [![PyPI - Version][12]][13]
 [![Python Version][18]][13]
 
-| Branch  | Build Status              |                                              |
-| ------- | ------------------------- | -------------------------------------------- |
-| Master  | [![Build and Test][1]][2] | [![since tagged][14]][20] ![last commit][16] |
-| Develop | [![Build and Test][3]][4] | [![since tagged][15]][21] ![last commit][17] |
+**Python library to programmatically schedule ComfyUI workflows via the ComfyUI
+API**
+
+</div>
+
+---
+
+<div align="center">
+
+| Branch        | Build Status              | Commits Since             | Last Commit        |
+| ------------- | ------------------------- | ------------------------- | ------------------ |
+| [Master][27]  | [![Build and Test][1]][2] | [![since tagged][14]][20] | ![last commit][16] |
+| [Develop][28] | [![Build and Test][3]][4] | [![since tagged][15]][21] | ![last commit][17] |
+
+</div>
 
 ```
 ComfyUI API Endpoint <| <=  Comfy Catapult <=> HTTP Server <| <=  Public users
@@ -37,12 +84,59 @@ hosting this API endpoint for its user interface.
 This makes it easier for you to make workflows via the UI, and then use it from
 a program.
 
-### Scheduling a job
+## 🎇 Features
+
+- ComfyUI API client
+  ({{path('./comfy_catapult/api_client_base.py', text='interface', link='md')}},
+  {{path('./comfy_catapult/api_client.py', text='implementation', link='md')}}).
+- ComfyUI Workflow scheduler
+  ({{path('./comfy_catapult/catapult_base.py', text='interface', link='md')}},
+  {{path('./comfy_catapult/catapult.py', text='implementation', link='md')}}).
+- ComfyUI API Pydantic Schema
+  ({{path('./comfy_catapult/comfy_schema.py', link='md')}}).
+- Helpers to handle uploading and downloading files to/from ComfyUI.
+
+## 🔨 Installation
+
+```bash
+# Inside your environment:
+
+# From pypi:
+pip install comfy_catapult
+
+# From git:
+pip install git+https://github.com/realazthat/{{project_name}}.git@v{{last_stable_release}}
+```
+
+## 🚜 Usage
+
+## Related Projects
+
+| Project                          | ComfyUI API Wrapper | Outsource Backend | Distribute Execution | Wrap Workflow | Studio |
+| -------------------------------- | ------------------- | ----------------- | -------------------- | ------------- | ------ |
+| [CushyStudio][31]                | ?                   | ?                 | ?                    | ?             | Yes    |
+| [ComfyUI-Serving-Toolkit][30]    | X                   | ?                 | ?                    | Yes           | ?      |
+| [ComfyUI_NetDist][29]            | X                   | ?                 | Yes                  | ?             | ?      |
+| [ComfyUI script_examples][32]    | Yes                 | No                | No                   | No            | No     |
+| [comfyui-python-api][5]          | ?                   | ?                 | ?                    | Yes           | ?      |
+| [comfyui-deploy][6]              | ?                   | ?                 | ?                    | Yes           | ?      |
+| [ComfyUI-to-Python-Extension][7] | ?                   | ?                 | ?                    | Yes           | ?      |
+| [ComfyScript][8]                 | ?                   | ?                 | ?                    | Yes           | ?      |
+| [hordelib][9]                    | ?                   | Yes               | ?                    | ?             | ?      |
+| [comfyui-cloud][10]              | ?                   | Yes               | ?                    | ?             | ?      |
+| [comfy_runner][22]               | ?                   | ?                 | ?                    | ?             | ?      |
+| [ComfyUI-ComfyRun][23]           | ?                   | ?                 | ?                    | ?             | ?      |
+
+## 📘 Documentation
+
+### Scheduling a Job
 
 From
 [`{{ path('comfy_catapult/catapult_base.py') }}`](comfy_catapult/catapult_base.py):
 
 `{{ pysignature('comfy_catapult/catapult_base.py', symbol='ComfyCatapultBase.Catapult', backtickify='py') }}`
+
+### Example usage:
 
 From
 [`{{ path('examples/sdxlturbo_example_catapulter.py') }}`](examples/sdxlturbo_example_catapulter.py):
@@ -50,25 +144,6 @@ From
 `{{ pysnippet('examples/sdxlturbo_example_catapulter.py', symbol='ExampleWorkflowInfo', backtickify='py') }}`
 
 `{{ pysnippet('examples/sdxlturbo_example_catapulter.py', symbol='RunExampleWorkflow', backtickify='py') }}`
-
-## Related Projects
-
-| Project                          | ComfyUI API Wrapper | Outsource Backend | Distribute Execution | Wrap Workflow | Studio |
-| -------------------------------- | ------------------- | ----------------- | -------------------- | ------------- | ------ |
-| [CushyStudio][2]                 | ?                   | ?                 | ?                    | ?             | Yes    |
-| [ComfyUI-Serving-Toolkit][3]     | X                   | ?                 | ?                    | Yes           | ?      |
-| [ComfyUI_NetDist][4]             | X                   | ?                 | Yes                  | ?             | ?      |
-| [ComfyUI script_examples][1]     | Yes                 | No                | No                   | No            | No     |
-| [comfyui-python-api][5]          | ?                   | ?                 | ?                    | Yes           | ?      |
-| [comfyui-deploy][6]              | ?                   | ?                 | ?                    | Yes           | ?      |
-| [ComfyUI-to-Python-Extension][7] | ?                   | ?                 | ?                    | Yes           | ?      |
-| [ComfyScript][8]                 | ?                   | ?                 | ?                    | Yes           | ?      |
-| [hordelib][9]                    | ?                   | Yes               | ?                    | ?             | ?      |
-| [comfyui-cloud][10]              | ?                   | Yes               | ?                    | ?             | ?      |
-
-**Outsource compute:**
-
-## Getting Started
 
 ### Exporting workflows in the API json format
 
@@ -78,7 +153,7 @@ In ComfyUI web interface:
 2. Enable the ability to export in the API format, `Enable Dev mode Options`.
 3. Click new menu item `Save (API format)`.
 
-![ComfyUI API format export instructions](assets/comfy-export-instructions.png)
+![ComfyUI API format export instructions](.github/comfy-export-instructions.png)
 
 ### Example workflow: Prepare ComfyUI
 
@@ -110,12 +185,9 @@ wget https://github.com/comfyanonymous/ComfyUI_examples/raw/master/sdturbo/sdxlt
 # Or just use `test_data/sdxlturbo_example_api.json`.
 ```
 
-### Install as a library and run the examples
+### Run the examples
 
 ```bash
-# Inside your environment:
-pip install comfy-catapult
-
 
 
 # If you set this environment variable, you don't have to specify it as an
@@ -140,88 +212,65 @@ python -m comfy_catapult.examples.sdxlturbo_example_catapulter \
 python -m comfy_catapult.examples.add_a_node
 python -m comfy_catapult.examples.using_pydantic
 
-
-
 ```
 
-- Examine
-  [`examples/sdxlturbo_example_catapulter.py`](examples/sdxlturbo_example_catapulter.py)
-  to see how to use the main `ComfyCatapult` library.
-- Examine
-  [`test_data/sdxlturbo_example_api.json`](test_data/sdxlturbo_example_api.json)
-  to see the API format. This will be necessary in order to programmatically set
-  the proper inputs for the workflow.
-  - (Optional) See [`examples/using_pydantic.py`](examples/using_pydantic.py)
-    for how to parse the API format into the Pydantic models schema for easier
+### 🤖 API
+
+- Examine {{path('./examples/sdxlturbo_example_catapulter.py', link='md')}} to
+  see how to use the main `ComfyCatapult` library.
+- Examine {{path('./test_data/sdxlturbo_example_api.json', link='md')}} to see
+  the API format. This will be necessary in order to programmatically set the
+  proper inputs for the workflow.
+  - (Optional) See {{path('./examples/using_pydantic.py', link='md')}} for how
+    to parse the API format into the Pydantic models schema for easier
     navigation.
-  - (Optional) See [`examples/add_a_node.py`](examples/add_a_node.py) for how to
+  - (Optional) See {{path('./examples/add_a_node.py', link='md')}} for how to
     add a new node to a workflow. This is useful when you need to add nodes at
     runtime (such as adding a bunch of LoadImage nodes).
-- See [`comfy_catapult/catapult_base.py`](comfy_catapult/catapult_base.py) for
-  the main library interface.
-- (Optional) See [`comfy_catapult/catapult.py`](comfy_catapult/catapult_base.py)
-  for the main library implementation.
-- (Optional) See
-  [`comfy_catapult/api_client_base.py`](comfy_catapult/api_client_base.py) for
+- See {{path('./comfy_catapult/catapult_base.py', link='md')}} for the main
+  library interface.
+- (Optional) See {{path('./comfy_catapult/catapult.py', link='md')}} for the
+  main library implementation.
+- (Optional) See {{path('./comfy_catapult/api_client_base.py', link='md')}} for
   the direct ComfyUI API endpoint client library interface; you don't need to
   use this usually.
 - (Optional) For those who want to do use the raw API themselves and learn how
-  it works: Examine
-  [`comfy_catapult/api_client.py`](comfy_catapult/api_client.py) to see the API
-  client implementation if you want to directly interface with ComfyUI endpoints
-  yourself.
+  it works: Examine {{path('./comfy_catapult/api_client.py', link='md')}} to see
+  the API client implementation if you want to directly interface with ComfyUI
+  endpoints yourself.
   - (Optional) Also see
     [ComfyUI/server.py](https://github.com/comfyanonymous/ComfyUI/blob/977eda19a6471fbff253dc92c3c2f1a4a67b1793/server.py#L99)
     (pinned to a specific commit) for the server `@routes` endpoint
     implementations.
 
-### Development; install dependencies and run the examples
-
-This is if you are intending on contributing or altering the library itself.
-
-```bash
-
-git clone https://github.com/realazthat/comfy-catapult.git
-cd comfy-catapult
-pip install -r requirements.txt
-
-
-# Run the example workflow:
-PYTHONPATH=$PYTHONPATH:$PWD python examples/sdxlturbo_example_catapulter.py \
-  --api_workflow_json_path "$PWD/sdxlturbo_example_api.json"
-  --tmp_path "$PWD/.deleteme/tmp/" \
-  --output_path "$PWD/.deleteme/output.png" \
-  --positive_prompt "amazing cloudscape, towering clouds, thunderstorm, awe" \
-  --negative_prompt "dull, blurry, nsfw"
-
-
-```
-
 ### Parsing the API format into the Pydantic models schema for easier navigation
 
-From [`{{ path('examples/using_pydantic.py') }}`](examples/using_pydantic.py):
+From {{ path('./examples/using_pydantic.py', link='md') }}:
 
 `{{ snippet('examples/using_pydantic.py', start='SNIPPETSTART', end='SNIPPETEND', backtickify='py') }}`
 
 ### Adding a new node to a workflow
 
-From [`{{ path('examples/add_a_node.py') }}`](examples/add_a_node.py):
+From {{ path('examples/add_a_node.py', link='md') }}:
 
 `{{ snippet('examples/add_a_node.py', start='# SNIPPETSTART', end='# SNIPPETEND', backtickify='py') }}`
 
-## Requirements
+## ✅ Requirements
 
 - Python 3.10+
 - ComfyUI server with API endpoint enabled.
 
 ### Known to work on
 
-- **Python 3.10.0**, WSL2/Windows11, Ubuntu 22.04.2 LTS
-- **Python 3.10.0**, Ubuntu 22.04
+- WSL2/Windows11, Ubuntu 22.04.2 LTS: **Python
+  {{rawsnippet('./.python-version')|trim}}**.
+- Ubuntu 20.04, Python `{{tested_python_versions}}`, tested in GitHub Actions
+  workflow ({{path('./.github/workflows/build-and-test.yml',  link='md')}}).
 
-## Limitations
+## 🚸 Limitations
 
-- ETA estimator isn't working
+- Interrupting a job will interrupt any job, not the specific job interrupted.
+  See [#5](https://github.com/realazthat/comfy-catapult/issues/5).
 
 ## TODO
 
@@ -236,25 +285,37 @@ From [`{{ path('examples/add_a_node.py') }}`](examples/add_a_node.py):
 ### Development environment: Linux-like
 
 - For running `pre.sh` (Linux-like environment).
+
+  - From {{path('./.github/dependencies.yml', link='md')}}, which is used for
+    the GH Action to do a fresh install of everything:
+
+    {{shell('python -m yq --yaml-output  \'.dev\' .github/dependencies.yml',
+            include_args=False,
+            backtickify='yaml',
+            indented=4
+    )}}
+
   - Requires `pyenv`, or an exact matching version of python as in
-    [`{{path('.python-version')}}`](./.python-version).
+    {{path('./.python-version', link='md')}}.
   - `jq`, ([installation](https://jqlang.github.io/jq/)) required for
     [yq](https://github.com/kislyuk/yq), which is itself required for our
-    `{{path('README.md')}}` generation, which uses `tomlq` (from the
+    `{{path('./README.md')}}` generation, which uses `tomlq` (from the
     [yq](https://github.com/kislyuk/yq) package) to include version strings from
-    `{{path('pyproject.toml')}}`.
-  - `bash`, `grep`, `awk`, `sed` `xxd`, `git`, `xxhash` (for tests/workflows).
-  - Requires nodejs (for act).
-  - Requires Go (to run act).
-  - docker (for act).
+    {{path('./pyproject.toml', link='md')}}.
+  - act (to run the GH Action locally):
+    - Requires nodejs.
+    - Requires Go.
+    - docker.
+  - Generate animation:
+    - docker
 
 ### Commit Process
 
 1. (Optionally) Fork the `develop` branch.
 2. Stage your files: `git add path/to/file.py`.
 3. `bash scripts/pre.sh`, this will format, lint, and test the code.
-4. `git status` check if anything changed (generated `{{path('README.md')}}` for
-   example), if so, `git add` the changes, and go back to the previous step.
+4. `git status` check if anything changed (generated `{{path('./README.md')}}`
+   for example), if so, `git add` the changes, and go back to the previous step.
 5. `git commit -m "..."`.
 6. Make a PR to `develop` (or push to develop if you have the rights).
 
@@ -262,12 +323,12 @@ From [`{{ path('examples/add_a_node.py') }}`](examples/add_a_node.py):
 
 These instructions are for maintainers of the project.
 
-1. `develop` branch: Run `bash {{path('scripts/pre.sh')}}` to ensure everything
-   is in order.
-2. `develop` branch: Bump the version in `{{path('pyproject.toml')}}`, following
-   semantic versioning principles. Also modify the `last_unstable_release` and
-   `last_stable_release` in the `[tool.comfy-catapult-project-metadata]` table
-   as appropriate.
+1. `develop` branch: Run `bash {{path('./scripts/pre.sh')}}` to ensure
+   everything is in order.
+2. `develop` branch: Bump the version in
+   {{path('./pyproject.toml', link='md')}}, following semantic versioning
+   principles. Also modify the `last_release` and `last_stable_release` in the
+   `[tool.comfy_catapult-project-metadata]` table as appropriate.
 3. `develop` branch: Commit these changes with a message like "Prepare release
    X.Y.Z". (See the contributions section [above](#commit-process)).
 4. `master` branch: Merge the `develop` branch into the `master` branch:
@@ -275,41 +336,61 @@ These instructions are for maintainers of the project.
 5. `master` branch: Tag the release: Create a git tag for the release with
    `git tag -a vX.Y.Z -m "Version X.Y.Z"`.
 6. Publish to PyPI: Publish the release to PyPI with
-   `bash scripts/deploy-to-pypi.sh`.
+   `bash {{path('./scripts/deploy-to-pypi.sh')}}`.
 7. Push to GitHub: Push the commit and tags to GitHub with `git push` and
    `git push --tags`.
 8. `git checkout develop && git merge master` The `--no-ff` option adds a commit
    to the master branch for the merge, so refork the develop branch from the
    master branch.
+9. `git push origin develop` Push the develop branch to GitHub.
 
 [1]:
-  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml/badge.svg?branch=master
+  https://img.shields.io/github/actions/workflow/status/realazthat/{{project_name}}/build-and-test.yml?branch=master&style=plastic
 [2]:
-  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
+  https://github.com/realazthat/{{project_name}}/actions/workflows/build-and-test.yml
 [3]:
-  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml/badge.svg?branch=develop
+  https://img.shields.io/github/actions/workflow/status/realazthat/{{project_name}}/build-and-test.yml?branch=develop&style=plastic
 [4]:
-  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
+  https://github.com/realazthat/{{project_name}}/actions/workflows/build-and-test.yml
 [5]: https://github.com/andreyryabtsev/comfyui-python-api
 [6]: https://github.com/BennyKok/comfyui-deploy
 [7]: https://github.com/pydn/ComfyUI-to-Python-Extension
 [8]: https://github.com/Chaoses-Ib/ComfyScript
 [9]: https://pypi.org/project/hordelib/
 [10]: https://github.com/nathannlu/comfyui-cloud
-[11]: https://img.shields.io/github/license/realazthat/comfy-catapult
-[12]: https://img.shields.io/pypi/v/comfy-catapult
-[13]: https://pypi.org/project/comfy-catapult/
+[11]:
+  https://img.shields.io/github/license/realazthat/{{project_name}}?style=plastic&color={{badge_color}}
+[12]:
+  https://img.shields.io/pypi/v/{{pypi_project_name}}?style=plastic&color={{badge_color}}
+[13]: https://pypi.org/project/{{pypi_project_name}}/
 [14]:
-  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v{{last_stable_release}}/master
+  https://img.shields.io/github/commits-since/realazthat/{{project_name}}/v{{last_stable_release}}/master?style=plastic&color={{badge_color}}
 [15]:
-  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v{{last_stable_release}}/develop
-[16]: https://img.shields.io/github/last-commit/realazthat/comfy-catapult/master
+  https://img.shields.io/github/commits-since/realazthat/{{project_name}}/v{{last_stable_release}}/develop?style=plastic&color={{badge_color}}
+[16]:
+  https://img.shields.io/github/last-commit/realazthat/{{project_name}}/master?style=plastic&color={{badge_color}}
 [17]:
-  https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop
-[18]: https://img.shields.io/pypi/pyversions/comfy-catapult
+  https://img.shields.io/github/last-commit/realazthat/{{project_name}}/develop?style=plastic&color={{badge_color}}
+[18]:
+  https://img.shields.io/pypi/pyversions/{{pypi_project_name}}?style=plastic&color={{badge_color}}
 [19]:
-  https://img.shields.io/github/languages/top/realazthat/comfy-catapult.svg?&cacheSeconds=28800
+  https://img.shields.io/github/languages/top/realazthat/{{project_name}}.svg?style=plastic&color={{badge_color}}&cacheSeconds=28800
 [20]:
-  https://github.com/realazthat/comfy-catapult/compare/v{{last_stable_release}}...master
+  https://github.com/realazthat/{{project_name}}/compare/v{{last_stable_release}}...master
 [21]:
-  https://github.com/realazthat/comfy-catapult/compare/v{{last_stable_release}}...develop
+  https://github.com/realazthat/{{project_name}}/compare/v{{last_stable_release}}...develop
+[22]: https://github.com/piyushK52/comfy_runner
+[23]: https://github.com/thecooltechguy/ComfyUI-ComfyRun
+[24]: .github/logo-exported.svg
+[25]:
+  https://img.shields.io/badge/Audience-Developers-{{badge_color}}?style=plastic&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXVzZXJzIj48cGF0aCBkPSJNMTYgMjF2LTJhNCA0IDAgMCAwLTQtNEg2YTQgNCAwIDAgMC00IDR2MiIvPjxjaXJjbGUgY3g9IjkiIGN5PSI3IiByPSI0Ii8+PHBhdGggZD0iTTIyIDIxdi0yYTQgNCAwIDAgMC0zLTMuODciLz48cGF0aCBkPSJNMTYgMy4xM2E0IDQgMCAwIDEgMCA3Ljc1Ii8+PC9zdmc+
+[26]:
+  https://img.shields.io/badge/Platform-Linux-{{badge_color}}?style=plastic&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWxhcHRvcC1taW5pbWFsIj48cmVjdCB3aWR0aD0iMTgiIGhlaWdodD0iMTIiIHg9IjMiIHk9IjQiIHJ4PSIyIiByeT0iMiIvPjxsaW5lIHgxPSIyIiB4Mj0iMjIiIHkxPSIyMCIgeTI9IjIwIi8+PC9zdmc+
+[27]: https://github.com/realazthat/{{project_name}}/tree/master
+[28]: https://github.com/realazthat/{{project_name}}/tree/develop
+[29]: https://github.com/city96/ComfyUI_NetDist
+[30]: https://github.com/matan1905/ComfyUI-Serving-Toolkit
+[31]: https://github.com/rvion/CushyStudio
+[32]:
+  https://github.com/comfyanonymous/ComfyUI/tree/89d0e9abeb31e44cccef46537cd10d8812130ef3/script_examples
+  "Permalink"

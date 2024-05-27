@@ -8,9 +8,8 @@
 from typing import List, Literal
 from urllib.parse import ParseResult, urljoin, urlparse, urlunparse
 
-from comfy_catapult.errors import (BasedURLValidationError,
-                                   URLDirectoryValidationError,
-                                   URLValidationError)
+from .errors import (BasedURLValidationError, URLDirectoryValidationError,
+                     URLValidationError)
 
 ComfyAPIScheme = Literal['http', 'https']
 VALID_COMFY_API_SCHEMES: List[ComfyAPIScheme] = ['http', 'https']

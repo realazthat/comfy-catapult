@@ -1,0 +1,15 @@
+# This file contains a list of dependencies that need to be installed
+
+prod: {}
+dev:
+  bash: scripts.
+  findutils: scripts.
+  grep: tests.
+  xxd: tests.
+  git: scripts, tests.
+  xxhash: scripts (changeguard).
+  rsync: out-of-directory test.
+  jq:
+    dependency for [yq](https://github.com/kislyuk/yq), which is used to
+    generate the README; the README generator needs to use `tomlq` (which is a
+    part of `yq`) to query `pyproject.toml`.

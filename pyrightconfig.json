@@ -1,0 +1,18 @@
+{
+  "include": ["comfy_catapult"],
+  "exclude": ["**/__pycache__"],
+  "ignore": [],
+  "defineConstant": {
+    "DEBUG": true
+  },
+  "stubPath": "comfy_catapult/stubs",
+  "reportMissingImports": true,
+  "reportMissingTypeStubs": false,
+  "pythonVersion": "3.8",
+  "pythonPlatform": "Linux",
+  "executionEnvironments": [
+    {
+      "root": "comfy_catapult"
+    }
+  ]
+}

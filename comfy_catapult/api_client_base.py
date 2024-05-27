@@ -6,12 +6,11 @@
 # the license text.
 
 from abc import ABC, abstractmethod
-from typing import List
+from typing import List, Optional
 
-from comfy_catapult.comfy_schema import (APIHistory, APIObjectInfo,
-                                         APIQueueInfo, APISystemStats,
-                                         APIUploadImageResp, APIWorkflowTicket,
-                                         ClientID, PromptID)
+from .comfy_schema import (APIHistory, APIObjectInfo, APIQueueInfo,
+                           APISystemStats, APIUploadImageResp,
+                           APIWorkflowTicket, ClientID, PromptID)
 
 
 class ComfyAPIClientBase(ABC):
@@ -76,24 +75,28 @@ class ComfyAPIClientBase(ABC):
   async def PostPromptRaw(self,
                           *,
                           prompt_workflow: dict,
-                          number: int | None = None,
-                          client_id: ClientID | None = None,
-                          prompt_id: PromptID | None = None,
-                          extra_data: dict | None = None) -> dict:
+                          number: Optional[int] = None,
+                          client_id: Optional[ClientID] = None,
+                          prompt_id: Optional[PromptID] = None,
+                          extra_data: Optional[dict] = None) -> dict:
     """See `ComfyUI/server.py` `@routes.post("/prompt")`.
 
     Args:
         prompt_workflow (dict): The API workflow, you can generate this with
           the ComfyUI web interface, as explained in `README.md`:
           1. Open settings (gear box in the corner).
-          2. Enable the ability to export in the API format, `Enable Dev mode Options`.
+          2. Enable the ability to export in the API format,
+            `Enable Dev mode Options`.
           3. Click new menu item `Save (API format)`.
-        prompt_id (PromptID | None): If you want to set the prompt id. If you
-          leave this empty, the server will generate a prompt id for you.
         number (int, optional): Where to insert into the queue. -1 means to
           insert to the front of the queue. Default is None, which uses the
           default on the server, which is also equivalent to -1.
-        client_id (ClientID | None, optional): _description_. Defaults to None.
+        client_id (ClientID | None): If you want to set the client id. ComfyUI
+          will use this to resume connections, and filter out websockets events
+          and similar etc. If you leave this empty, the server will generate a
+          client id for you.
+        prompt_id (PromptID | None): If you want to set the prompt id. If you
+          leave this empty, the server will generate a prompt id for you.
         extra_data (dict | None, optional): Extra data associated with the
           prompt/job. Defaults to None.
 
@@ -106,24 +109,28 @@ class ComfyAPIClientBase(ABC):
   async def PostPrompt(self,
                        *,
                        prompt_workflow: dict,
-                       number: int | None = None,
-                       client_id: ClientID | None = None,
-                       prompt_id: PromptID | None = None,
-                       extra_data: dict | None = None) -> APIWorkflowTicket:
+                       number: Optional[int] = None,
+                       client_id: Optional[ClientID] = None,
+                       prompt_id: Optional[PromptID] = None,
+                       extra_data: Optional[dict] = None) -> APIWorkflowTicket:
     """See `ComfyUI/server.py` `@routes.post("/prompt")`.
 
     Args:
         prompt_workflow (dict): The API workflow, you can generate this with
           the ComfyUI web interface, as explained in `README.md`:
           1. Open settings (gear box in the corner).
-          2. Enable the ability to export in the API format, `Enable Dev mode Options`.
+          2. Enable the ability to export in the API format,
+            `Enable Dev mode Options`.
           3. Click new menu item `Save (API format)`.
-        prompt_id (PromptID | None): If you want to set the prompt id. If you
-          leave this empty, the server will generate a prompt id for you.
         number (int, optional): Where to insert into the queue. -1 means to
           insert to the front of the queue. Default is None, which uses the
           default on the server, which is also equivalent to -1.
-        client_id (ClientID | None, optional): _description_. Defaults to None.
+        client_id (ClientID | None): If you want to set the client id. ComfyUI
+          will use this to resume connections, and filter out websockets events
+          and similar etc. If you leave this empty, the server will generate a
+          client id for you.
+        prompt_id (PromptID | None): If you want to set the prompt id. If you
+          leave this empty, the server will generate a prompt id for you.
         extra_data (dict | None, optional): Extra data associated with the
           prompt/job. Defaults to None.
 
@@ -135,15 +142,15 @@ class ComfyAPIClientBase(ABC):
   @abstractmethod
   async def GetHistoryRaw(self,
                           *,
-                          prompt_id: PromptID | None = None,
-                          max_items: int | None = None) -> dict:
+                          prompt_id: Optional[PromptID] = None,
+                          max_items: Optional[int] = None) -> dict:
     raise NotImplementedError()
 
   @abstractmethod
   async def GetHistory(self,
                        *,
-                       prompt_id: PromptID | None = None,
-                       max_items: int | None = None) -> APIHistory:
+                       prompt_id: Optional[PromptID] = None,
+                       max_items: Optional[int] = None) -> APIHistory:
     raise NotImplementedError()
 
   @abstractmethod

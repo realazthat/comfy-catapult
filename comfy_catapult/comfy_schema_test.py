@@ -13,9 +13,8 @@ import aiofiles
 import pydantic
 import yaml
 
-from comfy_catapult.comfy_schema import (VALID_FOLDER_TYPES, APIObjectInfo,
-                                         ComfyUIPathTriplet)
-from comfy_catapult.comfy_utils import TryParseAsModel
+from .comfy_schema import VALID_FOLDER_TYPES, APIObjectInfo, ComfyUIPathTriplet
+from .comfy_utils import TryParseAsModel
 
 INVALID_SUBFOLDER_EDGES: List[Tuple[str, Type[Exception]]] = [
     ('/', pydantic.ValidationError),

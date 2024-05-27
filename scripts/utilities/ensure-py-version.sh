@@ -5,7 +5,14 @@ set -e -x -v -u -o pipefail
 SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 source "${SCRIPT_DIR}/common.sh"
 
-PYTHON_VERSION_PATH=${PYTHON_VERSION_PATH:-"${PWD}/.python-version"}
+PYTHON_VERSION_PATH=${PYTHON_VERSION_PATH:-""}
+
+if [[ -z "${PYTHON_VERSION_PATH}" ]]; then
+  echo -e "${RED}PYTHON_VERSION_PATH is not set${NC}"
+  [[ $0 == "${BASH_SOURCE[0]}" ]] && EXIT="exit" || EXIT="return"
+  ${EXIT} 1
+fi
+
 EXPECTED_PYTHON_VERSION=$(cat "${PYTHON_VERSION_PATH}")
 # Get ONLY the version number, not the whole string
 PYTHON_VERSION=$(python -c "import sys; print(sys.version.split()[0])")
@@ -21,7 +28,7 @@ if command -v pyenv 1>/dev/null 2>&1; then
   PYENV_PYTHON_PATH=$(pyenv which python||true)
   PYENV_PYTHON_VERSION=$("${PYENV_PYTHON_PATH}" -c "import sys; print(sys.version.split()[0])"||true)
 
-  # If PYENV_VERSION_FILE is $PWD/.python-version, then we are using pyenv
+  # If PYENV_VERSION_FILE is $PYTHON_VERSION_PATH, then we are using pyenv
   if [[ "${PYENV_VERSION_FILE}" == "${PYTHON_VERSION_PATH}" ]]; then
     if [[ "${PYENV_VERSION_NAME}" == "${EXPECTED_PYTHON_VERSION}" ]]; then
       if [[ "${PYENV_PYTHON_VERSION}" == "${PYTHON_VERSION}" ]]; then

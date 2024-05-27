@@ -6,22 +6,26 @@
 # the license text.
 
 from copy import deepcopy
-from typing import Sequence
+from typing import Optional, Sequence, Union
 
-from comfy_catapult.comfy_schema import APINodeID, APIWorkflowTicket
+from .comfy_schema import APINodeID, APIWorkflowTicket
 
 
-class NodeNotFound(RuntimeError):
+class CatapultRuntimeError(RuntimeError):
+  pass
 
-  def __init__(self, *, node_id: APINodeID | int | None,
-               title: str | int | None):
+
+class NodeNotFound(CatapultRuntimeError):
+
+  def __init__(self, *, node_id: Union[APINodeID, int, None],
+               title: Union[str, int, None]):
     super().__init__(
         f'Node with title=={repr(title)}, node_id=={repr(node_id)} not found')
     self.node_id = node_id
     self.title = title
 
 
-class MultipleNodesFound(RuntimeError):
+class MultipleNodesFound(CatapultRuntimeError):
 
   def __init__(self, *, search_titles: Sequence[str],
                search_nodes: Sequence[APINodeID], found_titles: Sequence[str],
@@ -36,10 +40,10 @@ class MultipleNodesFound(RuntimeError):
     self.found_node_ids = list(found_nodes)
 
 
-class NodesNotExecuted(RuntimeError):
+class NodesNotExecuted(CatapultRuntimeError):
 
   def __init__(self, *, nodes: Sequence[APINodeID],
-               titles: Sequence[str | None] | None):
+               titles: Optional[Sequence[Optional[str]]]):
     if titles is None:
       titles = [None] * len(nodes)
     if len(nodes) != len(titles):
@@ -53,13 +57,17 @@ class NodesNotExecuted(RuntimeError):
     self.titles = list(titles)
 
 
-class WorkflowSubmissionError(RuntimeError):
+class WorkflowSubmissionError(CatapultRuntimeError):
 
   def __init__(self, msg, *, prepared_workflow: dict,
                ticket: APIWorkflowTicket):
     super().__init__(msg)
     self.prepared_workflow: dict = deepcopy(prepared_workflow)
     self.ticket: APIWorkflowTicket = deepcopy(ticket)
+
+
+class JobFailed(CatapultRuntimeError):
+  pass
 
 
 class URLValidationError(ValueError):
