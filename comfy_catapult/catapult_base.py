@@ -11,6 +11,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, NamedTuple, Optional, Sequence, Tuple
 
 from anyio import Path
+from pydantic import BaseModel, ConfigDict
 
 from .comfy_schema import APINodeID
 
@@ -27,7 +28,8 @@ class ExceptionInfo(NamedTuple):
   attributes: Dict[str, str]
 
 
-class JobStatus(NamedTuple):
+class JobStatus(BaseModel):
+  model_config = ConfigDict(frozen=True)
 
   scheduled: Optional[datetime.datetime]
   pending: Optional[datetime.datetime]
@@ -48,6 +50,9 @@ class JobStatus(NamedTuple):
   def IsDone(self) -> bool:
     return (self.success is not None or self.errored is not None
             or self.cancelled is not None)
+
+  def _replace(self, **kwargs):
+    return self.copy(update=kwargs)
 
 
 class ComfyCatapultBase(ABC):
