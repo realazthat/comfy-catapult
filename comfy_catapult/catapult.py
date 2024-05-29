@@ -360,48 +360,10 @@ class ComfyCatapult(ComfyCatapultBase):
     await self._CheckError()
     await self._PollFutures()
     ############################################################################
-    system_stats: APISystemStats = await self._comfy_client.GetSystemStats()
-    logger.info('system_stats: %s', YamlDump(system_stats.model_dump()))
+    await self._PollSystemStats()
     ############################################################################
-    queue_info: APIQueueInfo = await self._comfy_client.GetQueue()
-
     prompt_id_2_status: Dict[str, str] = {}
-    for pending in queue_info.queue_running:
-      prompt_id_2_status[pending.prompt_id] = 'running'
-    for running in queue_info.queue_pending:
-      prompt_id_2_status[running.prompt_id] = 'pending'
-    pending_count = sum(
-        [1 for status in prompt_id_2_status.values() if status == 'pending'],
-        start=0)
-    running_count = sum(
-        [1 for status in prompt_id_2_status.values() if status == 'running'],
-        start=0)
-
-    logger.info('pending_count: %s', pending_count)
-    logger.info('running_count: %s', running_count)
-
-    for prompt_id, status in prompt_id_2_status.items():
-      async with self._lock:
-        if prompt_id not in self._prompt_id_index:
-          continue
-        job_id = self._prompt_id_index[prompt_id]
-        job: _Job = self._jobs[job_id]
-
-        if status == 'pending' and job.status.pending is None:
-          job.status = job.status._replace(pending=self._Now())
-
-        if status == 'running' and job.status.running is None:
-          job.status = job.status._replace(running=self._Now())
-          self._guess_currently_running_job_id = _Guess(value=job_id,
-                                                        updated=self._Now())
-          self._guess_currently_running_node_id = _Guess(value=None,
-                                                         updated=self._Now())
-          self._guess_currently_running_node_progress = _Guess(
-              value=None, updated=self._Now())
-
-    # TODO: Reenable this or remove it.
-    # print('self._jobs:', file=sys.stderr)
-    # pprint(self._jobs, indent=2, stream=sys.stderr)
+    await self._PollQueue(prompt_id_2_status)
 
     ############################################################################
     prompt_info: dict = await self._comfy_client.GetPromptRaw()
@@ -434,42 +396,99 @@ class ComfyCatapult(ComfyCatapultBase):
           job.future.result()
           job.status = job.status._replace(success=self._Now())
 
+  async def _PollSystemStats(self):
+    system_stats: APISystemStats = await self._comfy_client.GetSystemStats()
+    logger.info('system_stats: %s', YamlDump(system_stats.model_dump()))
+    for job_id in await self._GetJobIDs():
+      async with _JobContext(job_id=job_id, comfy=self):
+        async with self._lock:
+          job = self._jobs[job_id]
+          if job.status.IsDone():
+            continue
+          if job.status.system_stats_check is None:
+            job.status = job.status._replace(system_stats_check=self._Now())
+
+  async def _PollQueue(self, prompt_id_2_status: Dict[str, str]):
+    """Check /queue endpoint and update job status.
+    """
+    queue_info: APIQueueInfo = await self._comfy_client.GetQueue()
+
+    for pending in queue_info.queue_running:
+      prompt_id_2_status[pending.prompt_id] = 'running'
+    for running in queue_info.queue_pending:
+      prompt_id_2_status[running.prompt_id] = 'pending'
+    pending_count = sum(
+        [1 for status in prompt_id_2_status.values() if status == 'pending'],
+        start=0)
+    running_count = sum(
+        [1 for status in prompt_id_2_status.values() if status == 'running'],
+        start=0)
+
+    logger.info('pending_count: %s', pending_count)
+    logger.info('running_count: %s', running_count)
+
+    for prompt_id, status in prompt_id_2_status.items():
+      async with self._lock:
+        if prompt_id not in self._prompt_id_index:
+          continue
+        job_id = self._prompt_id_index[prompt_id]
+        async with _JobContext(job_id=job_id, comfy=self):
+          job: _Job = self._jobs[job_id]
+
+          if status == 'pending' and job.status.pending is None:
+            job.status = job.status._replace(pending=self._Now())
+
+          if status == 'running' and job.status.running is None:
+            job.status = job.status._replace(running=self._Now())
+            self._guess_currently_running_job_id = _Guess(value=job_id,
+                                                          updated=self._Now())
+            self._guess_currently_running_node_id = _Guess(value=None,
+                                                           updated=self._Now())
+            self._guess_currently_running_node_progress = _Guess(
+                value=None, updated=self._Now())
+          job.status = job.status._replace(queue_check=self._Now())
+
+    # TODO: Reenable this or remove it.
+    # print('self._jobs:', file=sys.stderr)
+    # pprint(self._jobs, indent=2, stream=sys.stderr)
+
   async def _PollHistory(self, prompt_id_2_status: Dict[str, str]):
     # Update job.remote_job_status.
     for job_id in await self._GetJobIDs():
-      async with self._lock:
-        new_remote_job_status = (_Job.RemoteStatus.NONE
-                                 if job_id not in prompt_id_2_status else
-                                 _Job.RemoteStatus.PENDING_OR_RUNNING)
-        self._jobs[job_id].remote_job_status = new_remote_job_status
+      async with _JobContext(job_id=job_id, comfy=self) as job_context:
+        async with self._lock:
+          new_remote_job_status = (_Job.RemoteStatus.NONE
+                                   if job_id not in prompt_id_2_status else
+                                   _Job.RemoteStatus.PENDING_OR_RUNNING)
+          self._jobs[job_id].remote_job_status = new_remote_job_status
 
     # Update job.job_history.
     for job_id in await self._GetJobIDs():
-      async with self._lock:
-        if job_id in prompt_id_2_status:
-          # In this case, it's pending or running, not going to be in the
-          # `/history` endpoint.
-          continue
-
-        if self._jobs[job_id].status.job_history is not None:
-          # We already have the job history.
-          continue
-
-        ticket: Optional[APIWorkflowTicket] = self._jobs[job_id].ticket
-        prompt_id: Optional[str] = None
-        if ticket is not None:
-          prompt_id = ticket.prompt_id
-
-        if prompt_id is None:
-          # This should never happen, but :shrug:.
-          continue
-        job_debug_path = self._jobs[job_id].job_debug_path
-        errors_dump_directory: Optional[Path] = None
-        if job_debug_path is not None:
-          errors_dump_directory = job_debug_path / 'errors'
-
-      ##########################################################################
       async with _JobContext(job_id=job_id, comfy=self) as job_context:
+        async with self._lock:
+          if job_id in prompt_id_2_status:
+            # In this case, it's pending or running, not going to be in the
+            # `/history` endpoint.
+            continue
+
+          if self._jobs[job_id].status.job_history is not None:
+            # We already have the job history.
+            continue
+
+          ticket: Optional[APIWorkflowTicket] = self._jobs[job_id].ticket
+          prompt_id: Optional[str] = None
+          if ticket is not None:
+            prompt_id = ticket.prompt_id
+
+          if prompt_id is None:
+            # This should never happen, but :shrug:.
+            continue
+          job_debug_path = self._jobs[job_id].job_debug_path
+          errors_dump_directory: Optional[Path] = None
+          if job_debug_path is not None:
+            errors_dump_directory = job_debug_path / 'errors'
+
+        ########################################################################
         history_raw: dict = await self._comfy_client.GetHistoryRaw(
             prompt_id=prompt_id)
         await job_context.WatchVar(history_raw=history_raw)
@@ -480,7 +499,7 @@ class ComfyCatapult(ComfyCatapultBase):
         await self._ReceivedJobHistory(job_id=job_id,
                                        history=history,
                                        job_context=job_context)
-      ##########################################################################
+        ########################################################################
 
   def _Now(self) -> datetime.datetime:
     return datetime.datetime.now(datetime.timezone.utc)

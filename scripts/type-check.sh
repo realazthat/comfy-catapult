@@ -11,7 +11,7 @@ TOML=${PROJ_PATH}/pyproject.toml EXTRA=dev \
   TARGET_VENV_PATH="${PWD}/.cache/scripts/.venv" \
   bash "${PROJ_PATH}/scripts/utilities/ensure-reqs.sh"
 
-mypy "${PROJ_PATH}/comfy_catapult" --check-untyped-defs
+python -m mypy "${PROJ_PATH}/comfy_catapult" --check-untyped-defs
 python3 -m pyright --stats
 
 echo -e "${GREEN}All type checks ran successfully${NC}"
