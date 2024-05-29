@@ -168,8 +168,8 @@ async def amain():
 
       # Dump the ComfyUI server stats.
       system_stats: APISystemStats = await comfy_client.GetSystemStats()
-      print('system_stats:', file=sys.stderr)
-      print(YamlDump(system_stats.model_dump()), file=sys.stderr)
+      console.print('system_stats:', style='bold blue')
+      console.print(YamlDump(system_stats.model_dump()))
 
       async with ComfyCatapult(comfy_client=comfy_client,
                                debug_path=debug_path / 'catapult',
@@ -191,6 +191,7 @@ async def amain():
             job_history_dict=None,
             comfy_api_url=comfy_api_url)
         await RunWorkflow(job_info=job_info)
+        console.print('All done', style='bold green')
 
   except Exception:
     console.print_exception()
