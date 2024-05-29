@@ -15,5 +15,5 @@ TOML=${PROJ_PATH}/pyproject.toml EXTRA=dev \
 
 bash scripts/format.sh
 bash scripts/run-all-examples.sh
-bash scripts/gen-readme.sh
+bash scripts/generate-readme.sh
 ################################################################################
