@@ -98,6 +98,7 @@ a program.
 - ComfyUI API Pydantic Schema
   ([./comfy_catapult/comfy_schema.py](./comfy_catapult/comfy_schema.py)).
 - Helpers to handle uploading and downloading files to/from ComfyUI.
+- Simple CLI to execute workflows.
 
 ## 🔨 Installation
 
@@ -427,6 +428,12 @@ api_workflow.root[new_node_id] = APIWorkflowNodeInfo(
 print(api_workflow.model_dump_json())
 
 ````
+
+### CLI
+
+<!---->
+<img src="README.help.generated.svg" alt="Output of `python -m comfy_catapult.cli --help`" />
+<!---->
 
 ## ✅ Requirements
 

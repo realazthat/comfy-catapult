@@ -95,6 +95,7 @@ a program.
 - ComfyUI API Pydantic Schema
   ({{path('./comfy_catapult/comfy_schema.py', link='md')}}).
 - Helpers to handle uploading and downloading files to/from ComfyUI.
+- Simple CLI to execute workflows.
 
 ## 🔨 Installation
 
@@ -254,6 +255,16 @@ From {{ path('./examples/using_pydantic.py', link='md') }}:
 From {{ path('examples/add_a_node.py', link='md') }}:
 
 `{{ snippet('examples/add_a_node.py', start='# SNIPPETSTART', end='# SNIPPETEND', backtickify='py') }}`
+
+### CLI
+
+<!--{{ shell('python -m comfy_catapult.cli --help',
+             rich='README.help.generated.svg',
+             rich_alt='Output of `python -m comfy_catapult.cli --help`',
+             rich_bg_color='black',
+             rich_term='xterm-256color',
+             rich_cols=160,
+             decomentify='nl') }}-->
 
 ## ✅ Requirements
 
