@@ -270,6 +270,8 @@ class ComfyCatapult(ComfyCatapultBase):
       return
     if prompt_id not in history.root:
       raise AssertionError(f'prompt_id {repr(prompt_id)} not in history.root')
+    if not isinstance(prompt_id, str):
+      raise AssertionError(f'prompt_id must be str, not {type(prompt_id)}')
     job_history: APIHistoryEntry = history.root[prompt_id]
     async with self._lock:
       self._jobs[job_id].status = self._jobs[job_id].status._replace(
