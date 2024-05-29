@@ -15,6 +15,8 @@ TOML=${PROJ_PATH}/pyproject.toml EXTRA=dev \
 
 bash scripts/format.sh
 
+bash scripts/run-all-examples.sh
+
 python -m snipinator.cli \
   -t "${PROJ_PATH}/README.md.jinja2" \
   --rm \
