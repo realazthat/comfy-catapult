@@ -370,7 +370,7 @@ api_workflow_json = api_workflow.model_dump_json()
 # See comfy_catapult/comfyui_schema.py for the schema definition.
 
 print(api_workflow_json)
-# 
+
 ````
 
 ### Adding a new node to a workflow
