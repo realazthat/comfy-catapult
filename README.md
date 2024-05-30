@@ -450,7 +450,7 @@ Options:
 
 Example usage:
 
-````console
+````bash
 
 python -m comfy_catapult.cli \
     execute --workflow-path ./test_data/sdxlturbo_example_api.json
