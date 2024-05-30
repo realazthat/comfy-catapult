@@ -524,7 +524,7 @@ These instructions are for maintainers of the project.
 5. `master` branch: Tag the release: Create a git tag for the release with
    `git tag -a vX.Y.Z -m "Version X.Y.Z"`.
 6. Publish to PyPI: Publish the release to PyPI with
-   `bash ./scripts/deploy-to-pypi.sh`.
+   `bash ./scripts/utilities/deploy-to-pypi.sh`.
 7. Push to GitHub: Push the commit and tags to GitHub with `git push` and
    `git push --tags`.
 8. `git checkout develop && git merge master` The `--no-ff` option adds a commit
