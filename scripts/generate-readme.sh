@@ -15,9 +15,21 @@ TOML=${PROJ_PATH}/pyproject.toml EXTRA=dev \
 
 bash scripts/format.sh
 
-touch "${PROJ_PATH}/README.md"
+bash scripts/run-all-examples.sh
+
+################################################################################
 python -m snipinator.cli \
   -t "${PROJ_PATH}/README.md.jinja2" \
+  --rm \
+  --force \
+  --create \
   -o "${PROJ_PATH}/README.md" \
-  --chmod-ro --rm --force
+  --chmod-ro
+################################################################################
+LAST_VERSION=$(tomlq -r -e '.["tool"]["comfy_catapult-project-metadata"]["last_stable_release"]' pyproject.toml)
+python -m mdremotifier.cli \
+  -i "${PROJ_PATH}/README.md" \
+  --url-prefix "https://github.com/realazthat/comfy-catapult/blob/v${LAST_VERSION}/" \
+  --img-url-prefix "https://raw.githubusercontent.com/realazthat/comfy-catapult/v${LAST_VERSION}/" \
+  -o "${PROJ_PATH}/.github/README.remotified.md"
 ################################################################################

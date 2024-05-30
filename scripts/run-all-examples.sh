@@ -26,9 +26,11 @@ TOML=${PROJ_PATH}/pyproject.toml EXTRA=prod \
 export PYTHONPATH=${PYTHONPATH:-}
 export PYTHONPATH=${PYTHONPATH}:${PWD}
 
+################################################################################
 python -m examples.using_pydantic
+################################################################################
 python -m examples.add_a_node
-
+################################################################################
 ARGS=(
   "--comfy_install_file_url" "${COMFY_INSTALL_FILE_URL}"
   "--comfy_api_url" "${COMFY_API_URL}"
@@ -51,5 +53,8 @@ python -m examples.sdxlturbo_example_catapulter "${ARGS[@]}"
 if command -v tiv &> /dev/null; then
   tiv -w 80 -h 80 "${PWD}/.deleteme/output.png"
 fi
+################################################################################
+python -m comfy_catapult.cli --help
+################################################################################
 
 echo -e "${GREEN}All examples ran successfully${NC}"

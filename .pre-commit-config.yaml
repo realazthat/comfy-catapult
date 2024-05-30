@@ -18,7 +18,7 @@ repos:
   - id: detect-private-key
   - id: double-quote-string-fixer
   - id: end-of-file-fixer
-    exclude: ^README.md$
+    exclude: ^.*\.(md|svg)$
   - id: fix-byte-order-marker
   - id: fix-encoding-pragma
     exclude: ^.*__init__.py$
@@ -86,6 +86,7 @@ repos:
     files: ''
     types:
     - text
+    exclude: ^.*\.svg$
   - id: forbid-en-dashes
     name: Detect the EXTREMELY confusing unicode character U+2013
     language: system

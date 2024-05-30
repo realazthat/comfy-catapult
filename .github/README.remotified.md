@@ -90,13 +90,13 @@ a program.
 ## 🎇 Features
 
 - ComfyUI API client
-  ([interface](./comfy_catapult/api_client_base.py),
-  [implementation](./comfy_catapult/api_client.py)).
+  ([interface](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/comfy_catapult/api_client_base.py),
+  [implementation](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/comfy_catapult/api_client.py)).
 - ComfyUI Workflow scheduler
-  ([interface](./comfy_catapult/catapult_base.py),
-  [implementation](./comfy_catapult/catapult.py)).
+  ([interface](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/comfy_catapult/catapult_base.py),
+  [implementation](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/comfy_catapult/catapult.py)).
 - ComfyUI API Pydantic Schema
-  ([./comfy_catapult/comfy_schema.py](./comfy_catapult/comfy_schema.py)).
+  ([./comfy_catapult/comfy_schema.py](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/comfy_catapult/comfy_schema.py)).
 - Helpers to handle uploading and downloading files to/from ComfyUI.
 - Simple CLI to execute workflows.
 
@@ -136,7 +136,7 @@ pip install git+https://github.com/realazthat/comfy-catapult.git@v2.1.0
 ### Scheduling a Job
 
 From
-[`comfy_catapult/catapult_base.py`](comfy_catapult/catapult_base.py):
+[`comfy_catapult/catapult_base.py`](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/comfy_catapult/catapult_base.py):
 
 ````py
   async def Catapult(
@@ -170,7 +170,7 @@ From
 ### Example usage:
 
 From
-[`examples/sdxlturbo_example_catapulter.py`](examples/sdxlturbo_example_catapulter.py):
+[`examples/sdxlturbo_example_catapulter.py`](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/examples/sdxlturbo_example_catapulter.py):
 
 ````py
 class ExampleWorkflowInfo:
@@ -231,7 +231,7 @@ In ComfyUI web interface:
 2. Enable the ability to export in the API format, `Enable Dev mode Options`.
 3. Click new menu item `Save (API format)`.
 
-![ComfyUI API format export instructions](.github/comfy-export-instructions.png)
+![ComfyUI API format export instructions](https://raw.githubusercontent.com/realazthat/comfy-catapult/v2.1.0/.github/comfy-export-instructions.png)
 
 ### Example workflow: Prepare ComfyUI
 
@@ -244,7 +244,7 @@ Hugging Face page:
 [huggingface.co/stabilityai/sdxl-turbo/blob/main/sd_xl_turbo_1.0_fp16.safetensors](https://huggingface.co/stabilityai/sdxl-turbo/blob/main/sd_xl_turbo_1.0_fp16.safetensors).
 
 Direct download link:
-[huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors](huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors).
+[huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/huggingface.co/stabilityai/sdxl-turbo/resolve/main/sd_xl_turbo_1.0_fp16.safetensors).
 
 ### Download the example workflow, and export it in the API format
 
@@ -294,26 +294,26 @@ python -m comfy_catapult.examples.using_pydantic
 
 ### 🤖 API
 
-- Examine [./examples/sdxlturbo_example_catapulter.py](./examples/sdxlturbo_example_catapulter.py) to
+- Examine [./examples/sdxlturbo_example_catapulter.py](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/examples/sdxlturbo_example_catapulter.py) to
   see how to use the main `ComfyCatapult` library.
-- Examine [./test_data/sdxlturbo_example_api.json](./test_data/sdxlturbo_example_api.json) to see
+- Examine [./test_data/sdxlturbo_example_api.json](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/test_data/sdxlturbo_example_api.json) to see
   the API format. This will be necessary in order to programmatically set the
   proper inputs for the workflow.
-  - (Optional) See [./examples/using_pydantic.py](./examples/using_pydantic.py) for how
+  - (Optional) See [./examples/using_pydantic.py](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/examples/using_pydantic.py) for how
     to parse the API format into the Pydantic models schema for easier
     navigation.
-  - (Optional) See [./examples/add_a_node.py](./examples/add_a_node.py) for how to
+  - (Optional) See [./examples/add_a_node.py](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/examples/add_a_node.py) for how to
     add a new node to a workflow. This is useful when you need to add nodes at
     runtime (such as adding a bunch of LoadImage nodes).
-- See [./comfy_catapult/catapult_base.py](./comfy_catapult/catapult_base.py) for the main
+- See [./comfy_catapult/catapult_base.py](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/comfy_catapult/catapult_base.py) for the main
   library interface.
-- (Optional) See [./comfy_catapult/catapult.py](./comfy_catapult/catapult.py) for the
+- (Optional) See [./comfy_catapult/catapult.py](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/comfy_catapult/catapult.py) for the
   main library implementation.
-- (Optional) See [./comfy_catapult/api_client_base.py](./comfy_catapult/api_client_base.py) for
+- (Optional) See [./comfy_catapult/api_client_base.py](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/comfy_catapult/api_client_base.py) for
   the direct ComfyUI API endpoint client library interface; you don't need to
   use this usually.
 - (Optional) For those who want to do use the raw API themselves and learn how
-  it works: Examine [./comfy_catapult/api_client.py](./comfy_catapult/api_client.py) to see
+  it works: Examine [./comfy_catapult/api_client.py](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/comfy_catapult/api_client.py) to see
   the API client implementation if you want to directly interface with ComfyUI
   endpoints yourself.
   - (Optional) Also see
@@ -323,7 +323,7 @@ python -m comfy_catapult.examples.using_pydantic
 
 ### Parsing the API format into the Pydantic models schema for easier navigation
 
-From [./examples/using_pydantic.py](./examples/using_pydantic.py):
+From [./examples/using_pydantic.py](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/examples/using_pydantic.py):
 
 ````py
 
@@ -372,7 +372,7 @@ print(api_workflow_json)
 
 ### Adding a new node to a workflow
 
-From [examples/add_a_node.py](examples/add_a_node.py):
+From [examples/add_a_node.py](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/examples/add_a_node.py):
 
 ````py
 
@@ -432,8 +432,8 @@ print(api_workflow.model_dump_json())
 ### CLI
 
 <!---->
-<img src="README.help.generated.svg" alt="Output of `python -m comfy_catapult.cli --help`" />
-<!---->
+<img alt="Output of `python -m comfy_catapult.cli --help`" src="https://raw.githubusercontent.com/realazthat/comfy-catapult/v2.1.0/README.help.generated.svg"/>
+<!-- -->
 
 ## ✅ Requirements
 
@@ -445,7 +445,7 @@ print(api_workflow.model_dump_json())
 - WSL2/Windows11, Ubuntu 22.04.2 LTS: **Python
   3.10.0**.
 - Ubuntu 20.04, Python `3.10.0`, tested in GitHub Actions
-  workflow ([./.github/workflows/build-and-test.yml](./.github/workflows/build-and-test.yml)).
+  workflow ([./.github/workflows/build-and-test.yml](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/.github/workflows/build-and-test.yml)).
 
 ## 🚸 Limitations
 
@@ -455,10 +455,10 @@ print(api_workflow.model_dump_json())
 ## TODO
 
 - [ ] Helpers should support remote/cloud storage for ComfyUI input/output/model
-      directories (Currently only supports local paths).
+  directories (Currently only supports local paths).
 - [ ] ETA Estimator.
 - [ ] Make sure the schema can parse the formats even if the format adds new
-      fields.
+  fields.
 
 ## Contributions
 
@@ -466,7 +466,7 @@ print(api_workflow.model_dump_json())
 
 - For running `pre.sh` (Linux-like environment).
 
-  - From [./.github/dependencies.yml](./.github/dependencies.yml), which is used for
+  - From [./.github/dependencies.yml](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/.github/dependencies.yml), which is used for
     the GH Action to do a fresh install of everything:
 
     ```yaml
@@ -480,16 +480,16 @@ print(api_workflow.model_dump_json())
     jq: dependency for [yq](https://github.com/kislyuk/yq), which is used to generate
       the README; the README generator needs to use `tomlq` (which is a part of `yq`)
       to query `pyproject.toml`.
-    
+
     ```
 
   - Requires `pyenv`, or an exact matching version of python as in
-    [./.python-version](./.python-version).
+    [./.python-version](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/.python-version).
   - `jq`, ([installation](https://jqlang.github.io/jq/)) required for
     [yq](https://github.com/kislyuk/yq), which is itself required for our
     `./README.md` generation, which uses `tomlq` (from the
     [yq](https://github.com/kislyuk/yq) package) to include version strings from
-    [./pyproject.toml](./pyproject.toml).
+    [./pyproject.toml](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/pyproject.toml).
   - act (to run the GH Action locally):
     - Requires nodejs.
     - Requires Go.
@@ -514,7 +514,7 @@ These instructions are for maintainers of the project.
 1. `develop` branch: Run `bash ./scripts/pre.sh` to ensure
    everything is in order.
 2. `develop` branch: Bump the version in
-   [./pyproject.toml](./pyproject.toml), following semantic versioning
+   [./pyproject.toml](https://github.com/realazthat/comfy-catapult/blob/v2.1.0/pyproject.toml), following semantic versioning
    principles. Also modify the `last_release` and `last_stable_release` in the
    `[tool.comfy_catapult-project-metadata]` table as appropriate.
 3. `develop` branch: Commit these changes with a message like "Prepare release
@@ -532,53 +532,35 @@ These instructions are for maintainers of the project.
    master branch.
 9. `git push origin develop` Push the develop branch to GitHub.
 
-[1]:
-  https://img.shields.io/github/actions/workflow/status/realazthat/comfy-catapult/build-and-test.yml?branch=master&style=plastic
-[2]:
-  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
-[3]:
-  https://img.shields.io/github/actions/workflow/status/realazthat/comfy-catapult/build-and-test.yml?branch=develop&style=plastic
-[4]:
-  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
+[1]: https://img.shields.io/github/actions/workflow/status/realazthat/comfy-catapult/build-and-test.yml?branch=master&style=plastic
+[2]: https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
+[3]: https://img.shields.io/github/actions/workflow/status/realazthat/comfy-catapult/build-and-test.yml?branch=develop&style=plastic
+[4]: https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
 [5]: https://github.com/andreyryabtsev/comfyui-python-api
 [6]: https://github.com/BennyKok/comfyui-deploy
 [7]: https://github.com/pydn/ComfyUI-to-Python-Extension
 [8]: https://github.com/Chaoses-Ib/ComfyScript
 [9]: https://pypi.org/project/hordelib/
 [10]: https://github.com/nathannlu/comfyui-cloud
-[11]:
-  https://img.shields.io/github/license/realazthat/comfy-catapult?style=plastic&color=0A1E1E
-[12]:
-  https://img.shields.io/pypi/v/comfy_catapult?style=plastic&color=0A1E1E
+[11]: https://img.shields.io/github/license/realazthat/comfy-catapult?style=plastic&color=0A1E1E
+[12]: https://img.shields.io/pypi/v/comfy_catapult?style=plastic&color=0A1E1E
 [13]: https://pypi.org/project/comfy_catapult/
-[14]:
-  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.1.0/master?style=plastic&color=0A1E1E
-[15]:
-  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.1.0/develop?style=plastic&color=0A1E1E
-[16]:
-  https://img.shields.io/github/last-commit/realazthat/comfy-catapult/master?style=plastic&color=0A1E1E
-[17]:
-  https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop?style=plastic&color=0A1E1E
-[18]:
-  https://img.shields.io/pypi/pyversions/comfy_catapult?style=plastic&color=0A1E1E
-[19]:
-  https://img.shields.io/github/languages/top/realazthat/comfy-catapult.svg?style=plastic&color=0A1E1E&cacheSeconds=28800
-[20]:
-  https://github.com/realazthat/comfy-catapult/compare/v2.1.0...master
-[21]:
-  https://github.com/realazthat/comfy-catapult/compare/v2.1.0...develop
+[14]: https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.1.0/master?style=plastic&color=0A1E1E
+[15]: https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.1.0/develop?style=plastic&color=0A1E1E
+[16]: https://img.shields.io/github/last-commit/realazthat/comfy-catapult/master?style=plastic&color=0A1E1E
+[17]: https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop?style=plastic&color=0A1E1E
+[18]: https://img.shields.io/pypi/pyversions/comfy_catapult?style=plastic&color=0A1E1E
+[19]: https://img.shields.io/github/languages/top/realazthat/comfy-catapult.svg?style=plastic&color=0A1E1E&cacheSeconds=28800
+[20]: https://github.com/realazthat/comfy-catapult/compare/v2.1.0...master
+[21]: https://github.com/realazthat/comfy-catapult/compare/v2.1.0...develop
 [22]: https://github.com/piyushK52/comfy_runner
 [23]: https://github.com/thecooltechguy/ComfyUI-ComfyRun
-[24]: .github/logo-exported.svg
-[25]:
-  https://img.shields.io/badge/Audience-Developers-0A1E1E?style=plastic&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXVzZXJzIj48cGF0aCBkPSJNMTYgMjF2LTJhNCA0IDAgMCAwLTQtNEg2YTQgNCAwIDAgMC00IDR2MiIvPjxjaXJjbGUgY3g9IjkiIGN5PSI3IiByPSI0Ii8+PHBhdGggZD0iTTIyIDIxdi0yYTQgNCAwIDAgMC0zLTMuODciLz48cGF0aCBkPSJNMTYgMy4xM2E0IDQgMCAwIDEgMCA3Ljc1Ii8+PC9zdmc+
-[26]:
-  https://img.shields.io/badge/Platform-Linux-0A1E1E?style=plastic&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWxhcHRvcC1taW5pbWFsIj48cmVjdCB3aWR0aD0iMTgiIGhlaWdodD0iMTIiIHg9IjMiIHk9IjQiIHJ4PSIyIiByeT0iMiIvPjxsaW5lIHgxPSIyIiB4Mj0iMjIiIHkxPSIyMCIgeTI9IjIwIi8+PC9zdmc+
+[24]: https://raw.githubusercontent.com/realazthat/comfy-catapult/v2.1.0/.github/logo-exported.svg
+[25]: https://img.shields.io/badge/Audience-Developers-0A1E1E?style=plastic&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXVzZXJzIj48cGF0aCBkPSJNMTYgMjF2LTJhNCA0IDAgMCAwLTQtNEg2YTQgNCAwIDAgMC00IDR2MiIvPjxjaXJjbGUgY3g9IjkiIGN5PSI3IiByPSI0Ii8+PHBhdGggZD0iTTIyIDIxdi0yYTQgNCAwIDAgMC0zLTMuODciLz48cGF0aCBkPSJNMTYgMy4xM2E0IDQgMCAwIDEgMCA3Ljc1Ii8+PC9zdmc+
+[26]: https://img.shields.io/badge/Platform-Linux-0A1E1E?style=plastic&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWxhcHRvcC1taW5pbWFsIj48cmVjdCB3aWR0aD0iMTgiIGhlaWdodD0iMTIiIHg9IjMiIHk9IjQiIHJ4PSIyIiByeT0iMiIvPjxsaW5lIHgxPSIyIiB4Mj0iMjIiIHkxPSIyMCIgeTI9IjIwIi8+PC9zdmc+
 [27]: https://github.com/realazthat/comfy-catapult/tree/master
 [28]: https://github.com/realazthat/comfy-catapult/tree/develop
 [29]: https://github.com/city96/ComfyUI_NetDist
 [30]: https://github.com/matan1905/ComfyUI-Serving-Toolkit
 [31]: https://github.com/rvion/CushyStudio
-[32]:
-  https://github.com/comfyanonymous/ComfyUI/tree/89d0e9abeb31e44cccef46537cd10d8812130ef3/script_examples
-  "Permalink"
+[32]: https://github.com/comfyanonymous/ComfyUI/tree/89d0e9abeb31e44cccef46537cd10d8812130ef3/script_examples "Permalink"
