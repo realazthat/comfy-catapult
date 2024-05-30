@@ -436,9 +436,26 @@ print(api_workflow.model_dump_json())
 
 ### 💻 Command Line Options
 
+Options:
+
 <!---->
 <img alt="Output of `python -m comfy_catapult.cli --help`" src="https://raw.githubusercontent.com/realazthat/comfy-catapult/v2.2.0/README.help.generated.svg"/>
 <!-- -->
+
+`execute` options:
+
+<!---->
+<img alt="Output of `python -m comfy_catapult.cli execute --help`" src="https://raw.githubusercontent.com/realazthat/comfy-catapult/v2.2.0/README.execute-help.generated.svg"/>
+<!-- -->
+
+Example usage:
+
+````console
+
+python -m comfy_catapult.cli \
+    execute --workflow-path ./test_data/sdxlturbo_example_api.json
+
+````
 
 ## ✅ Requirements
 

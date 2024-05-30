@@ -263,6 +263,8 @@ From {{ path('examples/add_a_node.py', link='md') }}:
 
 ### 💻 Command Line Options
 
+Options:
+
 <!--{{ shell('python -m comfy_catapult.cli --help',
              rich='README.help.generated.svg',
              rich_alt='Output of `python -m comfy_catapult.cli --help`',
@@ -270,6 +272,20 @@ From {{ path('examples/add_a_node.py', link='md') }}:
              rich_term='xterm-256color',
              rich_cols=160,
              decomentify='nl') }}-->
+
+`execute` options:
+
+<!--{{ shell('python -m comfy_catapult.cli execute --help',
+             rich='README.execute-help.generated.svg',
+             rich_alt='Output of `python -m comfy_catapult.cli execute --help`',
+             rich_bg_color='black',
+             rich_term='xterm-256color',
+             rich_cols=160,
+             decomentify='nl') }}-->
+
+Example usage:
+
+`{{ snippet('examples/cli-example.sh', start='# SNIPPETSTART', end='# SNIPPETEND', backtickify='console') }}`
 
 ## ✅ Requirements
 
