@@ -45,6 +45,8 @@ SOURCE: `README.md.jinja2`.
   <strong>
     <a href="#-requirements">✅Requirements</a>
     &nbsp;&bull;&nbsp;
+    <a href="#-command-line-options">💻CLI</a>
+    &nbsp;&bull;&nbsp;
     <a href="#-docker-image">🐳Docker</a>
     &nbsp;&bull;&nbsp;
     <a href="#-limitations">🚸Limitations</a>
@@ -432,7 +434,7 @@ print(api_workflow.model_dump_json())
 
 ````
 
-### CLI
+### 💻 Command Line Options
 
 <!---->
 <img alt="Output of `python -m comfy_catapult.cli --help`" src="https://raw.githubusercontent.com/realazthat/comfy-catapult/v2.2.0/README.help.generated.svg"/>
