@@ -3,7 +3,7 @@
 set -e -x -v -u -o pipefail
 
 SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-source "${SCRIPT_DIR}/utilities/common.sh"
+source "${SCRIPT_DIR}/common.sh"
 
 VENV_PATH=${PWD}/.cache/scripts/.venv source "${PROJ_PATH}/scripts/utilities/ensure-venv.sh"
 TOML=${PROJ_PATH}/pyproject.toml EXTRA=dev \
