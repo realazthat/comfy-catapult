@@ -455,6 +455,7 @@ docker run --rm --tty ghcr.io/realazthat/comfy-catapult:v2.2.0 --help
 # /data in the docker image is the working directory, so paths are simpler.
 docker run --rm --tty \
   -v "${PWD}:/data" \
+  -e "COMFY_API_URL=${COMFY_API_URL}" \
   ghcr.io/realazthat/comfy-catapult:v2.2.0 \
   execute --workflow-path ./test_data/sdxlturbo_example_api.json
 ```
