@@ -34,8 +34,6 @@ from .comfy_schema import APINodeID, APISystemStats
 from .comfy_utils import YamlDump
 from .remote_file_api_comfy import ComfySchemeRemoteFileAPI
 from .remote_file_api_generic import GenericRemoteFileAPI
-from .remote_file_api_local import LocalRemoteFileAPI
-from .url_utils import ToParseResult
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +75,33 @@ async def GetWorkflow(workflow_path: str) -> str:
   else:
     workflow_json = Path(workflow_path).read_text()
   return workflow_json
+
+
+async def GetRemote(*, comfy_api_url: str):
+  # Utility to help download/upload files.
+  remote = GenericRemoteFileAPI()
+  # This maps comfy+http://comfy_host:port/folder_type/subfolder/filename to
+  # the /view and /upload API endpoints.
+  remote.Register(
+      ComfySchemeRemoteFileAPI(comfy_api_urls=[comfy_api_url], overwrite=True))
+  # if args.comfy_install_file_url is not None:
+  #   scheme = ToParseResult(args.comfy_install_file_url).scheme
+  #   if scheme != 'file':
+  #     raise ValueError(
+  #         f'args.comfy_install_file_url must be a file:// URL, but is {args.comfy_install_file_url}'
+  #     )
+
+  #   # This one uses file:/// protocol on the local system. It is probably
+  #   # faster. In the future, I hope to add other protocols, so this can be
+  #   # used with other a choice remote storage systems as transparently as
+  #   # possible.
+  #   remote.Register(
+  #       LocalRemoteFileAPI(upload_to_bases=[args.comfy_input_file_url],
+  #                          download_from_bases=[
+  #                              args.comfy_output_file_url,
+  #                              args.comfy_temp_file_url
+  #                          ]))
+  return remote
 
 
 async def amain():
@@ -139,35 +164,12 @@ async def amain():
 
     async with ComfyAPIClient(comfy_api_url=comfy_api_url) as comfy_client:
 
-      # Utility to help download/upload files.
-      remote = GenericRemoteFileAPI()
-      # This maps comfy+http://comfy_host:port/folder_type/subfolder/filename to
-      # the /view and /upload API endpoints.
-      remote.Register(
-          ComfySchemeRemoteFileAPI(comfy_api_urls=[comfy_api_url],
-                                   overwrite=True))
-      if args.comfy_install_file_url is not None:
-        scheme = ToParseResult(args.comfy_install_file_url).scheme
-        if scheme != 'file':
-          raise ValueError(
-              f'args.comfy_install_file_url must be a file:// URL, but is {args.comfy_install_file_url}'
-          )
-
-        # This one uses file:/// protocol on the local system. It is probably
-        # faster. In the future, I hope to add other protocols, so this can be
-        # used with other a choice remote storage systems as transparently as
-        # possible.
-        remote.Register(
-            LocalRemoteFileAPI(upload_to_bases=[args.comfy_input_file_url],
-                               download_from_bases=[
-                                   args.comfy_output_file_url,
-                                   args.comfy_temp_file_url
-                               ]))
+      remote = await GetRemote(comfy_api_url=comfy_api_url)
 
       # Dump the ComfyUI server stats.
       system_stats: APISystemStats = await comfy_client.GetSystemStats()
-      print('system_stats:', file=sys.stderr)
-      print(YamlDump(system_stats.model_dump()), file=sys.stderr)
+      console.print('system_stats:', style='bold blue')
+      console.print(YamlDump(system_stats.model_dump()))
 
       async with ComfyCatapult(comfy_client=comfy_client,
                                debug_path=debug_path / 'catapult',
@@ -189,6 +191,7 @@ async def amain():
             job_history_dict=None,
             comfy_api_url=comfy_api_url)
         await RunWorkflow(job_info=job_info)
+        console.print('All done', style='bold green')
 
   except Exception:
     console.print_exception()
