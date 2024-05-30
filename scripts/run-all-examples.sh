@@ -57,4 +57,10 @@ fi
 python -m comfy_catapult.cli --help
 ################################################################################
 
+# For each sh in examples
+find examples -type f -name "*.sh" -print0 | while IFS= read -r -d '' EXAMPLE; do
+  bash "${EXAMPLE}"
+  echo -e "${GREEN}${EXAMPLE} ran successfully${NC}"
+done
+
 echo -e "${GREEN}All examples ran successfully${NC}"

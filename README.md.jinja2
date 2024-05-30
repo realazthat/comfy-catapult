@@ -37,9 +37,12 @@
     <a href="#-api">🤖API</a>
   </strong>
 </p>
+
 <p align="center">
   <strong>
     <a href="#-requirements">✅Requirements</a>
+    &nbsp;&bull;&nbsp;
+    <a href="#-docker-image">🐳Docker</a>
     &nbsp;&bull;&nbsp;
     <a href="#-limitations">🚸Limitations</a>
   </strong>
@@ -271,6 +274,31 @@ From {{ path('examples/add_a_node.py', link='md') }}:
 - Python 3.10+
 - ComfyUI server with API endpoint enabled.
 
+## 🐳 Docker Image
+
+Docker images are published to [ghcr.io/realazthat/{{project_name}}][31] at each
+tag.
+
+```bash
+# Use the published images at https://ghcr.io/realazthat/{{project_name}}.
+docker run --rm --tty ghcr.io/realazthat/{{project_name}}:v{{last_stable_release}} --help
+
+# /data in the docker image is the working directory, so paths are simpler.
+docker run --rm --tty \
+  -v "${PWD}:/data" \
+  ghcr.io/realazthat/{{project_name}}:v{{last_stable_release}} \
+  execute --workflow-path ./test_data/sdxlturbo_example_api.json
+```
+
+If you want to build the image yourself, you can use the Dockerfile in the
+repository.
+
+<!--{{snippet('./examples/local-docker-example.sh',
+              start='# DOCKER_START',
+              end='# DOCKER_END',
+              backtickify='bash',
+              decomentify='nl')|trim}}-->
+
 ### Known to work on
 
 - WSL2/Windows11, Ubuntu 22.04.2 LTS: **Python
@@ -319,6 +347,7 @@ From {{ path('examples/add_a_node.py', link='md') }}:
     - docker.
   - Generate animation:
     - docker
+  - docker (for building the docker image).
 
 ### Commit Process
 
