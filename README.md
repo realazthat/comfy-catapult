@@ -109,7 +109,7 @@ a program.
 pip install comfy_catapult
 
 # From git:
-pip install git+https://github.com/realazthat/comfy-catapult.git@v2.1.0
+pip install git+https://github.com/realazthat/comfy-catapult.git@v2.2.0
 ```
 
 ## 🚜 Usage
@@ -552,9 +552,9 @@ These instructions are for maintainers of the project.
   https://img.shields.io/pypi/v/comfy_catapult?style=plastic&color=0A1E1E
 [13]: https://pypi.org/project/comfy_catapult/
 [14]:
-  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.1.0/master?style=plastic&color=0A1E1E
+  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.2.0/master?style=plastic&color=0A1E1E
 [15]:
-  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.1.0/develop?style=plastic&color=0A1E1E
+  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.2.0/develop?style=plastic&color=0A1E1E
 [16]:
   https://img.shields.io/github/last-commit/realazthat/comfy-catapult/master?style=plastic&color=0A1E1E
 [17]:
@@ -564,9 +564,9 @@ These instructions are for maintainers of the project.
 [19]:
   https://img.shields.io/github/languages/top/realazthat/comfy-catapult.svg?style=plastic&color=0A1E1E&cacheSeconds=28800
 [20]:
-  https://github.com/realazthat/comfy-catapult/compare/v2.1.0...master
+  https://github.com/realazthat/comfy-catapult/compare/v2.2.0...master
 [21]:
-  https://github.com/realazthat/comfy-catapult/compare/v2.1.0...develop
+  https://github.com/realazthat/comfy-catapult/compare/v2.2.0...develop
 [22]: https://github.com/piyushK52/comfy_runner
 [23]: https://github.com/thecooltechguy/ComfyUI-ComfyRun
 [24]: .github/logo-exported.svg
