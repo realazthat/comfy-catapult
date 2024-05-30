@@ -445,6 +445,13 @@ print(api_workflow.model_dump_json())
 - Python 3.10+
 - ComfyUI server with API endpoint enabled.
 
+### Known to work on
+
+- WSL2/Windows11, Ubuntu 22.04.2 LTS: **Python
+  3.10.0**.
+- Ubuntu 20.04, Python `3.10.0`, tested in GitHub Actions
+  workflow ([./.github/workflows/build-and-test.yml](https://github.com/realazthat/comfy-catapult/blob/v2.2.0/.github/workflows/build-and-test.yml)).
+
 ## 🐳 Docker Image
 
 Docker images are published to [ghcr.io/realazthat/comfy-catapult][31] at each
@@ -483,13 +490,6 @@ docker run --rm --tty \
 
 ```
 <!---->
-
-### Known to work on
-
-- WSL2/Windows11, Ubuntu 22.04.2 LTS: **Python
-  3.10.0**.
-- Ubuntu 20.04, Python `3.10.0`, tested in GitHub Actions
-  workflow ([./.github/workflows/build-and-test.yml](https://github.com/realazthat/comfy-catapult/blob/v2.2.0/.github/workflows/build-and-test.yml)).
 
 ## 🚸 Limitations
 

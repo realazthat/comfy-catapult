@@ -276,6 +276,13 @@ From {{ path('examples/add_a_node.py', link='md') }}:
 - Python 3.10+
 - ComfyUI server with API endpoint enabled.
 
+### Known to work on
+
+- WSL2/Windows11, Ubuntu 22.04.2 LTS: **Python
+  {{rawsnippet('./.python-version')|trim}}**.
+- Ubuntu 20.04, Python `{{tested_python_versions}}`, tested in GitHub Actions
+  workflow ({{path('./.github/workflows/build-and-test.yml',  link='md')}}).
+
 ## 🐳 Docker Image
 
 Docker images are published to [ghcr.io/realazthat/{{project_name}}][31] at each
@@ -301,13 +308,6 @@ repository.
               end='# DOCKER_END',
               backtickify='bash',
               decomentify='nl')|trim}}-->
-
-### Known to work on
-
-- WSL2/Windows11, Ubuntu 22.04.2 LTS: **Python
-  {{rawsnippet('./.python-version')|trim}}**.
-- Ubuntu 20.04, Python `{{tested_python_versions}}`, tested in GitHub Actions
-  workflow ({{path('./.github/workflows/build-and-test.yml',  link='md')}}).
 
 ## 🚸 Limitations
 
