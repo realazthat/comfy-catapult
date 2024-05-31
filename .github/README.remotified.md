@@ -40,9 +40,14 @@ SOURCE: `README.md.jinja2`.
     <a href="#-api">🤖API</a>
   </strong>
 </p>
+
 <p align="center">
   <strong>
     <a href="#-requirements">✅Requirements</a>
+    &nbsp;&bull;&nbsp;
+    <a href="#-command-line-options">💻CLI</a>
+    &nbsp;&bull;&nbsp;
+    <a href="#-docker-image">🐳Docker</a>
     &nbsp;&bull;&nbsp;
     <a href="#-limitations">🚸Limitations</a>
   </strong>
@@ -367,7 +372,7 @@ api_workflow_json = api_workflow.model_dump_json()
 # See comfy_catapult/comfyui_schema.py for the schema definition.
 
 print(api_workflow_json)
-# 
+
 ````
 
 ### Adding a new node to a workflow
@@ -429,11 +434,28 @@ print(api_workflow.model_dump_json())
 
 ````
 
-### CLI
+### 💻 Command Line Options
+
+Options:
 
 <!---->
 <img alt="Output of `python -m comfy_catapult.cli --help`" src="https://raw.githubusercontent.com/realazthat/comfy-catapult/v2.2.0/README.help.generated.svg"/>
 <!-- -->
+
+`execute` options:
+
+<!---->
+<img alt="Output of `python -m comfy_catapult.cli execute --help`" src="https://raw.githubusercontent.com/realazthat/comfy-catapult/v2.2.0/README.execute-help.generated.svg"/>
+<!-- -->
+
+Example usage:
+
+````bash
+
+python -m comfy_catapult.cli \
+    execute --workflow-path ./test_data/sdxlturbo_example_api.json
+
+````
 
 ## ✅ Requirements
 
@@ -446,6 +468,45 @@ print(api_workflow.model_dump_json())
   3.10.0**.
 - Ubuntu 20.04, Python `3.10.0`, tested in GitHub Actions
   workflow ([./.github/workflows/build-and-test.yml](https://github.com/realazthat/comfy-catapult/blob/v2.2.0/.github/workflows/build-and-test.yml)).
+
+## 🐳 Docker Image
+
+Docker images are published to [ghcr.io/realazthat/comfy-catapult][31] at each
+tag.
+
+```bash
+# Use the published images at https://ghcr.io/realazthat/comfy-catapult.
+docker run --rm --tty ghcr.io/realazthat/comfy-catapult:v2.2.0 --help
+
+# /data in the docker image is the working directory, so paths are simpler.
+docker run --rm --tty \
+  -v "${PWD}:/data" \
+  -e "COMFY_API_URL=${COMFY_API_URL}" \
+  ghcr.io/realazthat/comfy-catapult:v2.2.0 \
+  execute --workflow-path ./test_data/sdxlturbo_example_api.json
+```
+
+If you want to build the image yourself, you can use the Dockerfile in the
+repository.
+
+<!---->
+```bash
+
+# Build the docker image.
+docker build -t my-comfy-catapult-image .
+
+# Print usage.
+docker run --rm --tty my-comfy-catapult-image --help
+
+# /data in the docker image is the working directory, so paths are simpler.
+docker run --rm --tty \
+  -v "${PWD}:/data" \
+  -e "COMFY_API_URL=${COMFY_API_URL}" \
+  my-comfy-catapult-image \
+  execute --workflow-path ./test_data/sdxlturbo_example_api.json
+
+```
+<!---->
 
 ## 🚸 Limitations
 
@@ -496,6 +557,7 @@ print(api_workflow.model_dump_json())
     - docker.
   - Generate animation:
     - docker
+  - docker (for building the docker image).
 
 ### Commit Process
 

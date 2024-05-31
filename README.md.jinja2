@@ -37,9 +37,14 @@
     <a href="#-api">🤖API</a>
   </strong>
 </p>
+
 <p align="center">
   <strong>
     <a href="#-requirements">✅Requirements</a>
+    &nbsp;&bull;&nbsp;
+    <a href="#-command-line-options">💻CLI</a>
+    &nbsp;&bull;&nbsp;
+    <a href="#-docker-image">🐳Docker</a>
     &nbsp;&bull;&nbsp;
     <a href="#-limitations">🚸Limitations</a>
   </strong>
@@ -248,7 +253,7 @@ python -m comfy_catapult.examples.using_pydantic
 
 From {{ path('./examples/using_pydantic.py', link='md') }}:
 
-`{{ snippet('examples/using_pydantic.py', start='SNIPPETSTART', end='SNIPPETEND', backtickify='py') }}`
+`{{ snippet('examples/using_pydantic.py', start='# SNIPPETSTART', end='# SNIPPETEND', backtickify='py') }}`
 
 ### Adding a new node to a workflow
 
@@ -256,7 +261,9 @@ From {{ path('examples/add_a_node.py', link='md') }}:
 
 `{{ snippet('examples/add_a_node.py', start='# SNIPPETSTART', end='# SNIPPETEND', backtickify='py') }}`
 
-### CLI
+### 💻 Command Line Options
+
+Options:
 
 <!--{{ shell('python -m comfy_catapult.cli --help',
              rich='README.help.generated.svg',
@@ -265,6 +272,20 @@ From {{ path('examples/add_a_node.py', link='md') }}:
              rich_term='xterm-256color',
              rich_cols=160,
              decomentify='nl') }}-->
+
+`execute` options:
+
+<!--{{ shell('python -m comfy_catapult.cli execute --help',
+             rich='README.execute-help.generated.svg',
+             rich_alt='Output of `python -m comfy_catapult.cli execute --help`',
+             rich_bg_color='black',
+             rich_term='xterm-256color',
+             rich_cols=160,
+             decomentify='nl') }}-->
+
+Example usage:
+
+`{{ snippet('examples/cli-example.sh', start='# SNIPPETSTART', end='# SNIPPETEND', backtickify='bash') }}`
 
 ## ✅ Requirements
 
@@ -277,6 +298,32 @@ From {{ path('examples/add_a_node.py', link='md') }}:
   {{rawsnippet('./.python-version')|trim}}**.
 - Ubuntu 20.04, Python `{{tested_python_versions}}`, tested in GitHub Actions
   workflow ({{path('./.github/workflows/build-and-test.yml',  link='md')}}).
+
+## 🐳 Docker Image
+
+Docker images are published to [ghcr.io/realazthat/{{project_name}}][31] at each
+tag.
+
+```bash
+# Use the published images at https://ghcr.io/realazthat/{{project_name}}.
+docker run --rm --tty ghcr.io/realazthat/{{project_name}}:v{{last_stable_release}} --help
+
+# /data in the docker image is the working directory, so paths are simpler.
+docker run --rm --tty \
+  -v "${PWD}:/data" \
+  -e "COMFY_API_URL=${COMFY_API_URL}" \
+  ghcr.io/realazthat/{{project_name}}:v{{last_stable_release}} \
+  execute --workflow-path ./test_data/sdxlturbo_example_api.json
+```
+
+If you want to build the image yourself, you can use the Dockerfile in the
+repository.
+
+<!--{{snippet('./examples/local-docker-example.sh',
+              start='# DOCKER_START',
+              end='# DOCKER_END',
+              backtickify='bash',
+              decomentify='nl')|trim}}-->
 
 ## 🚸 Limitations
 
@@ -319,6 +366,7 @@ From {{ path('examples/add_a_node.py', link='md') }}:
     - docker.
   - Generate animation:
     - docker
+  - docker (for building the docker image).
 
 ### Commit Process
 
