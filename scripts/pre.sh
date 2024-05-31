@@ -29,6 +29,7 @@ fi
 EXTRA=dev bash scripts/utilities/pin-extra-reqs.sh
 EXTRA=prod bash scripts/utilities/pin-extra-reqs.sh
 bash scripts/run-all-tests.sh
+bash scripts/run-all-examples.sh
 bash scripts/type-check.sh
 bash scripts/generate.sh
 if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
