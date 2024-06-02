@@ -7,10 +7,13 @@
 
 import dataclasses
 import datetime
+import json
 import logging
 import textwrap
+import traceback
+from asyncio import CancelledError
 from dataclasses import is_dataclass
-from typing import (Any, Generator, Hashable, List, Literal, NamedTuple,
+from typing import (Any, Dict, Generator, Hashable, List, Literal, NamedTuple,
                     Optional, Type, TypeVar, Union, cast)
 
 import aiofiles
@@ -447,14 +450,18 @@ class WatchVar:
 
   def __exit__(self, exc_type, exc, tb):
     if exc is not None:
+      if isinstance(
+          exc, (KeyboardInterrupt, SystemExit, CancelledError, BaseException)):
+        return
+
+      extra: Dict[str, Any] = {}
+      if exc_type is not None:
+        extra['exc_type'] = type(exc_type).__name__
+      extra['kwargs'] = self._kwargs
+      extra['tb'] = traceback.format_tb(tb)
+
       logger.error(
-          f'{type(self).__name__}: Error occurred, and you are watching these variables:'
-      )
-      for key, value in self._kwargs.items():
-        value_lines = str(value).split('\n')
-        if len(value_lines) > 1:
-          value = '\n' + textwrap.indent(value, prefix='    ')
-        else:
-          if isinstance(value, str):
-            value = repr(value)
-        logger.error(f'  {key}: {value}')
+          f'{type(self).__name__}: Error occurred: {json.dumps(str(exc))} ({type(exc).__name__})'
+          f'\nTraceback:\n{textwrap.indent("".join(traceback.format_tb(tb)), "  ")}'
+          f'\nYou are watching these variables:\n{textwrap.indent(YamlDump(self._kwargs), "  ")}',
+          extra=extra)
