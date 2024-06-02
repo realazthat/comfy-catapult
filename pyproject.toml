@@ -8,7 +8,7 @@ version = "2.2.0"
 description = "Programmatically schedule ComfyUI workflows."
 authors = [{name = "AYF", email = "realazthat@gmail.com"}]
 license = {file = "LICENSE.md"}
-readme = "README.remotified.md"
+readme = ".github/README.remotified.md"
 keywords = [
   "pipeline",
   "scheduler",
