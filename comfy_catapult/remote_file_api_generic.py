@@ -5,6 +5,7 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
+import json
 from collections import defaultdict
 from typing import Dict, List, Tuple
 
@@ -55,7 +56,7 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
           relevant_apis.append(api)
     if relevant_apis:
       return relevant_apis
-    raise ValueError(f'ComfyUI API server URL {repr(comfy_api_url)}:'
+    raise ValueError(f'ComfyUI API server URL {json.dumps(comfy_api_url)}:'
                      ' there is no API registered to handle this URL'
                      f'\n triplet: {triplet}'
                      f'\n convered_urls: {convered_urls}')

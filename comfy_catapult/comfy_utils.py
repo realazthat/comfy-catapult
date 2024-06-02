@@ -258,7 +258,7 @@ async def BigYamlDump(data: Any, *, max_lines: Optional[int],
   await path.parent.mkdir(parents=True, exist_ok=True)
   async with aiofiles.open(path, 'w') as f:
     await f.write(yaml_str)
-  return f'Too large, see {repr(str(path))}'
+  return f'Too large, see {json.dumps(str(path))}'
 
 
 async def BigErrorStrDump(exception: Exception, max_lines: Optional[int],
@@ -273,7 +273,7 @@ async def BigErrorStrDump(exception: Exception, max_lines: Optional[int],
 
   async with aiofiles.open(path, 'w') as f:
     await f.write(error_str)
-  return error_line + f' (Wrote full error_str to {repr(str(path))})'
+  return error_line + f' (Wrote full error_str to {json.dumps(str(path))})'
 
 
 _BaseModelT = TypeVar('_BaseModelT', bound=BaseModel)

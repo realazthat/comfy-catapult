@@ -5,6 +5,7 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
+import json
 from typing import List, Tuple
 
 import aioshutil
@@ -18,21 +19,21 @@ from .url_utils import ToParseResult, ValidateIsBasedURL
 async def _LocalFileURLToLocalPath(url: str) -> Path:
   url_pr = ToParseResult(url)
   if url_pr.scheme != 'file':
-    raise ValueError(f'URL {repr(url)} is not a file:// URL')
+    raise ValueError(f'URL {json.dumps(url)} is not a file:// URL')
   if url_pr.netloc != '':
-    raise ValueError(f'URL {repr(url)} is not a local file URL')
+    raise ValueError(f'URL {json.dumps(url)} is not a local file URL')
   if url_pr.params != '':
-    raise ValueError(f'URL {repr(url)} has params')
+    raise ValueError(f'URL {json.dumps(url)} has params')
   if url_pr.query != '':
-    raise ValueError(f'URL {repr(url)} has query')
+    raise ValueError(f'URL {json.dumps(url)} has query')
   if url_pr.fragment != '':
-    raise ValueError(f'URL {repr(url)} has fragment')
+    raise ValueError(f'URL {json.dumps(url)} has fragment')
   if not url_pr.path.startswith('/'):
-    raise ValueError(f'URL {repr(url)} has relative path')
+    raise ValueError(f'URL {json.dumps(url)} has relative path')
   path = Path(url_pr.path)
   path = await path.resolve()
   if not path.is_absolute():
-    raise ValueError(f'URL {repr(url)} has relative path')
+    raise ValueError(f'URL {json.dumps(url)} has relative path')
   return path
 
 
@@ -46,7 +47,8 @@ async def _ValidateLocalPath(*, path: Path, any_bases: List[Path]) -> Path:
   for base in any_bases:
     if await _IsLocalPathWeaklyRelative(base=base, path=path):
       return path
-  raise ValueError(f'Path {path} is not relative to any of {any_bases}')
+  raise ValueError(
+      f'Path {json.dumps(str(path))} is not relative to any of {any_bases}')
 
 
 class LocalRemoteFileAPI(RemoteFileAPIBase):
@@ -64,11 +66,12 @@ class LocalRemoteFileAPI(RemoteFileAPIBase):
     self._download_from_bases = download_from_bases
 
   async def UploadFile(self, *, src_path: Path, untrusted_dst_url: str) -> str:
-    trusted_dst_url = ValidateIsBasedURL(url=untrusted_dst_url,
-                                         any_bases=self._upload_to_bases)
+    trusted_dst_url: str = ValidateIsBasedURL(url=untrusted_dst_url,
+                                              any_bases=self._upload_to_bases)
     scheme = ToParseResult(trusted_dst_url).scheme
     if scheme != 'file':
-      raise ValueError(f'URL {repr(trusted_dst_url)} is not a file:// URL')
+      raise ValueError(
+          f'URL {json.dumps(trusted_dst_url)} is not a file:// URL')
     if not await src_path.exists():
       raise ValueError(f'File {src_path} does not exist')
     if not await src_path.is_file():
@@ -86,11 +89,12 @@ class LocalRemoteFileAPI(RemoteFileAPIBase):
     return trusted_dst_url
 
   async def DownloadFile(self, *, untrusted_src_url: str, dst_path: Path):
-    trusted_src_url = ValidateIsBasedURL(url=untrusted_src_url,
-                                         any_bases=self._download_from_bases)
+    trusted_src_url: str = ValidateIsBasedURL(
+        url=untrusted_src_url, any_bases=self._download_from_bases)
     scheme = ToParseResult(trusted_src_url).scheme
     if scheme != 'file':
-      raise ValueError(f'URL {repr(trusted_src_url)} is not a file:// URL')
+      raise ValueError(
+          f'URL {json.dumps(trusted_src_url)} is not a file:// URL')
 
     untrusted_src_path = await _LocalFileURLToLocalPath(url=trusted_src_url)
     trusted_src_path = await _ValidateLocalPath(

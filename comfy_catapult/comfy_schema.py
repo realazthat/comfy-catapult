@@ -5,6 +5,7 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
+import json
 from typing import Any, Dict, List, Literal, NamedTuple, Optional, Union
 from urllib.parse import urljoin
 
@@ -554,23 +555,23 @@ class ComfyUIPathTriplet(BaseModel):
   def validate_folder_type(cls, v: str):
     if v not in VALID_FOLDER_TYPES:
       raise ValueError(
-          f'folder_type {repr(v)} is not one of {VALID_FOLDER_TYPES}')
+          f'folder_type {json.dumps(v)} is not one of {VALID_FOLDER_TYPES}')
     return v
 
   @field_validator('subfolder')
   @classmethod
   def validate_subfolder(cls, v: str):
     if v.startswith('/'):
-      raise ValueError(f'subfolder {repr(v)} must not start with a slash')
+      raise ValueError(f'subfolder {json.dumps(v)} must not start with a slash')
     return v
 
   @field_validator('filename')
   @classmethod
   def validate_filename(cls, v: str):
     if '/' in v:
-      raise ValueError(f'filename {repr(v)} must not contain a slash')
+      raise ValueError(f'filename {json.dumps(v)} must not contain a slash')
     if v == '':
-      raise ValueError(f'filename {repr(v)} must not be empty')
+      raise ValueError(f'filename {json.dumps(v)} must not be empty')
     return v
 
   def ToLocalPathStr(self, *, include_folder_type: bool) -> str:

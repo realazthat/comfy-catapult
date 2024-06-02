@@ -150,10 +150,10 @@ class ComfyCatapult(ComfyCatapultBase):
   ) -> dict:
     async with self._lock:
       if job_id in self._jobs:
-        raise KeyError(f'User job id {repr(job_id)} already exists')
+        raise KeyError(f'User job id {json.dumps(job_id)} already exists')
       if not slugify(job_id) == job_id:
         raise ValueError(
-            f'User job id {repr(job_id)} is not slugified (e.g {repr(slugify(job_id))})'
+            f'User job id {json.dumps(job_id)} is not slugified (e.g {json.dumps(slugify(job_id))})'
         )
       if job_debug_path is None and self._debug_path is not None:
         dt = datetime.datetime.now(datetime.timezone.utc).isoformat()
@@ -215,14 +215,14 @@ class ComfyCatapult(ComfyCatapultBase):
                       job_id: str) -> 'Tuple[JobStatus, asyncio.Future[dict]]':
     async with self._lock:
       if job_id not in self._jobs:
-        raise KeyError(f'Job id {repr(job_id)} not found')
+        raise KeyError(f'Job id {json.dumps(job_id)} not found')
       job = self._jobs[job_id]
       return deepcopy(job.status), job.future
 
   async def GetExceptions(self, *, job_id: str) -> List[Exception]:
     async with self._lock:
       if job_id not in self._jobs:
-        raise KeyError(f'Job id {repr(job_id)} not found')
+        raise KeyError(f'Job id {json.dumps(job_id)} not found')
       job = self._jobs[job_id]
       return list(job.errors)
 
@@ -269,7 +269,8 @@ class ComfyCatapult(ComfyCatapultBase):
     if len(history.root) == 0:
       return
     if prompt_id not in history.root:
-      raise AssertionError(f'prompt_id {repr(prompt_id)} not in history.root')
+      raise AssertionError(
+          f'prompt_id {json.dumps(prompt_id)} not in history.root')
     if not isinstance(prompt_id, str):
       raise AssertionError(f'prompt_id must be str, not {type(prompt_id)}')
     job_history: APIHistoryEntry = history.root[prompt_id]
@@ -621,7 +622,7 @@ class ComfyCatapult(ComfyCatapultBase):
                         ExceptionInfo(
                             type=str(node_type),
                             message=
-                            f'Node {repr(node_id)} of type {repr(node_type)} errored:\n{YamlDump(message.data)}',
+                            f'Node {json.dumps(node_id)} of type {json.dumps(str(node_type))} errored:\n{textwrap.indent(YamlDump(message.data), "  ")}',
                             traceback='',
                             attributes={})
                     ])
@@ -790,4 +791,4 @@ class _JobContext:
         await job_dump_path.parent.mkdir(parents=True, exist_ok=True)
         async with aiofiles.open(job_dump_path, 'w') as f:
           await f.write(YamlDump(dump))
-        logger.error(f'Wrote job status to {repr(str(job_dump_path))}.')
+        logger.error(f'Wrote job status to {json.dumps(str(job_dump_path))}.')

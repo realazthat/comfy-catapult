@@ -84,12 +84,12 @@ class TestComfySchema(IsolatedAsyncioTestCase):
                              subfolder='subfolder',
                              filename='/filename.txt')
     self.assertIn(
-        "Value error, filename '/filename.txt' must not contain a slash",
+        'Value error, filename "/filename.txt" must not contain a slash',
         str(cm.exception).strip())
 
     with self.assertRaises(pydantic.ValidationError) as cm:
       _ = ComfyUIPathTriplet(type='input', subfolder='subfolder', filename='')
-    self.assertIn("Value error, filename '' must not be empty",
+    self.assertIn('Value error, filename "" must not be empty',
                   str(cm.exception).strip())
 
     with self.assertRaises(pydantic.ValidationError) as cm:
@@ -97,7 +97,7 @@ class TestComfySchema(IsolatedAsyncioTestCase):
                              subfolder='/subfolder',
                              filename='filename.txt')
     self.assertIn(
-        "Value error, subfolder '/subfolder' must not start with a slash",
+        'Value error, subfolder "/subfolder" must not start with a slash',
         str(cm.exception).strip())
 
   def test_ComfyUIPathTripletEdges(self):
