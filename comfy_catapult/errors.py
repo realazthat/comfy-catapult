@@ -68,6 +68,10 @@ class WorkflowSubmissionError(CatapultRuntimeError):
     self.ticket: APIWorkflowTicket = deepcopy(ticket)
 
 
+class JobNotFound(CatapultRuntimeError):
+  pass
+
+
 class JobFailed(CatapultRuntimeError):
   pass
 

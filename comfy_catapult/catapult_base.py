@@ -11,7 +11,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, NamedTuple, Optional, Sequence, Tuple
 
 from anyio import Path
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from .comfy_schema import APINodeID
 
@@ -31,23 +31,46 @@ class ExceptionInfo(NamedTuple):
 class JobStatus(BaseModel):
   model_config = ConfigDict(frozen=True)
 
-  scheduled: Optional[datetime.datetime]
-  pending: Optional[datetime.datetime]
-  running: Optional[datetime.datetime]
-  success: Optional[datetime.datetime]
-  errored: Optional[datetime.datetime]
-  cancelled: Optional[datetime.datetime]
+  scheduled: Optional[datetime.datetime] = Field(
+      ..., description='Time the job was scheduled with Comfy Catapult.')
+  comfy_scheduled: Optional[datetime.datetime] = Field(
+      ..., description='Time the job was scheduled with ComfyUI.')
+  pending: Optional[datetime.datetime] = Field(
+      ...,
+      description='If/when the job is seen in the ComfyUI /queue as pending.')
+  running: Optional[datetime.datetime] = Field(
+      ...,
+      description='If/when the job is seen in the ComfyUI /queue as running.')
+  success: Optional[datetime.datetime] = Field(
+      ...,
+      description=
+      'If/when the job is seen in the ComfyUI /history as successful.')
+  errored: Optional[datetime.datetime] = Field(
+      ...,
+      description='If/when the job has encountered an unrecoverable error.')
+  cancelled: Optional[datetime.datetime] = Field(
+      ..., description='If/when the job was cancelled.')
   errors: List[ExceptionInfo]
 
-  system_stats_check: Optional[datetime.datetime] = None
-  """Last time system stats were successfully checked (while this job is not done)."""
-  queue_check: Optional[datetime.datetime] = None
-  """Last time /queue/job_id was successfully checked for (while this job is not done)."""
+  system_stats_check: Optional[datetime.datetime] = Field(
+      None,
+      description=
+      'Last time system stats were successfully checked (while this job is not done).'
+  )
+  queue_check: Optional[datetime.datetime] = Field(
+      None,
+      description=
+      'Last time /queue/job_id was successfully checked for (while this job is not done).'
+  )
 
-  job_history: Optional[dict] = None
-  """The history of the job. This is only set when the job is done and the history is successfully retrieved."""
+  job_history: Optional[dict] = Field(
+      None,
+      description=
+      'The history of the job. This is only set when the job is done and the history is successfully retrieved.'
+  )
 
   def IsDone(self) -> bool:
+    """Returns True if the job is no longer viable; either it finished or an error occurred etc.."""
     return (self.success is not None or self.errored is not None
             or self.cancelled is not None)
 
