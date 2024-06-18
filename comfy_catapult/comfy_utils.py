@@ -238,7 +238,8 @@ def YamlDump(data: Any) -> str:
 
 
 async def _GetNewPath(*, parent_path: Path) -> Path:
-  name = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S_%f')
+  now = datetime.datetime.now(datetime.timezone.utc)
+  name = now.strftime('%Y-%m-%d_%H-%M-%S_%f')
   path = parent_path / name
   index = 1
   while await path.exists():

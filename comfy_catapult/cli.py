@@ -15,7 +15,7 @@ import os
 import sys
 import uuid
 import warnings
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from shutil import get_terminal_size
 from typing import List, Optional, Tuple
@@ -212,7 +212,7 @@ async def amain():
                                debug_path=debug_path / 'catapult',
                                debug_save_all=True) as catapult:
 
-        dt_str = datetime.now().isoformat()
+        dt_str = datetime.now(tz=timezone.utc).isoformat()
 
         if job_id is None:
           job_id = f'{slugify(dt_str)}-my-job-{uuid.uuid4()}'
