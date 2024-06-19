@@ -6,6 +6,7 @@
 # the license text.
 
 import asyncio
+import base64
 import datetime
 import enum
 import json
@@ -18,7 +19,9 @@ from copy import deepcopy
 from dataclasses import dataclass
 from pprint import pformat
 from typing import Any, Dict, Generic, List, Optional, Sequence, Tuple, TypeVar
-from urllib.parse import ParseResult, urlparse
+from urllib.parse import ParseResult
+from urllib.parse import unquote as paramdecode
+from urllib.parse import urlparse
 
 import aiofiles
 from anyio import Path
@@ -36,6 +39,29 @@ from .errors import (JobFailed, JobNotFound, NodesNotExecuted,
                      WorkflowSubmissionError)
 
 logger = logging.getLogger(__name__)
+
+
+def _BasicAuthToHeaders(*, url: str, headers: Dict[str, str]) -> str:
+  """
+  websockets lib doessn't support basic auth in the url, so we have to move it
+  to the headers.
+  """
+  url_pr = urlparse(url)
+  if url_pr.username is None and url_pr.password is None:
+    return url
+
+  username = url_pr.username or ''
+  password = url_pr.password or ''
+
+  # urldecode the username and password
+  username = paramdecode(username)
+  password = paramdecode(password)
+  auth = f'{username}:{password}'
+  encoded_auth = base64.b64encode(auth.encode()).decode()
+
+  headers['Authorization'] = f'Basic {encoded_auth}'
+  new_netloc = f'{url_pr.hostname}:{url_pr.port}'
+  return url_pr._replace(netloc=new_netloc).geturl()
 
 
 @dataclass
@@ -109,6 +135,7 @@ class ComfyCatapult(ComfyCatapultBase):
     # Reconnect to the webscoket every 20 seconds, because the currently running
     # node is sent upon reconnect.
     self._ws_connect_interval = 20.
+    self._loop_delay: float = 2.
     self._debug_path = debug_path
     self._debug_save_all = debug_save_all
 
@@ -576,6 +603,8 @@ class ComfyCatapult(ComfyCatapultBase):
     node_id: Optional[str]
     node_type: Optional[str]
 
+    # Only sleep if there is an error to prevent overflow to the logs; otherwise
+    # poll ws.recv() as fast as possible.
     while True:
       try:
         logger.debug('websocket recv')
@@ -701,16 +730,17 @@ class ComfyCatapult(ComfyCatapultBase):
         raise
       except Exception:
         logger.exception('Error in _LoopWS')
+        await asyncio.sleep(self._loop_delay)
 
   async def _PollLoop(self):
     while not self._stop_event.is_set():
       try:
-        await asyncio.sleep(5)
         await self._Poll()
       except asyncio.CancelledError:
         raise
       except Exception:
         logger.exception('Error in _PollLoop')
+      await asyncio.sleep(self._loop_delay)
 
   async def _MonitoringThread(self):
 
@@ -729,8 +759,15 @@ class ComfyCatapult(ComfyCatapultBase):
     ws_url = ws_url._replace(query=f'clientId={client_id}')
 
     async def _MonitoringThreadLoopOnce():
+      nonlocal ws_url
       try:
-        async with connect(ws_url.geturl()) as ws:
+        # websockets lib doessn't support basic auth in the url, so we have to
+        # move it to the headers.
+        headers: Dict[str, str] = {}
+        ws_url = urlparse(
+            _BasicAuthToHeaders(url=ws_url.geturl(), headers=headers))
+
+        async with connect(ws_url.geturl(), extra_headers=headers) as ws:
           await asyncio.wait_for(self._LoopWS(ws=ws),
                                  timeout=ws_connect_interval)
       except asyncio.TimeoutError:
@@ -749,6 +786,7 @@ class ComfyCatapult(ComfyCatapultBase):
         raise
       except Exception:
         logger.exception('Error in _MonitoringThreadLoopOnce')
+      await asyncio.sleep(self._loop_delay)
 
   async def _CheckError(self):
     async with self._lock:
