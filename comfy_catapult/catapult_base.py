@@ -13,7 +13,7 @@ from typing import Dict, List, NamedTuple, Optional, Sequence, Tuple
 from anyio import Path
 from pydantic import BaseModel, ConfigDict, Field
 
-from .comfy_schema import APINodeID
+from .comfy_schema import APINodeID, APIWorkflowTicket
 
 
 class Progress(NamedTuple):
@@ -63,6 +63,9 @@ class JobStatus(BaseModel):
       'Last time /queue/job_id was successfully checked for (while this job is not done).'
   )
 
+  ticket: Optional[APIWorkflowTicket] = Field(
+      ..., description='The ticket returned from the ComfyUI API.')
+
   job_history: Optional[dict] = Field(
       None,
       description=
@@ -110,7 +113,9 @@ class ComfyCatapultBase(ABC):
     Args:
         job_id (str): A unique identifier for the job. Note: This string must
           be unique, and must be slugified! Use python-slugify to slugify the
-          string.
+          string. Note: This is not the same string as the prompt_id returned
+          from ComfyUI API. You can find that in the JobStatus.ticket returned
+          from GetStatus().
         prepared_workflow (dict): Workflow to submit.
         important (List[APINodeID]): List of important nodes (e.g output nodes we
           are interested in).

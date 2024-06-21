@@ -85,7 +85,6 @@ class _Job:
   job_id: str
   prepared_workflow: dict
   important_nodes: Tuple[APINodeID, ...]
-  ticket: Optional[APIWorkflowTicket]
   status: JobStatus
   # Exceptions that should be in status but aren't because they're not pickable
   # or deepcopyable.
@@ -205,7 +204,6 @@ class ComfyCatapult(ComfyCatapultBase):
     job = _Job(job_id=job_id,
                prepared_workflow=prepared_workflow,
                important_nodes=tuple(important),
-               ticket=None,
                future=future,
                status=JobStatus(scheduled=self._Now(),
                                 comfy_scheduled=None,
@@ -216,6 +214,7 @@ class ComfyCatapult(ComfyCatapultBase):
                                 cancelled=None,
                                 system_stats_check=None,
                                 queue_check=None,
+                                ticket=None,
                                 job_history=None,
                                 errors=[]),
                errors=[],
@@ -230,7 +229,7 @@ class ComfyCatapult(ComfyCatapultBase):
           prompt_workflow=prepared_workflow)
 
       async with self._lock:
-        job.ticket = ticket
+        job.status = job.status._replace(ticket=ticket)
         if ticket.prompt_id is not None:
           self._prompt_id_index[ticket.prompt_id] = job_id
 
@@ -281,7 +280,7 @@ class ComfyCatapult(ComfyCatapultBase):
     async with _JobContext(job_id=job_id, catapult=self):
       async with self._lock:
         job: _Job = await self._GetJob(job_id=job_id)
-        ticket: Optional[APIWorkflowTicket] = job.ticket
+        ticket: Optional[APIWorkflowTicket] = job.status.ticket
         prompt_id: Optional[str] = None
         if ticket is not None:
           prompt_id = ticket.prompt_id
@@ -314,7 +313,7 @@ class ComfyCatapult(ComfyCatapultBase):
 
     async with self._lock:
       prepared_workflow: dict = deepcopy(job.prepared_workflow)
-      ticket: Optional[APIWorkflowTicket] = deepcopy(job.ticket)
+      ticket: Optional[APIWorkflowTicket] = deepcopy(job.status.ticket)
       prompt_id: Optional[str] = None
       if ticket is not None:
         prompt_id = ticket.prompt_id
@@ -547,7 +546,7 @@ class ComfyCatapult(ComfyCatapultBase):
           # We already have the job history.
           return
 
-        ticket: Optional[APIWorkflowTicket] = job.ticket
+        ticket: Optional[APIWorkflowTicket] = job.status.ticket
         prompt_id: Optional[str] = None
         if ticket is not None:
           prompt_id = ticket.prompt_id
@@ -870,7 +869,7 @@ class _JobContext:
         job_debug_path: Optional[Path] = job.job_debug_path
         status = deepcopy(job.status)
         workflow = deepcopy(job.prepared_workflow)
-        ticket = deepcopy(job.ticket)
+        ticket = deepcopy(job.status.ticket)
         remote_job_status = deepcopy(job.remote_job_status)
 
       dt = datetime.datetime.now(datetime.timezone.utc).isoformat()
