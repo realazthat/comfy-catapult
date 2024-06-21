@@ -10,18 +10,19 @@ RUN apt-get -y update && apt-get -y --no-install-recommends install bash && \
   apt-get -y clean && \
   apt-get -y autoremove && \
   rm -rf /var/lib/apt/lists/* && \
+  useradd -m -d /home/user -s /bin/bash user && \
   pip install --no-cache-dir --upgrade pip setuptools wheel && \
-  mkdir -p /home/nobody/.local && \
-  chown -R nobody:nogroup /comfy_catapult /home/nobody/.local && \
+  mkdir -p /home/user/.local && \
+  chown -R user:user /comfy_catapult /home/user/.local && \
   chmod -R a+wrX /comfy_catapult
 
 
 COPY . /comfy_catapult
-USER nobody
+USER user
 WORKDIR /comfy_catapult
-ENV PATH=/home/nobody/.local/bin:$PATH
-ENV PYTHONPATH=/home/nobody/.local/lib/python3.12/site-packages
-RUN pip install --no-cache-dir --prefix=/home/nobody/.local .
+ENV PATH=/home/user/.local/bin:$PATH
+ENV PYTHONPATH=/home/user/.local/lib/python3.12/site-packages
+RUN pip install --no-cache-dir --prefix=/home/user/.local .
 
 # This is where the user will mount their data to.
 WORKDIR /data
