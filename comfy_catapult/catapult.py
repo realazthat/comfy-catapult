@@ -19,7 +19,6 @@ from copy import deepcopy
 from dataclasses import dataclass
 from pprint import pformat
 from typing import Any, Dict, Generic, List, Optional, Sequence, Tuple, TypeVar
-from urllib.parse import ParseResult
 from urllib.parse import unquote as paramdecode
 from urllib.parse import urlparse
 
@@ -37,6 +36,7 @@ from .comfy_schema import (APIHistory, APIHistoryEntry,
 from .comfy_utils import TryParseAsModel, YamlDump
 from .errors import (JobFailed, JobNotFound, NodesNotExecuted,
                      WorkflowSubmissionError)
+from .url_utils import JoinToBaseURL
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,17 @@ def _BasicAuthToHeaders(*, url: str, headers: Dict[str, str]) -> str:
   headers['Authorization'] = f'Basic {encoded_auth}'
   new_netloc = f'{url_pr.hostname}:{url_pr.port}'
   return url_pr._replace(netloc=new_netloc).geturl()
+
+
+def _GetWebSocketURL(*, comfy_api_url: str, client_id: str) -> str:
+  ws_url_str = JoinToBaseURL(comfy_api_url, 'ws')
+  ws_url = urlparse(ws_url_str)
+  if ws_url.scheme == 'https':
+    ws_url = ws_url._replace(scheme='wss')
+  else:
+    ws_url = ws_url._replace(scheme='ws')
+  ws_url = ws_url._replace(query=f'clientId={client_id}')
+  return ws_url.geturl()
 
 
 @dataclass
@@ -749,25 +760,20 @@ class ComfyCatapult(ComfyCatapultBase):
       comfy_api_url: str = self._comfy_client.GetURL()
       ws_connect_interval: float = self._ws_connect_interval
 
-    # replace protocol with ws, using a url library
-    ws_url: ParseResult = urlparse(comfy_api_url)
-    if ws_url.scheme == 'https':
-      ws_url = ws_url._replace(scheme='wss')
-    else:
-      ws_url = ws_url._replace(scheme='ws')
-    ws_url = ws_url._replace(path='/ws')
-    ws_url = ws_url._replace(query=f'clientId={client_id}')
+    ws_url = urlparse(
+        _GetWebSocketURL(comfy_api_url=comfy_api_url, client_id=client_id))
+
+    ws_headers: Dict[str, str] = {}
+    ws_url = urlparse(
+        _BasicAuthToHeaders(url=ws_url.geturl(), headers=ws_headers))
 
     async def _MonitoringThreadLoopOnce():
       nonlocal ws_url
       try:
         # websockets lib doessn't support basic auth in the url, so we have to
         # move it to the headers.
-        headers: Dict[str, str] = {}
-        ws_url = urlparse(
-            _BasicAuthToHeaders(url=ws_url.geturl(), headers=headers))
 
-        async with connect(ws_url.geturl(), extra_headers=headers) as ws:
+        async with connect(ws_url.geturl(), extra_headers=ws_headers) as ws:
           await asyncio.wait_for(self._LoopWS(ws=ws),
                                  timeout=ws_connect_interval)
       except asyncio.TimeoutError:
