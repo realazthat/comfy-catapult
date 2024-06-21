@@ -6,7 +6,6 @@ WORKDIR /comfy_catapult
 # apt-get -y --no-install-recommends install git=1:2.39.2-1.1 &&
 # apt-get -y upgrade &&
 
-COPY . /comfy_catapult
 RUN apt-get -y update && apt-get -y --no-install-recommends install bash && \
   apt-get -y clean && \
   apt-get -y autoremove && \
@@ -17,6 +16,7 @@ RUN apt-get -y update && apt-get -y --no-install-recommends install bash && \
   chmod -R a+wrX /comfy_catapult
 
 
+COPY . /comfy_catapult
 USER nobody
 WORKDIR /comfy_catapult
 ENV PATH=/home/nobody/.local/bin:$PATH
