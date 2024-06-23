@@ -18,13 +18,15 @@ import uuid
 from copy import deepcopy
 from dataclasses import dataclass
 from pprint import pformat
-from typing import Any, Dict, Generic, List, Optional, Sequence, Tuple, TypeVar
+from typing import (Any, Dict, Generic, List, Optional, Sequence, Tuple,
+                    TypeVar, Union, overload)
 from urllib.parse import unquote as paramdecode
 from urllib.parse import urlparse
 
 import aiofiles
 from anyio import Path
 from slugify import slugify
+from typing_extensions import Literal
 from websockets import WebSocketClientProtocol, connect
 
 from .api_client import ComfyAPIClientBase
@@ -178,14 +180,55 @@ class ComfyCatapult(ComfyCatapultBase):
     except asyncio.CancelledError:
       pass
 
+  @overload
   async def Catapult(
       self,
       *,
       job_id: str,
       prepared_workflow: dict,
       important: Sequence[APINodeID],
+      use_future_api: Literal[True],
+      job_debug_path: Optional[Path] = None
+  ) -> Tuple[JobStatus, 'asyncio.Future[dict]']:
+    ...
+
+  @overload
+  async def Catapult(self,
+                     *,
+                     job_id: str,
+                     prepared_workflow: dict,
+                     important: Sequence[APINodeID],
+                     use_future_api: Literal[False] = False,
+                     job_debug_path: Optional[Path] = None) -> dict:
+    ...
+
+  async def Catapult(
+      self,
+      *,
+      job_id: str,
+      prepared_workflow: dict,
+      important: Sequence[APINodeID],
+      use_future_api: bool = False,
       job_debug_path: Optional[Path] = None,
-  ) -> dict:
+  ) -> Union[dict, Tuple[JobStatus, 'asyncio.Future[dict]']]:
+    # TODO: Deprecate use_future_api==False at version>=3.0.
+    status, future = await self._CatapultInternal(
+        job_id=job_id,
+        prepared_workflow=prepared_workflow,
+        important=important,
+        job_debug_path=job_debug_path)
+    if use_future_api:
+      return status, future
+    return await future
+
+  async def _CatapultInternal(
+      self,
+      *,
+      job_id: str,
+      prepared_workflow: dict,
+      important: Sequence[APINodeID],
+      job_debug_path: Optional[Path] = None,
+  ) -> Tuple[JobStatus, 'asyncio.Future[dict]']:
     async with self._lock:
       if job_id in self._jobs:
         raise KeyError(f'User job id {json.dumps(job_id)} already exists')
@@ -254,7 +297,9 @@ class ComfyCatapult(ComfyCatapultBase):
             'ticket.prompt_id is None, should be impossible here')
       async with self._lock:
         job.status = job.status._replace(comfy_scheduled=self._Now())
-      return await future
+
+      async with self._lock:
+        return deepcopy(job.status), job.future
 
   async def GetStatus(self, *,
                       job_id: str) -> 'Tuple[JobStatus, asyncio.Future[dict]]':

@@ -18,6 +18,7 @@ from typing import List
 
 from anyio import Path
 from slugify import slugify
+from typing_extensions import Optional
 
 from comfy_catapult.api_client import ComfyAPIClient, ComfyAPIClientBase
 from comfy_catapult.catapult import ComfyCatapult
@@ -58,10 +59,10 @@ class ExampleWorkflowInfo:
 
   # When the job is complete, this will be the `/history` json/dictionary for
   # this job.
-  job_history_dict: dict | None
+  job_history_dict: Optional[dict]
 
   # These are inputs that modify this particular workflow.
-  ckpt_name: str | None
+  ckpt_name: Optional[str]
   positive_prompt: str
   negative_prompt: str
   # For this particular workflow, this will define the path to the output image.
@@ -78,8 +79,19 @@ async def RunExampleWorkflow(*, job_info: ExampleWorkflowInfo):
   important: List[APINodeID] = job_info.important
 
   # Here the magic happens, the job is submitted to the ComfyUI server.
-  job_info.job_history_dict = await job_info.catapult.Catapult(
-      job_id=job_id, prepared_workflow=workflow_dict, important=important)
+  status, future = await job_info.catapult.Catapult(
+      job_id=job_id,
+      prepared_workflow=workflow_dict,
+      important=important,
+      use_future_api=True)
+
+  # Wait for the job to complete.
+  while not future.done():
+    status, _ = await job_info.catapult.GetStatus(job_id=job_id)
+    print(f'status: {status}', file=sys.stderr)
+    await asyncio.sleep(3)
+
+  job_info.job_history_dict = await future
 
   # Now that the job is done, you have to write something that will go and get
   # the results you care about, if necessary.

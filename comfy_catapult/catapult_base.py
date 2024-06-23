@@ -8,7 +8,8 @@
 import asyncio
 import datetime
 from abc import ABC, abstractmethod
-from typing import Dict, List, NamedTuple, Optional, Sequence, Tuple
+from typing import (Dict, List, Literal, NamedTuple, Optional, Sequence, Tuple,
+                    Union, overload)
 
 from anyio import Path
 from pydantic import BaseModel, ConfigDict, Field
@@ -99,6 +100,7 @@ class ComfyCatapultBase(ABC):
   async def Close(self):
     raise NotImplementedError()
 
+  @overload
   @abstractmethod
   async def Catapult(
       self,
@@ -106,8 +108,32 @@ class ComfyCatapultBase(ABC):
       job_id: str,
       prepared_workflow: dict,
       important: Sequence[APINodeID],
-      job_debug_path: Optional[Path] = None,
-  ) -> dict:
+      use_future_api: Literal[True],
+      job_debug_path: Optional[Path] = None
+  ) -> Tuple[JobStatus, 'asyncio.Future[dict]']:
+    ...
+
+  @overload
+  @abstractmethod
+  async def Catapult(self,
+                     *,
+                     job_id: str,
+                     prepared_workflow: dict,
+                     important: Sequence[APINodeID],
+                     use_future_api: Literal[False] = False,
+                     job_debug_path: Optional[Path] = None) -> dict:
+    ...
+
+  @abstractmethod
+  async def Catapult(
+      self,
+      *,
+      job_id: str,
+      prepared_workflow: dict,
+      important: Sequence[APINodeID],
+      use_future_api: bool = False,
+      job_debug_path: Optional[Path] = None
+  ) -> Union[dict, Tuple[JobStatus, 'asyncio.Future[dict]']]:
     """Schedule a ComfyUI workflow job.
 
     Args:
@@ -117,8 +143,10 @@ class ComfyCatapultBase(ABC):
           from ComfyUI API. You can find that in the JobStatus.ticket returned
           from GetStatus().
         prepared_workflow (dict): Workflow to submit.
-        important (List[APINodeID]): List of important nodes (e.g output nodes we
-          are interested in).
+        important (List[APINodeID]): List of important nodes (e.g output nodes
+          we are interested in).
+        use_future_api (bool): Use the future API; returns a future that will
+          resolve to the job history when the job is done.
         job_debug_path (Path, optional): Path to save debug information. If
           None, will use sensible defaults.
 
@@ -126,7 +154,10 @@ class ComfyCatapultBase(ABC):
         WorkflowSubmissionError: Failed to submit workflow.
 
     Returns:
-        dict: The history of the job returned from the ComfyUI API.
+        Union[dict, Tuple[JobStatus, asyncio.Future[dict]]]: If use_future_api
+        is True, returns a tuple of the job status and a future that will
+        resolve to the job history when the job is done. Otherwise, returns the
+        job history.
     """
     raise NotImplementedError()
 
@@ -142,7 +173,6 @@ class ComfyCatapultBase(ABC):
         Tuple[JobStatus, asyncio.Future[dict]]: The status of the job, and a
           future that will resolve to the job history when the job is done.
     """
-    raise NotImplementedError()
 
   @abstractmethod
   async def GetExceptions(self, *, job_id: str) -> List[Exception]:
