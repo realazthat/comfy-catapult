@@ -13,8 +13,11 @@ from typing import (Dict, List, Literal, NamedTuple, Optional, Sequence, Tuple,
 
 from anyio import Path
 from pydantic import BaseModel, ConfigDict, Field
+from typing_extensions import Annotated
 
 from .comfy_schema import APINodeID, APIWorkflowTicket
+
+JobID = Annotated[str, 'JobID']
 
 
 class Progress(NamedTuple):
@@ -105,7 +108,7 @@ class ComfyCatapultBase(ABC):
   async def Catapult(
       self,
       *,
-      job_id: str,
+      job_id: JobID,
       prepared_workflow: dict,
       important: Sequence[APINodeID],
       use_future_api: Literal[True],
@@ -117,7 +120,7 @@ class ComfyCatapultBase(ABC):
   @abstractmethod
   async def Catapult(self,
                      *,
-                     job_id: str,
+                     job_id: JobID,
                      prepared_workflow: dict,
                      important: Sequence[APINodeID],
                      use_future_api: Literal[False] = False,
@@ -128,7 +131,7 @@ class ComfyCatapultBase(ABC):
   async def Catapult(
       self,
       *,
-      job_id: str,
+      job_id: JobID,
       prepared_workflow: dict,
       important: Sequence[APINodeID],
       use_future_api: bool = False,
@@ -162,8 +165,8 @@ class ComfyCatapultBase(ABC):
     raise NotImplementedError()
 
   @abstractmethod
-  async def GetStatus(self, *,
-                      job_id: str) -> 'Tuple[JobStatus, asyncio.Future[dict]]':
+  async def GetStatus(
+      self, *, job_id: JobID) -> 'Tuple[JobStatus, asyncio.Future[dict]]':
     """Get the status of a job.
 
     Args:
@@ -175,7 +178,7 @@ class ComfyCatapultBase(ABC):
     """
 
   @abstractmethod
-  async def GetExceptions(self, *, job_id: str) -> List[Exception]:
+  async def GetExceptions(self, *, job_id: JobID) -> List[Exception]:
     """List of exceptions that occurred during the job.
 
     Args:
@@ -187,7 +190,7 @@ class ComfyCatapultBase(ABC):
     raise NotImplementedError()
 
   @abstractmethod
-  async def CancelJob(self, *, job_id: str):
+  async def CancelJob(self, *, job_id: JobID):
     """Cancel a job. No-op if the job is done. Will also try to cancel the job remotely.
 
     Args:

@@ -147,7 +147,7 @@ From
   async def Catapult(
       self,
       *,
-      job_id: str,
+      job_id: JobID,
       prepared_workflow: dict,
       important: Sequence[APINodeID],
       use_future_api: Literal[True],
