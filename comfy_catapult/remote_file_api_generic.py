@@ -148,5 +148,5 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
           raise
     raise AssertionError('unreachable')
 
-  def GetBases(self) -> 'list[str]':
+  def GetBases(self) -> List[str]:
     return list(self._base_to_apis.keys())

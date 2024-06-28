@@ -459,8 +459,8 @@ python -m comfy_catapult.cli \
 ### Known to work on
 
 - WSL2/Windows11, Ubuntu 22.04.2 LTS: **Python
-  3.10.0**.
-- Ubuntu 20.04, Python `3.10.0`, tested in GitHub Actions
+  3.8.0**.
+- Ubuntu 20.04, Python `3.8.0, 3.9.0, 3.10.0, 3.11.0, 3.12.0`, tested in GitHub Actions
   workflow ([./.github/workflows/build-and-test.yml](https://github.com/realazthat/comfy-catapult/blob/v2.2.0/.github/workflows/build-and-test.yml)).
 
 ## 🐳 Docker Image

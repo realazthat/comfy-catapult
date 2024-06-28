@@ -277,7 +277,7 @@ class ComfySchemeRemoteFileAPI(RemoteFileAPIBase):
   def URLToTriplet(self, *, url: str) -> Tuple[str, ComfyUIPathTriplet]:
     return ComfySchemeURLToTriplet(url=url)
 
-  def GetBases(self) -> 'list[str]':
+  def GetBases(self) -> List[str]:
     if self._comfy_api_urls is None:
       return [f'comfy+{scheme}://' for scheme in VALID_COMFY_API_SCHEMES]
 

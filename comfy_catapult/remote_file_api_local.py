@@ -138,5 +138,5 @@ class LocalRemoteFileAPI(RemoteFileAPIBase):
   def URLToTriplet(self, *, url: str) -> Tuple[str, ComfyUIPathTriplet]:
     raise NotImplementedError('Local files do not support triplets')
 
-  def GetBases(self) -> 'list[str]':
+  def GetBases(self) -> List[str]:
     return list(self._upload_to_bases + self._download_from_bases)

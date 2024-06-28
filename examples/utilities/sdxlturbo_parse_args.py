@@ -13,6 +13,7 @@ from typing import NamedTuple
 from urllib.parse import ParseResult, urlparse
 
 from anyio import Path
+from typing_extensions import Optional
 
 from comfy_catapult.url_utils import SmartURLJoin, ValidateIsURLDirectory
 
@@ -28,14 +29,14 @@ class Args(NamedTuple):
   output_path: Path
   debug_path: Path
 
-  ckpt_name: str | None
+  ckpt_name: Optional[str]
   positive_prompt: str
   negative_prompt: str
 
 
 async def ParseArgs() -> Args:
 
-  def URL_HELP(to: str, example_url: str, default_subdir: str | None):
+  def URL_HELP(to: str, example_url: str, default_subdir: Optional[str]):
     lines = [
         f'Optional URL to ComfyUI {to} directory, e.g. {repr(example_url)}.',
         'Note, that the URL must end with a trailing slash.',
@@ -94,10 +95,10 @@ async def ParseArgs() -> Args:
 
   ##############################################################################
   try:
-    comfy_api_url_pr: ParseResult | None = args.comfy_api_url
+    comfy_api_url_pr: Optional[ParseResult] = args.comfy_api_url
     if comfy_api_url_pr is None:
       # Check if COMFY_API_URL is an environment variable.
-      env_comfy_api_url: str | None = os.environ.get('COMFY_API_URL')
+      env_comfy_api_url: Optional[str] = os.environ.get('COMFY_API_URL')
       if env_comfy_api_url is not None:
         comfy_api_url_pr = urlparse(env_comfy_api_url)
       else:
@@ -116,13 +117,13 @@ async def ParseArgs() -> Args:
   ##############################################################################
   api_workflow_json_path: Path = args.api_workflow_json_path
   ##############################################################################
-  comfy_install_file_url_pr: ParseResult | None = args.comfy_install_file_url
+  comfy_install_file_url_pr: Optional[ParseResult] = args.comfy_install_file_url
 
-  comfy_input_file_url_pr: ParseResult | None = args.comfy_input_file_url
-  comfy_output_file_url_pr: ParseResult | None = args.comfy_output_file_url
-  comfy_temp_file_url_pr: ParseResult | None = args.comfy_temp_file_url
-  if comfy_install_file_url_pr is None or comfy_install_file_url_pr.geturl(
-  ) == '':
+  comfy_input_file_url_pr: Optional[ParseResult] = args.comfy_input_file_url
+  comfy_output_file_url_pr: Optional[ParseResult] = args.comfy_output_file_url
+  comfy_temp_file_url_pr: Optional[ParseResult] = args.comfy_temp_file_url
+  if (comfy_install_file_url_pr is None
+      or comfy_install_file_url_pr.geturl() == ''):
     comfy_install_file_url_pr = urlparse(ValidateIsURLDirectory(url='file:///'))
   comfy_api_url_pr = urlparse(
       ValidateIsURLDirectory(url=comfy_install_file_url_pr.geturl()))

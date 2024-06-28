@@ -10,7 +10,7 @@ export TOML="${PROJ_PATH}/pyproject.toml"
 # This variable will be 1 when we are the ideal version in the GH action matrix.
 IDEAL="0"
 PYTHON_VERSION=$(cat .python-version)
-if [[ "${PYTHON_VERSION}" == "3.10.0" ]]; then
+if [[ "${PYTHON_VERSION}" == "3.8.0" ]]; then
   IDEAL="1"
 fi
 

@@ -20,7 +20,11 @@ classifiers = [
   "Operating System :: OS Independent",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10"
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12"
 ]
 dependencies = [
   "aiofiles >=23,<24",
@@ -121,13 +125,14 @@ dev = [
   "cryptography==42.0.7",
   "defusedxml==0.7.1",
   "distlib==0.3.8",
-  "docutils==0.21.2",
+  "docutils==0.20.1",
   "exceptiongroup==1.2.0",
   "filelock==3.13.1",
   "frozenlist==1.4.1",
   "identify==2.5.33",
   "idna==3.6",
   "importlib-metadata==7.0.1",
+  "importlib-resources==6.4.0",
   "isort==5.13.2",
   "jaraco-classes==3.4.0",
   "jaraco-context==5.3.0",
@@ -155,7 +160,7 @@ dev = [
   "pip-tools==7.3.0",
   "pkginfo==1.10.0",
   "platformdirs==4.1.0",
-  "pre-commit==3.6.0",
+  "pre-commit==3.5.0",
   "ptyprocess==0.7.0",
   "pycparser==2.22",
   "pydantic==2.6.4",

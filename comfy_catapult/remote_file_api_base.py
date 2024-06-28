@@ -6,7 +6,7 @@
 # the license text.
 
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import List, Tuple
 
 from anyio import Path
 
@@ -67,6 +67,6 @@ class RemoteFileAPIBase(ABC):
     raise NotImplementedError()
 
   @abstractmethod
-  def GetBases(self) -> 'list[str]':
+  def GetBases(self) -> List[str]:
     """Return a list of base URLs that this API can handle."""
     raise NotImplementedError()
