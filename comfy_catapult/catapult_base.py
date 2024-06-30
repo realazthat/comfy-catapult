@@ -82,7 +82,7 @@ class JobStatus(BaseModel):
             or self.cancelled is not None)
 
   def _replace(self, **kwargs):
-    return self.copy(update=kwargs)
+    return self.model_copy(update=kwargs)
 
 
 class ComfyCatapultBase(ABC):
