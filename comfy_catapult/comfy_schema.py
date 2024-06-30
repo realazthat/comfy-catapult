@@ -146,6 +146,16 @@ class APISystemStats(BaseModel):
 
 
 ################################################################################
+class APIPromptInfo(BaseModel):
+  """Returned from /prompt endpoint."""
+
+  class ExecInfo(BaseModel):
+    queue_remaining: Optional[int]
+
+  exec_info: Optional[ExecInfo]
+
+
+################################################################################
 class APIQueueInfoEntry(NamedTuple):
   number: int
   prompt_id: PromptID

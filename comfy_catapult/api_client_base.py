@@ -8,8 +8,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
-from .comfy_schema import (APIHistory, APIObjectInfo, APIQueueInfo,
-                           APISystemStats, APIUploadImageResp,
+from .comfy_schema import (APIHistory, APIObjectInfo, APIPromptInfo,
+                           APIQueueInfo, APISystemStats, APIUploadImageResp,
                            APIWorkflowTicket, ClientID, PromptID)
 
 
@@ -69,6 +69,10 @@ class ComfyAPIClientBase(ABC):
 
   @abstractmethod
   async def GetPromptRaw(self) -> dict:
+    raise NotImplementedError()
+
+  @abstractmethod
+  async def GetPrompt(self) -> APIPromptInfo:
     raise NotImplementedError()
 
   @abstractmethod
@@ -184,6 +188,9 @@ class ComfyAPIClientBase(ABC):
 
   @abstractmethod
   async def PostInterrupt(self):
+    """
+    # TODO(realazthat/comfy-catapult#5): change the API to take a prompt_id.
+    """
     raise NotImplementedError()
 
   @abstractmethod

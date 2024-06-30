@@ -17,8 +17,8 @@ from anyio import Path
 from pydantic import BaseModel
 
 from .api_client_base import ComfyAPIClientBase
-from .comfy_schema import (APIHistory, APIObjectInfo, APIQueueInfo,
-                           APISystemStats, APIUploadImageResp,
+from .comfy_schema import (APIHistory, APIObjectInfo, APIPromptInfo,
+                           APIQueueInfo, APISystemStats, APIUploadImageResp,
                            APIWorkflowTicket, ClientID, PromptID)
 from .comfy_utils import TryParseAsModel, WatchVar, YamlDump
 from .url_utils import JoinToBaseURL
@@ -173,6 +173,13 @@ class ComfyAPIClient(ComfyAPIClientBase):
     with WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
         return await _TryParseRespAsJson(resp=resp, json_type=dict)
+
+  async def GetPrompt(self) -> APIPromptInfo:
+    prompt_info_dict = await self.GetPromptRaw()
+    return await TryParseAsModel(
+        content=prompt_info_dict,
+        model_type=APIPromptInfo,
+        errors_dump_directory=self._errors_dump_directory)
 
   async def PostPromptRaw(self,
                           *,

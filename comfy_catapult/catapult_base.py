@@ -166,11 +166,15 @@ class ComfyCatapultBase(ABC):
 
   @abstractmethod
   async def GetStatus(
-      self, *, job_id: JobID) -> 'Tuple[JobStatus, asyncio.Future[dict]]':
+      self,
+      *,
+      job_id: JobID,
+      poll: bool = False) -> 'Tuple[JobStatus, asyncio.Future[dict]]':
     """Get the status of a job.
 
     Args:
         job_id (str): The job id.
+        poll (bool): If True, will poll ComfyUI for the latest status update.
 
     Returns:
         Tuple[JobStatus, asyncio.Future[dict]]: The status of the job, and a
@@ -193,7 +197,26 @@ class ComfyCatapultBase(ABC):
   async def CancelJob(self, *, job_id: JobID):
     """Cancel a job. No-op if the job is done. Will also try to cancel the job remotely.
 
+    Warning: Currently, ComfyUI will interrupt the currently running job, even
+    if it is not the job you are trying to cancel. This is a limitation of the
+    ComfyUI API.
+
     Args:
         job_id (str): The job id.
+    """
+    raise NotImplementedError()
+
+  @abstractmethod
+  async def Resume(self,
+                   *,
+                   job_id: JobID,
+                   prepared_workflow: dict,
+                   important: Sequence[APINodeID],
+                   status: JobStatus,
+                   poll: bool,
+                   errors: List[Exception] = [],
+                   job_debug_path: Optional[Path] = None):
+    """Resume a job. This is useful if another instance of the ComfyCatapultBase
+    is created and the job is "forgotten".
     """
     raise NotImplementedError()
