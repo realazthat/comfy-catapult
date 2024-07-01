@@ -1,7 +1,7 @@
 {
   "3": {
     "inputs": {
-      "seed": 520928642807155,
+      "seed": 511865558576191,
       "steps": 20,
       "cfg": 8,
       "sampler_name": "euler",
@@ -31,7 +31,7 @@
   },
   "4": {
     "inputs": {
-      "ckpt_name": "v1-5-pruned-emaonly.safetensors"
+      "ckpt_name": "sd_xl_turbo_1.0_fp16.safetensors"
     },
     "class_type": "CheckpointLoaderSimple",
     "_meta": {
