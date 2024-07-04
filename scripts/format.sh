@@ -16,8 +16,8 @@ python -m mdreftidy.cli "${PWD}/README.md.jinja2" \
   --renumber --remove-unused --move-to-bottom --sort-ref-blocks --inplace
 bash scripts/utilities/prettier.sh --parser markdown "${PWD}/README.md.jinja2" --write
 
-yapf -r ./comfy_catapult ./examples ./scripts -i
-autoflake --remove-all-unused-imports --in-place --recursive ./comfy_catapult ./examples
-isort ./comfy_catapult ./examples ./scripts 
+python -m yapf -r ./comfy_catapult ./examples ./scripts -i
+python -m autoflake --remove-all-unused-imports --in-place --recursive ./comfy_catapult ./examples
+python -m isort ./comfy_catapult ./examples ./scripts 
 
 # vulture ./comfy_catapult ./examples
