@@ -114,7 +114,7 @@ a program.
 pip install comfy_catapult
 
 # From git:
-pip install git+https://github.com/realazthat/comfy-catapult.git@v2.2.0
+pip install git+https://github.com/realazthat/comfy-catapult.git@v3.0.0
 ```
 
 ## 🚜 Usage
@@ -470,13 +470,13 @@ tag.
 
 ```bash
 # Use the published images at https://ghcr.io/realazthat/comfy-catapult.
-docker run --rm --tty ghcr.io/realazthat/comfy-catapult:v2.2.0 --help
+docker run --rm --tty ghcr.io/realazthat/comfy-catapult:v3.0.0 --help
 
 # /data in the docker image is the working directory, so paths are simpler.
 docker run --rm --tty \
   -v "${PWD}:/data" \
   -e "COMFY_API_URL=${COMFY_API_URL}" \
-  ghcr.io/realazthat/comfy-catapult:v2.2.0 \
+  ghcr.io/realazthat/comfy-catapult:v3.0.0 \
   execute --workflow-path ./test_data/sdxlturbo_example_api.json
 ```
 
@@ -608,9 +608,9 @@ These instructions are for maintainers of the project.
 [11]:
   https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
 [12]:
-  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.2.0/master?style=plastic&color=0A1E1E
+  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v3.0.0/master?style=plastic&color=0A1E1E
 [13]:
-  https://github.com/realazthat/comfy-catapult/compare/v2.2.0...master
+  https://github.com/realazthat/comfy-catapult/compare/v3.0.0...master
 [14]:
   https://img.shields.io/github/last-commit/realazthat/comfy-catapult/master?style=plastic&color=0A1E1E
 [15]: https://github.com/realazthat/comfy-catapult/tree/develop
@@ -619,9 +619,9 @@ These instructions are for maintainers of the project.
 [17]:
   https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
 [18]:
-  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.2.0/develop?style=plastic&color=0A1E1E
+  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v3.0.0/develop?style=plastic&color=0A1E1E
 [19]:
-  https://github.com/realazthat/comfy-catapult/compare/v2.2.0...develop
+  https://github.com/realazthat/comfy-catapult/compare/v3.0.0...develop
 [20]:
   https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop?style=plastic&color=0A1E1E
 [21]: https://github.com/rvion/CushyStudio
