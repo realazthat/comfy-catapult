@@ -465,7 +465,7 @@ python -m comfy_catapult.cli \
 
 ## 🐳 Docker Image
 
-Docker images are published to [ghcr.io/realazthat/comfy-catapult][21] at each
+Docker images are published to [ghcr.io/realazthat/comfy-catapult][33] at each
 tag.
 
 ```bash
@@ -620,3 +620,4 @@ These instructions are for maintainers of the project.
 [30]: https://github.com/nathannlu/comfyui-cloud
 [31]: https://github.com/piyushK52/comfy_runner
 [32]: https://github.com/thecooltechguy/ComfyUI-ComfyRun
+[33]: https://ghcr.io/realazthat/comfy-catapult
