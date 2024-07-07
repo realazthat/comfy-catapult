@@ -36,9 +36,9 @@ chmod -R a+wxr "${CKPT_DIR}"
 # chown 1000:1111 "${CKPT_FILE}"
 ls -la "${CKPT_DIR}"
 ################################################################################
-LOGIN_PORT="$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1])')";
-COMFYUI_PORT="$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1])')";
-SERVICE_PORT="$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1])')";
+LOGIN_PORT="$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1])')"
+COMFYUI_PORT="$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1])')"
+SERVICE_PORT="$(python -c 'import socket; s=socket.socket(); s.bind(("", 0)); print(s.getsockname()[1])')"
 
 DOCKER_CKPT_DIR=/opt/ComfyUI/models/checkpoints
 DOCKER_CKPT_FILE="${DOCKER_CKPT_DIR}/sd_xl_turbo_1.0_fp16.safetensors"

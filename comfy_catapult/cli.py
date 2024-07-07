@@ -15,10 +15,10 @@ import os
 import sys
 import uuid
 import warnings
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from shutil import get_terminal_size
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import anyio
 import colorama
@@ -28,10 +28,12 @@ from rich_argparse import RichHelpFormatter
 from slugify import slugify
 
 from . import _build_version
+from ._internal.utilities import DumpModelToDict, DumpModelToYAML
 from .api_client import ComfyAPIClient
+from .api_client_base import ComfyAPIClientBase
 from .catapult import ComfyCatapult
+from .catapult_base import ComfyCatapultBase, JobStatus
 from .comfy_schema import APINodeID, APISystemStats
-from .comfy_utils import YamlDump
 from .remote_file_api_comfy import ComfySchemeRemoteFileAPI
 from .remote_file_api_generic import GenericRemoteFileAPI
 
@@ -104,47 +106,81 @@ async def GetRemote(*, comfy_api_url: str):
   return remote
 
 
+async def DumpInfo(comfy_client: ComfyAPIClientBase,
+                   catapult: ComfyCatapultBase, job_id: str, console: Console):
+
+  status: JobStatus
+  status, _ = await catapult.GetStatus(job_id=job_id)
+  console.print(await DumpModelToDict(status))
+
+  system_stats: APISystemStats = await comfy_client.GetSystemStats()
+  console.print('system_stats:', style='bold blue')
+  console.print(await DumpModelToYAML(system_stats))
+
+
+async def StatusThread(stop_event: asyncio.Event,
+                       comfy_client: ComfyAPIClientBase,
+                       catapult: ComfyCatapultBase, job_id: str,
+                       console: Console):
+  while not stop_event.is_set():
+    try:
+      await asyncio.sleep(5)
+      await DumpInfo(comfy_client=comfy_client,
+                     catapult=catapult,
+                     job_id=job_id,
+                     console=console)
+    except Exception as e:
+      console.print(f'Error in StatusThread: {e}', style='bold red')
+      console.print_exception()
+
+
+def ParseArgs() -> Tuple[argparse.ArgumentParser, argparse.Namespace]:
+  p = argparse.ArgumentParser(prog=_GetProgramName(),
+                              description=__doc__,
+                              formatter_class=_CustomRichHelpFormatter)
+  p.add_argument('--version', action='version', version=_build_version)
+  p.add_argument(
+      '--comfy-api-url',
+      type=str,
+      default=None,
+      help=
+      'URL of the ComfyUI API. If left empty, will default to COMFY_API_URL.')
+  p.add_argument('--debug-path',
+                 type=Path,
+                 default=Path('.debug'),
+                 help='Path to save debug information.')
+
+  # Add commands: execute, execute-bg, status, wait, cancel.
+
+  sub_p = p.add_subparsers(dest='command',
+                           title='commands',
+                           description='Choose a command to run.',
+                           required=True)
+
+  p_execute = sub_p.add_parser('execute',
+                               help='Execute a workflow.',
+                               formatter_class=_CustomRichHelpFormatter)
+
+  p_execute.add_argument('--job-id',
+                         type=str,
+                         default=None,
+                         help='Unique job identifier.')
+  p_execute.add_argument('--workflow-path',
+                         type=str,
+                         required=True,
+                         help='Input markdown file, use "-" for stdin.')
+  args = p.parse_args()
+  return p, args
+
+
 async def amain():
   console = Console(file=sys.stderr)
   args: Optional[argparse.Namespace] = None
   try:
     # Windows<10 requires this.
     colorama.init()
-    p = argparse.ArgumentParser(prog=_GetProgramName(),
-                                description=__doc__,
-                                formatter_class=_CustomRichHelpFormatter)
-    p.add_argument('--version', action='version', version=_build_version)
-    p.add_argument(
-        '--comfy-api-url',
-        type=str,
-        default=None,
-        help=
-        'URL of the ComfyUI API. If left empty, will default to COMFY_API_URL.')
-    p.add_argument('--debug-path',
-                   type=Path,
-                   default=Path('.debug'),
-                   help='Path to save debug information.')
 
-    # Add commands: execute, execute-bg, status, wait, cancel.
-
-    sub_p = p.add_subparsers(dest='command',
-                             title='commands',
-                             description='Choose a command to run.',
-                             required=True)
-
-    p_execute = sub_p.add_parser('execute',
-                                 help='Execute a workflow.',
-                                 formatter_class=_CustomRichHelpFormatter)
-
-    p_execute.add_argument('--job-id',
-                           type=str,
-                           default=None,
-                           help='Unique job identifier.')
-    p_execute.add_argument('--workflow-path',
-                           type=str,
-                           required=True,
-                           help='Input markdown file, use "-" for stdin.')
-    args = p.parse_args()
+    p, args = ParseArgs()
 
     job_id: Optional[str] = args.job_id
     workflow_path: str = args.workflow_path
@@ -153,10 +189,11 @@ async def amain():
 
     if comfy_api_url is None:
       comfy_api_url = os.environ.get('COMFY_API_URL')
-      if comfy_api_url is None or comfy_api_url == '':
-        p.error(
-            'comfy-api-url is required, or set the COMFY_API_URL environment variable.'
-        )
+    if comfy_api_url is None or comfy_api_url == '':
+      p.error(
+          'comfy-api-url is required, or set the COMFY_API_URL environment variable.'
+      )
+      return
 
     workflow_template_json_str: str = await GetWorkflow(
         workflow_path=workflow_path)
@@ -169,13 +206,13 @@ async def amain():
       # Dump the ComfyUI server stats.
       system_stats: APISystemStats = await comfy_client.GetSystemStats()
       console.print('system_stats:', style='bold blue')
-      console.print(YamlDump(system_stats.model_dump()))
+      console.print(await DumpModelToYAML(system_stats))
 
       async with ComfyCatapult(comfy_client=comfy_client,
                                debug_path=debug_path / 'catapult',
                                debug_save_all=True) as catapult:
 
-        dt_str = datetime.now().isoformat()
+        dt_str = datetime.now(tz=timezone.utc).isoformat()
 
         if job_id is None:
           job_id = f'{slugify(dt_str)}-my-job-{uuid.uuid4()}'
@@ -190,7 +227,26 @@ async def amain():
             job_id=job_id,
             job_history_dict=None,
             comfy_api_url=comfy_api_url)
+
+        stop_event = asyncio.Event()
+        status_thread_future = asyncio.create_task(
+            StatusThread(stop_event=stop_event,
+                         comfy_client=comfy_client,
+                         catapult=catapult,
+                         job_id=job_id,
+                         console=console))
+
         await RunWorkflow(job_info=job_info)
+        stop_event.set()
+        await status_thread_future
+
+        console.print('Job complete, now dumping info', style='bold green')
+
+        await DumpInfo(comfy_client=comfy_client,
+                       catapult=catapult,
+                       job_id=job_id,
+                       console=console)
+
         console.print('All done', style='bold green')
 
   except Exception:

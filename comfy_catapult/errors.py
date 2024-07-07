@@ -5,6 +5,7 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
+import json
 from copy import deepcopy
 from typing import Optional, Sequence, Union
 
@@ -20,7 +21,8 @@ class NodeNotFound(CatapultRuntimeError):
   def __init__(self, *, node_id: Union[APINodeID, int, None],
                title: Union[str, int, None]):
     super().__init__(
-        f'Node with title=={repr(title)}, node_id=={repr(node_id)} not found')
+        f'Node with title=={json.dumps(title)}, node_id=={json.dumps(node_id)} not found'
+    )
     self.node_id = node_id
     self.title = title
 
@@ -64,6 +66,10 @@ class WorkflowSubmissionError(CatapultRuntimeError):
     super().__init__(msg)
     self.prepared_workflow: dict = deepcopy(prepared_workflow)
     self.ticket: APIWorkflowTicket = deepcopy(ticket)
+
+
+class JobNotFound(CatapultRuntimeError):
+  pass
 
 
 class JobFailed(CatapultRuntimeError):

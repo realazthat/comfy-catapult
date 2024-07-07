@@ -15,13 +15,13 @@ SOURCE: `README.md.jinja2`.
 
 -->
 
-# <div align="center">![Comfy Catapult][24]</div>
+# <div align="center">![Comfy Catapult][1]</div>
 
 <div align="center">
 <!-- Icons from https://lucide.dev/icons/users -->
 <!-- Icons from https://lucide.dev/icons/laptop-minimal -->
 
-![**Audience:** Developers][25] ![**Platform:** Linux][26]
+![**Audience:** Developers][2] ![**Platform:** Linux][3]
 
 </div>
 
@@ -40,9 +40,14 @@ SOURCE: `README.md.jinja2`.
     <a href="#-api">🤖API</a>
   </strong>
 </p>
+
 <p align="center">
   <strong>
     <a href="#-requirements">✅Requirements</a>
+    &nbsp;&bull;&nbsp;
+    <a href="#-command-line-options">💻CLI</a>
+    &nbsp;&bull;&nbsp;
+    <a href="#-docker-image">🐳Docker</a>
     &nbsp;&bull;&nbsp;
     <a href="#-limitations">🚸Limitations</a>
   </strong>
@@ -50,8 +55,8 @@ SOURCE: `README.md.jinja2`.
 
 <div align="center">
 
-![Top language][19] ![GitHub License][11] [![PyPI - Version][12]][13]
-[![Python Version][18]][13]
+![Top language][4] ![GitHub License][5] [![PyPI - Version][6]][7]
+[![Python Version][8]][7]
 
 **Python library to programmatically schedule ComfyUI workflows via the ComfyUI
 API**
@@ -62,10 +67,10 @@ API**
 
 <div align="center">
 
-| Branch        | Build Status              | Commits Since             | Last Commit        |
-| ------------- | ------------------------- | ------------------------- | ------------------ |
-| [Master][27]  | [![Build and Test][1]][2] | [![since tagged][14]][20] | ![last commit][16] |
-| [Develop][28] | [![Build and Test][3]][4] | [![since tagged][15]][21] | ![last commit][17] |
+| Branch        | Build Status                | Commits Since             | Last Commit        |
+| ------------- | --------------------------- | ------------------------- | ------------------ |
+| [Master][9]   | [![Build and Test][10]][11] | [![since tagged][12]][13] | ![last commit][14] |
+| [Develop][15] | [![Build and Test][16]][17] | [![since tagged][18]][19] | ![last commit][20] |
 
 </div>
 
@@ -109,27 +114,27 @@ a program.
 pip install comfy_catapult
 
 # From git:
-pip install git+https://github.com/realazthat/comfy-catapult.git@v2.2.0
+pip install git+https://github.com/realazthat/comfy-catapult.git@v3.0.0
 ```
 
 ## 🚜 Usage
 
 ## Related Projects
 
-| Project                          | ComfyUI API Wrapper | Outsource Backend | Distribute Execution | Wrap Workflow | Studio |
-| -------------------------------- | ------------------- | ----------------- | -------------------- | ------------- | ------ |
-| [CushyStudio][31]                | ?                   | ?                 | ?                    | ?             | Yes    |
-| [ComfyUI-Serving-Toolkit][30]    | X                   | ?                 | ?                    | Yes           | ?      |
-| [ComfyUI_NetDist][29]            | X                   | ?                 | Yes                  | ?             | ?      |
-| [ComfyUI script_examples][32]    | Yes                 | No                | No                   | No            | No     |
-| [comfyui-python-api][5]          | ?                   | ?                 | ?                    | Yes           | ?      |
-| [comfyui-deploy][6]              | ?                   | ?                 | ?                    | Yes           | ?      |
-| [ComfyUI-to-Python-Extension][7] | ?                   | ?                 | ?                    | Yes           | ?      |
-| [ComfyScript][8]                 | ?                   | ?                 | ?                    | Yes           | ?      |
-| [hordelib][9]                    | ?                   | Yes               | ?                    | ?             | ?      |
-| [comfyui-cloud][10]              | ?                   | Yes               | ?                    | ?             | ?      |
-| [comfy_runner][22]               | ?                   | ?                 | ?                    | ?             | ?      |
-| [ComfyUI-ComfyRun][23]           | ?                   | ?                 | ?                    | ?             | ?      |
+| Project                           | ComfyUI API Wrapper | Outsource Backend | Distribute Execution | Wrap Workflow | Studio |
+| --------------------------------- | ------------------- | ----------------- | -------------------- | ------------- | ------ |
+| [CushyStudio][21]                 | ?                   | ?                 | ?                    | ?             | Yes    |
+| [ComfyUI-Serving-Toolkit][22]     | X                   | ?                 | ?                    | Yes           | ?      |
+| [ComfyUI_NetDist][23]             | X                   | ?                 | Yes                  | ?             | ?      |
+| [ComfyUI script_examples][24]     | Yes                 | No                | No                   | No            | No     |
+| [comfyui-python-api][25]          | ?                   | ?                 | ?                    | Yes           | ?      |
+| [comfyui-deploy][26]              | ?                   | ?                 | ?                    | Yes           | ?      |
+| [ComfyUI-to-Python-Extension][27] | ?                   | ?                 | ?                    | Yes           | ?      |
+| [ComfyScript][28]                 | ?                   | ?                 | ?                    | Yes           | ?      |
+| [hordelib][29]                    | ?                   | Yes               | ?                    | ?             | ?      |
+| [comfyui-cloud][30]               | ?                   | Yes               | ?                    | ?             | ?      |
+| [comfy_runner][31]                | ?                   | ?                 | ?                    | ?             | ?      |
+| [ComfyUI-ComfyRun][32]            | ?                   | ?                 | ?                    | ?             | ?      |
 
 ## 📘 Documentation
 
@@ -142,29 +147,12 @@ From
   async def Catapult(
       self,
       *,
-      job_id: str,
+      job_id: JobID,
       prepared_workflow: dict,
       important: Sequence[APINodeID],
-      job_debug_path: Optional[Path] = None,
-  ) -> dict:
-    """Schedule a ComfyUI workflow job.
-
-    Args:
-        job_id (str): A unique identifier for the job. Note: This string must
-          be unique, and must be slugified! Use python-slugify to slugify the
-          string.
-        prepared_workflow (dict): Workflow to submit.
-        important (List[APINodeID]): List of important nodes (e.g output nodes we
-          are interested in).
-        job_debug_path (Path, optional): Path to save debug information. If
-          None, will use sensible defaults.
-
-    Raises:
-        WorkflowSubmissionError: Failed to submit workflow.
-
-    Returns:
-        dict: The history of the job returned from the ComfyUI API.
-    """
+      use_future_api: Literal[True],
+      job_debug_path: Optional[Path] = None
+  ) -> Tuple[JobStatus, 'asyncio.Future[dict]']:
 ````
 
 ### Example usage:
@@ -194,10 +182,10 @@ class ExampleWorkflowInfo:
 
   # When the job is complete, this will be the `/history` json/dictionary for
   # this job.
-  job_history_dict: dict | None
+  job_history_dict: Optional[dict]
 
   # These are inputs that modify this particular workflow.
-  ckpt_name: str | None
+  ckpt_name: Optional[str]
   positive_prompt: str
   negative_prompt: str
   # For this particular workflow, this will define the path to the output image.
@@ -215,8 +203,19 @@ async def RunExampleWorkflow(*, job_info: ExampleWorkflowInfo):
   important: List[APINodeID] = job_info.important
 
   # Here the magic happens, the job is submitted to the ComfyUI server.
-  job_info.job_history_dict = await job_info.catapult.Catapult(
-      job_id=job_id, prepared_workflow=workflow_dict, important=important)
+  status, future = await job_info.catapult.Catapult(
+      job_id=job_id,
+      prepared_workflow=workflow_dict,
+      important=important,
+      use_future_api=True)
+
+  # Wait for the job to complete.
+  while not future.done():
+    status, _ = await job_info.catapult.GetStatus(job_id=job_id)
+    print(f'status: {status}', file=sys.stderr)
+    await asyncio.sleep(3)
+
+  job_info.job_history_dict = await future
 
   # Now that the job is done, you have to write something that will go and get
   # the results you care about, if necessary.
@@ -367,7 +366,7 @@ api_workflow_json = api_workflow.model_dump_json()
 # See comfy_catapult/comfyui_schema.py for the schema definition.
 
 print(api_workflow_json)
-# 
+
 ````
 
 ### Adding a new node to a workflow
@@ -429,11 +428,28 @@ print(api_workflow.model_dump_json())
 
 ````
 
-### CLI
+### 💻 Command Line Options
+
+Options:
 
 <!---->
 <img src="README.help.generated.svg" alt="Output of `python -m comfy_catapult.cli --help`" />
 <!---->
+
+`execute` options:
+
+<!---->
+<img src="README.execute-help.generated.svg" alt="Output of `python -m comfy_catapult.cli execute --help`" />
+<!---->
+
+Example usage:
+
+````bash
+
+python -m comfy_catapult.cli \
+    execute --workflow-path ./test_data/sdxlturbo_example_api.json
+
+````
 
 ## ✅ Requirements
 
@@ -443,9 +459,48 @@ print(api_workflow.model_dump_json())
 ### Known to work on
 
 - WSL2/Windows11, Ubuntu 22.04.2 LTS: **Python
-  3.10.0**.
-- Ubuntu 20.04, Python `3.10.0`, tested in GitHub Actions
+  3.8.0**.
+- Ubuntu 20.04, Python `3.8.0, 3.9.0, 3.10.0, 3.11.0, 3.12.0`, tested in GitHub Actions
   workflow ([./.github/workflows/build-and-test.yml](./.github/workflows/build-and-test.yml)).
+
+## 🐳 Docker Image
+
+Docker images are published to [ghcr.io/realazthat/comfy-catapult][21] at each
+tag.
+
+```bash
+# Use the published images at https://ghcr.io/realazthat/comfy-catapult.
+docker run --rm --tty ghcr.io/realazthat/comfy-catapult:v3.0.0 --help
+
+# /data in the docker image is the working directory, so paths are simpler.
+docker run --rm --tty \
+  -v "${PWD}:/data" \
+  -e "COMFY_API_URL=${COMFY_API_URL}" \
+  ghcr.io/realazthat/comfy-catapult:v3.0.0 \
+  execute --workflow-path ./test_data/sdxlturbo_example_api.json
+```
+
+If you want to build the image yourself, you can use the Dockerfile in the
+repository.
+
+<!---->
+```bash
+
+# Build the docker image.
+docker build -t my-comfy-catapult-image .
+
+# Print usage.
+docker run --rm --tty my-comfy-catapult-image --help
+
+# /data in the docker image is the working directory, so paths are simpler.
+docker run --rm --tty \
+  -v "${PWD}:/data" \
+  -e "COMFY_API_URL=${COMFY_API_URL}" \
+  my-comfy-catapult-image \
+  execute --workflow-path ./test_data/sdxlturbo_example_api.json
+
+```
+<!---->
 
 ## 🚸 Limitations
 
@@ -496,6 +551,7 @@ print(api_workflow.model_dump_json())
     - docker.
   - Generate animation:
     - docker
+  - docker (for building the docker image).
 
 ### Commit Process
 
@@ -524,7 +580,7 @@ These instructions are for maintainers of the project.
 5. `master` branch: Tag the release: Create a git tag for the release with
    `git tag -a vX.Y.Z -m "Version X.Y.Z"`.
 6. Publish to PyPI: Publish the release to PyPI with
-   `bash ./scripts/deploy-to-pypi.sh`.
+   `bash ./scripts/utilities/deploy-to-pypi.sh`.
 7. Push to GitHub: Push the commit and tags to GitHub with `git push` and
    `git push --tags`.
 8. `git checkout develop && git merge master` The `--no-ff` option adds a commit
@@ -532,53 +588,53 @@ These instructions are for maintainers of the project.
    master branch.
 9. `git push origin develop` Push the develop branch to GitHub.
 
-[1]:
-  https://img.shields.io/github/actions/workflow/status/realazthat/comfy-catapult/build-and-test.yml?branch=master&style=plastic
+[1]: .github/logo-exported.svg
 [2]:
-  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
-[3]:
-  https://img.shields.io/github/actions/workflow/status/realazthat/comfy-catapult/build-and-test.yml?branch=develop&style=plastic
-[4]:
-  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
-[5]: https://github.com/andreyryabtsev/comfyui-python-api
-[6]: https://github.com/BennyKok/comfyui-deploy
-[7]: https://github.com/pydn/ComfyUI-to-Python-Extension
-[8]: https://github.com/Chaoses-Ib/ComfyScript
-[9]: https://pypi.org/project/hordelib/
-[10]: https://github.com/nathannlu/comfyui-cloud
-[11]:
-  https://img.shields.io/github/license/realazthat/comfy-catapult?style=plastic&color=0A1E1E
-[12]:
-  https://img.shields.io/pypi/v/comfy_catapult?style=plastic&color=0A1E1E
-[13]: https://pypi.org/project/comfy_catapult/
-[14]:
-  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.2.0/master?style=plastic&color=0A1E1E
-[15]:
-  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v2.2.0/develop?style=plastic&color=0A1E1E
-[16]:
-  https://img.shields.io/github/last-commit/realazthat/comfy-catapult/master?style=plastic&color=0A1E1E
-[17]:
-  https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop?style=plastic&color=0A1E1E
-[18]:
-  https://img.shields.io/pypi/pyversions/comfy_catapult?style=plastic&color=0A1E1E
-[19]:
-  https://img.shields.io/github/languages/top/realazthat/comfy-catapult.svg?style=plastic&color=0A1E1E&cacheSeconds=28800
-[20]:
-  https://github.com/realazthat/comfy-catapult/compare/v2.2.0...master
-[21]:
-  https://github.com/realazthat/comfy-catapult/compare/v2.2.0...develop
-[22]: https://github.com/piyushK52/comfy_runner
-[23]: https://github.com/thecooltechguy/ComfyUI-ComfyRun
-[24]: .github/logo-exported.svg
-[25]:
   https://img.shields.io/badge/Audience-Developers-0A1E1E?style=plastic&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLXVzZXJzIj48cGF0aCBkPSJNMTYgMjF2LTJhNCA0IDAgMCAwLTQtNEg2YTQgNCAwIDAgMC00IDR2MiIvPjxjaXJjbGUgY3g9IjkiIGN5PSI3IiByPSI0Ii8+PHBhdGggZD0iTTIyIDIxdi0yYTQgNCAwIDAgMC0zLTMuODciLz48cGF0aCBkPSJNMTYgMy4xM2E0IDQgMCAwIDEgMCA3Ljc1Ii8+PC9zdmc+
-[26]:
+[3]:
   https://img.shields.io/badge/Platform-Linux-0A1E1E?style=plastic&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGNsYXNzPSJsdWNpZGUgbHVjaWRlLWxhcHRvcC1taW5pbWFsIj48cmVjdCB3aWR0aD0iMTgiIGhlaWdodD0iMTIiIHg9IjMiIHk9IjQiIHJ4PSIyIiByeT0iMiIvPjxsaW5lIHgxPSIyIiB4Mj0iMjIiIHkxPSIyMCIgeTI9IjIwIi8+PC9zdmc+
-[27]: https://github.com/realazthat/comfy-catapult/tree/master
-[28]: https://github.com/realazthat/comfy-catapult/tree/develop
-[29]: https://github.com/city96/ComfyUI_NetDist
-[30]: https://github.com/matan1905/ComfyUI-Serving-Toolkit
-[31]: https://github.com/rvion/CushyStudio
-[32]:
+[4]:
+  https://img.shields.io/github/languages/top/realazthat/comfy-catapult.svg?style=plastic&color=0A1E1E&cacheSeconds=28800
+[5]:
+  https://img.shields.io/github/license/realazthat/comfy-catapult?style=plastic&color=0A1E1E
+[6]:
+  https://img.shields.io/pypi/v/comfy_catapult?style=plastic&color=0A1E1E
+[7]: https://pypi.org/project/comfy_catapult/
+[8]:
+  https://img.shields.io/pypi/pyversions/comfy_catapult?style=plastic&color=0A1E1E
+[9]: https://github.com/realazthat/comfy-catapult/tree/master
+[10]:
+  https://img.shields.io/github/actions/workflow/status/realazthat/comfy-catapult/build-and-test.yml?branch=master&style=plastic
+[11]:
+  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
+[12]:
+  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v3.0.0/master?style=plastic&color=0A1E1E
+[13]:
+  https://github.com/realazthat/comfy-catapult/compare/v3.0.0...master
+[14]:
+  https://img.shields.io/github/last-commit/realazthat/comfy-catapult/master?style=plastic&color=0A1E1E
+[15]: https://github.com/realazthat/comfy-catapult/tree/develop
+[16]:
+  https://img.shields.io/github/actions/workflow/status/realazthat/comfy-catapult/build-and-test.yml?branch=develop&style=plastic
+[17]:
+  https://github.com/realazthat/comfy-catapult/actions/workflows/build-and-test.yml
+[18]:
+  https://img.shields.io/github/commits-since/realazthat/comfy-catapult/v3.0.0/develop?style=plastic&color=0A1E1E
+[19]:
+  https://github.com/realazthat/comfy-catapult/compare/v3.0.0...develop
+[20]:
+  https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop?style=plastic&color=0A1E1E
+[21]: https://github.com/rvion/CushyStudio
+[22]: https://github.com/matan1905/ComfyUI-Serving-Toolkit
+[23]: https://github.com/city96/ComfyUI_NetDist
+[24]:
   https://github.com/comfyanonymous/ComfyUI/tree/89d0e9abeb31e44cccef46537cd10d8812130ef3/script_examples
   "Permalink"
+[25]: https://github.com/andreyryabtsev/comfyui-python-api
+[26]: https://github.com/BennyKok/comfyui-deploy
+[27]: https://github.com/pydn/ComfyUI-to-Python-Extension
+[28]: https://github.com/Chaoses-Ib/ComfyScript
+[29]: https://pypi.org/project/hordelib/
+[30]: https://github.com/nathannlu/comfyui-cloud
+[31]: https://github.com/piyushK52/comfy_runner
+[32]: https://github.com/thecooltechguy/ComfyUI-ComfyRun

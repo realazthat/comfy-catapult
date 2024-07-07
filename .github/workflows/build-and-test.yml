@@ -23,8 +23,16 @@ jobs:
       matrix:
         # See https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json
         python-version:
+          - file: 3.8.0
+            gh: 3.8.0
+          - file: 3.9.0
+            gh: 3.9.0
           - file: 3.10.0
             gh: 3.10.0
+          - file: 3.11.0
+            gh: 3.11.0
+          - file: 3.12.0
+            gh: 3.12.0
 
     steps:
       - uses: actions/checkout@v4

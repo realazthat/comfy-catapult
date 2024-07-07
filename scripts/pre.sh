@@ -10,7 +10,7 @@ export TOML="${PROJ_PATH}/pyproject.toml"
 # This variable will be 1 when we are the ideal version in the GH action matrix.
 IDEAL="0"
 PYTHON_VERSION=$(cat .python-version)
-if [[ "${PYTHON_VERSION}" == "3.10.0" ]]; then
+if [[ "${PYTHON_VERSION}" == "3.8.0" ]]; then
   IDEAL="1"
 fi
 
@@ -28,9 +28,13 @@ fi
 
 EXTRA=dev bash scripts/utilities/pin-extra-reqs.sh
 EXTRA=prod bash scripts/utilities/pin-extra-reqs.sh
+# Runs in generate.sh.
+# bash scripts/run-all-examples.sh
+# Runs in generate.sh.
+# bash scripts/format.sh
+bash scripts/generate.sh
 bash scripts/run-all-tests.sh
 bash scripts/type-check.sh
-bash scripts/generate.sh
 if [[ -z "${GITHUB_ACTIONS:-}" ]]; then
   bash scripts/act.sh
 	bash scripts/precommit.sh
@@ -41,3 +45,5 @@ fi
 if [[ "${IDEAL}" == "1" ]]; then
   STEP=post bash scripts/utilities/changeguard.sh
 fi
+
+echo -e "${GREEN}pre.sh completed successfully.${NC}"

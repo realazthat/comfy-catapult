@@ -16,12 +16,12 @@ import aiohttp
 from anyio import Path
 from pydantic import BaseModel
 
+from ._internal.url_utils import JoinToBaseURL
+from ._internal.utilities import DumpYaml, TryParseAsModel, WatchVar
 from .api_client_base import ComfyAPIClientBase
-from .comfy_schema import (APIHistory, APIObjectInfo, APIQueueInfo,
-                           APISystemStats, APIUploadImageResp,
+from .comfy_schema import (APIHistory, APIObjectInfo, APIPromptInfo,
+                           APIQueueInfo, APISystemStats, APIUploadImageResp,
                            APIWorkflowTicket, ClientID, PromptID)
-from .comfy_utils import TryParseAsModel, WatchVar, YamlDump
-from .url_utils import JoinToBaseURL
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ async def _RaiseForStatus(*,
     else:
       message += f'\n\nError getting content: {content_or_exc}'
     if extra is not None:
-      message += f'\n\nExtra info: {textwrap.indent(YamlDump(extra), prefix="  ")}'
+      message += f'\n\nExtra info: {textwrap.indent(await DumpYaml(extra), prefix="  ")}'
 
     raise aiohttp.ClientResponseError(request_info=e.request_info,
                                       history=e.history,
@@ -97,7 +97,7 @@ async def _TryParseRespAsJson(*, resp: aiohttp.ClientResponse,
     raise Exception(
         f'Error: {resp.status} {resp.reason}'
         f'\n\nContent (raw):\n{textwrap.indent(content_str, prefix="  ")}'
-        f'\n\nContent (yaml):\n{textwrap.indent(YamlDump(content), prefix="  ")}'
+        f'\n\nContent (yaml):\n{textwrap.indent(await DumpYaml(content), prefix="  ")}'
         f'\n\nContent (base64):\n{textwrap.indent(contentb64, prefix="  ")}'
     ) from e
 
@@ -140,13 +140,13 @@ class ComfyAPIClient(ComfyAPIClientBase):
 
   async def GetSystemStatsRaw(self) -> dict:
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'system_stats'))
-    with WatchVar(url=url.geturl()):
+    async with WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
         return await _TryParseRespAsJson(resp=resp, json_type=dict)
 
   async def GetSystemStats(self) -> APISystemStats:
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'system_stats'))
-    with WatchVar(url=url.geturl()):
+    async with WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
         return await _TryParseRespAsModel(
             resp=resp,
@@ -155,13 +155,13 @@ class ComfyAPIClient(ComfyAPIClientBase):
 
   async def GetObjectInfoRaw(self) -> dict:
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'object_info'))
-    with WatchVar(url=url.geturl()):
+    async with WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
         return await _TryParseRespAsJson(resp=resp, json_type=dict)
 
   async def GetObjectInfo(self) -> APIObjectInfo:
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'object_info'))
-    with WatchVar(url=url.geturl()):
+    async with WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
         return await _TryParseRespAsModel(
             resp=resp,
@@ -170,9 +170,16 @@ class ComfyAPIClient(ComfyAPIClientBase):
 
   async def GetPromptRaw(self) -> dict:
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'prompt'))
-    with WatchVar(url=url.geturl()):
+    async with WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
         return await _TryParseRespAsJson(resp=resp, json_type=dict)
+
+  async def GetPrompt(self) -> APIPromptInfo:
+    prompt_info_dict = await self.GetPromptRaw()
+    return await TryParseAsModel(
+        content=prompt_info_dict,
+        model_type=APIPromptInfo,
+        errors_dump_directory=self._errors_dump_directory)
 
   async def PostPromptRaw(self,
                           *,
@@ -194,7 +201,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
 
     data: bytes = json.dumps(body).encode('utf-8')
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'prompt'))
-    with WatchVar(url=url.geturl()):
+    async with WatchVar(url=url.geturl()):
       async with self._session.post(url.geturl(), data=data) as resp:
         return await _TryParseRespAsJson(resp=resp, json_type=dict)
 
@@ -225,7 +232,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
     if prompt_id is not None:
       url = url._replace(path=f'{url.path}/{prompt_id}')
 
-    with WatchVar(url=url.geturl()):
+    async with WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
         return await _TryParseRespAsJson(resp=resp, json_type=dict)
 
@@ -241,7 +248,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
 
   async def GetQueueRaw(self) -> dict:
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'queue'))
-    with WatchVar(url=url.geturl()):
+    async with WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
         return await _TryParseRespAsJson(resp=resp, json_type=dict)
 
@@ -271,10 +278,10 @@ class ComfyAPIClient(ComfyAPIClientBase):
     Returns:
         dict: _description_
     """
-    with WatchVar(folder_type=folder_type,
-                  subfolder=subfolder,
-                  filename=filename,
-                  overwrite=overwrite):
+    async with WatchVar(folder_type=folder_type,
+                        subfolder=subfolder,
+                        filename=filename,
+                        overwrite=overwrite):
       fdata = aiohttp.FormData()
       fdata.add_field('image',
                       data,
@@ -285,7 +292,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
       fdata.add_field('type', folder_type)
       fdata.add_field('filename', filename)
       post_url = urlparse(JoinToBaseURL(self._comfy_api_url, 'upload/image'))
-      with WatchVar(post_url=post_url.geturl(), fdata=fdata):
+      async with WatchVar(post_url=post_url.geturl(), fdata=fdata):
         async with self._session.post(post_url.geturl(), data=fdata) as resp:
           result = await _TryParseRespAsJson(resp=resp, json_type=dict)
           if not isinstance(result, dict):
@@ -313,7 +320,7 @@ class ComfyAPIClient(ComfyAPIClientBase):
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'view'))
     url = url._replace(query=urlencode(data))
 
-    with WatchVar(url=url.geturl()):
+    async with WatchVar(url=url.geturl()):
       async with self._session.get(url.geturl()) as resp:
         await _RaiseForStatus(resp=resp)
         return await resp.content.read()
@@ -321,20 +328,20 @@ class ComfyAPIClient(ComfyAPIClientBase):
   async def PostFree(self, *, unload_models: bool, free_memory: bool):
     data = {'unload_models': unload_models, 'free_memory': free_memory}
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'free'))
-    with WatchVar(url=url.geturl()):
+    async with WatchVar(url=url.geturl()):
       async with self._session.post(url.geturl(), data=data) as resp:
         await _RaiseForStatus(resp=resp)
 
   async def PostInterrupt(self):
     # TODO(realazthat/comfy-catapult#5): change the API to take a prompt_id.
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'interrupt'))
-    with WatchVar(url=url.geturl()):
+    async with WatchVar(url=url.geturl()):
       async with self._session.post(url.geturl()) as resp:
         resp.raise_for_status()
 
   async def PostQueue(self, *, delete: List[PromptID], clear: bool):
     url = urlparse(JoinToBaseURL(self._comfy_api_url, 'queue'))
     data = {'delete': delete, 'clear': clear}
-    with WatchVar(url=url.geturl()):
+    async with WatchVar(url=url.geturl()):
       async with self._session.post(url.geturl(), data=data) as resp:
         resp.raise_for_status()

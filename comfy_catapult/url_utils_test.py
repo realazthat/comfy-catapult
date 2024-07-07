@@ -7,9 +7,29 @@
 
 import unittest
 
+from ._internal.url_utils import JoinToBaseURL
 
-class TestUrlUtils(unittest.IsolatedAsyncioTestCase):
-  pass
+
+class TestUrlUtils(unittest.TestCase):
+
+  def test_JoinToBaseURL(self):
+    self.assertEqual(JoinToBaseURL('http://example.com', 'path'),
+                     'http://example.com/path')
+    self.assertEqual(JoinToBaseURL('http://example.com/', 'path'),
+                     'http://example.com/path')
+    self.assertEqual(JoinToBaseURL('http://example.com', '/path'),
+                     'http://example.com/path')
+    self.assertEqual(JoinToBaseURL('http://example.com/', '/path'),
+                     'http://example.com/path')
+
+    self.assertEqual(JoinToBaseURL('http://example.com/path', 'to'),
+                     'http://example.com/path/to')
+    self.assertEqual(JoinToBaseURL('http://example.com/path/', 'to'),
+                     'http://example.com/path/to')
+    self.assertEqual(JoinToBaseURL('http://example.com/path', '/to'),
+                     'http://example.com/path/to')
+    self.assertEqual(JoinToBaseURL('http://example.com/path/', '/to'),
+                     'http://example.com/path/to')
 
 
 if __name__ == '__main__':

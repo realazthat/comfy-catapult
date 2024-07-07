@@ -5,18 +5,20 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
+import json
 from typing import List, Optional, Tuple, cast
 from urllib.parse import ParseResult
 
 from anyio import Path
 from typing_extensions import Literal
 
+from ._internal.url_utils import (VALID_COMFY_API_SCHEMES, SmartURLJoin,
+                                  ToParseResult, ValidateIsBasedURL,
+                                  ValidateIsComfyAPITargetURL)
 from .api_client import ComfyAPIClient
 from .comfy_schema import (VALID_FOLDER_TYPES, APIUploadImageResp,
                            ComfyUIPathTriplet)
 from .remote_file_api_base import RemoteFileAPIBase
-from .url_utils import (VALID_COMFY_API_SCHEMES, SmartURLJoin, ToParseResult,
-                        ValidateIsBasedURL, ValidateIsComfyAPITargetURL)
 
 VALID_COMFY_SCHEME_SCHEMES = ['comfy+http', 'comfy+https']
 
@@ -26,12 +28,12 @@ def _ValidateComfyAPITargetURL(url: str, *,
   url_pr = ToParseResult(url=url)
   if url_pr.scheme not in VALID_COMFY_API_SCHEMES:
     raise ValueError(
-        f'URL {repr(url)} scheme does not start with one of {VALID_COMFY_API_SCHEMES}'
+        f'URL {json.dumps(url)} scheme does not start with one of {VALID_COMFY_API_SCHEMES}'
     )
 
   if any_api_targets is not None:
     if url not in any_api_targets:
-      raise ValueError(f'URL {repr(url)} is not one of {any_api_targets}')
+      raise ValueError(f'URL {json.dumps(url)} is not one of {any_api_targets}')
 
   return url
 
@@ -40,7 +42,7 @@ def _ValidateComfySchemeURL(url: str, *, any_bases: Optional[List[str]]) -> str:
   url_pr = ToParseResult(url=url)
   if url_pr.scheme not in VALID_COMFY_SCHEME_SCHEMES:
     raise ValueError(
-        f'URL {repr(url)} scheme does not start with one of {VALID_COMFY_SCHEME_SCHEMES}'
+        f'URL {json.dumps(url)} scheme does not start with one of {VALID_COMFY_SCHEME_SCHEMES}'
     )
 
   # TODO: check the path
@@ -66,18 +68,18 @@ def ComfySchemeURLToTriplet(
     Tuple[str, ComfyUIPathTriplet]: The ComfyUI API URL, and the triplet.
   """
   url_pr = ToParseResult(url=url)
-  url_path = url_pr.path
+  url_path: str = url_pr.path
 
   if url_pr.scheme not in ['comfy+http', 'comfy+https']:
     raise ValueError(
-        f'URL {repr(url)} does not start with one of {VALID_COMFY_SCHEME_SCHEMES}'
+        f'URL {json.dumps(url)} does not start with one of {VALID_COMFY_SCHEME_SCHEMES}'
     )
 
   api_scheme = url_pr.scheme[6:]
 
   if not url_path.startswith('/'):
     raise ValueError(
-        f'URL {url}, path {repr(url_path)} must start with a slash')
+        f'URL {url}, path {json.dumps(url_path)} must start with a slash')
 
   # /folder_type/subfolder/filename => ('folder_type', 'subfolder', 'filename')
   # /folder_type/filename => ('folder_type', '', 'filename')
@@ -89,7 +91,7 @@ def ComfySchemeURLToTriplet(
   folder_type_str, _, rest = url_path[1:].partition('/')
   if folder_type_str not in VALID_FOLDER_TYPES:
     raise ValueError(
-        f'URL {repr(url)} path {repr(url_path)} does not start with one of {VALID_FOLDER_TYPES}'
+        f'URL {json.dumps(url)} path {json.dumps(url_path)} does not start with one of {VALID_FOLDER_TYPES}'
     )
   folder_type = cast(Literal['input', 'output', 'temp'], folder_type_str)
   subfolder, _, filename = rest.rpartition('/')
@@ -106,7 +108,7 @@ def ComfySchemeURLToTriplet(
         inversion_check=False)
     if inverted_url != url:
       raise ValueError(
-          f'\nurl: {repr(url)}\ntriplet: {repr(triplet)}\ninverted_url: {repr(inverted_url)}'
+          f'\nurl: {json.dumps(url)}\ntriplet: {repr(triplet)}\ninverted_url: {json.dumps(inverted_url)}'
       )
   return comfy_api_url_pr.geturl(), triplet
 
@@ -150,7 +152,7 @@ def TripletToComfySchemeURL(comfy_api_url: str,
   #   assert inverted_triplet.Normalized() == triplet.Normalized(), (
   #       f'\ntriplet:                       {repr(triplet)}'
   #       f'\ntriplet.Normalized():          {repr(triplet.Normalized())}'
-  #       f'\nurl:                           {repr(url)}'
+  #       f'\nurl:                           {json.dumps(url)}'
   #       f'\ninverted_triplet:              {repr(inverted_triplet)}'
   #       f'\ninverted_triplet.Normalized(): {repr(inverted_triplet.Normalized())}'
   #   )
@@ -276,7 +278,7 @@ class ComfySchemeRemoteFileAPI(RemoteFileAPIBase):
   def URLToTriplet(self, *, url: str) -> Tuple[str, ComfyUIPathTriplet]:
     return ComfySchemeURLToTriplet(url=url)
 
-  def GetBases(self) -> 'list[str]':
+  def GetBases(self) -> List[str]:
     if self._comfy_api_urls is None:
       return [f'comfy+{scheme}://' for scheme in VALID_COMFY_API_SCHEMES]
 

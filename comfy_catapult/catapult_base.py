@@ -8,12 +8,16 @@
 import asyncio
 import datetime
 from abc import ABC, abstractmethod
-from typing import Dict, List, NamedTuple, Optional, Sequence, Tuple
+from typing import (Dict, List, Literal, NamedTuple, Optional, Sequence, Tuple,
+                    Union, overload)
 
 from anyio import Path
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+from typing_extensions import Annotated
 
-from .comfy_schema import APINodeID
+from .comfy_schema import APINodeID, APIWorkflowTicket
+
+JobID = Annotated[str, 'JobID']
 
 
 class Progress(NamedTuple):
@@ -31,28 +35,54 @@ class ExceptionInfo(NamedTuple):
 class JobStatus(BaseModel):
   model_config = ConfigDict(frozen=True)
 
-  scheduled: Optional[datetime.datetime]
-  pending: Optional[datetime.datetime]
-  running: Optional[datetime.datetime]
-  success: Optional[datetime.datetime]
-  errored: Optional[datetime.datetime]
-  cancelled: Optional[datetime.datetime]
+  scheduled: Optional[datetime.datetime] = Field(
+      ..., description='Time the job was scheduled with Comfy Catapult.')
+  comfy_scheduled: Optional[datetime.datetime] = Field(
+      ..., description='Time the job was scheduled with ComfyUI.')
+  pending: Optional[datetime.datetime] = Field(
+      ...,
+      description='If/when the job is seen in the ComfyUI /queue as pending.')
+  running: Optional[datetime.datetime] = Field(
+      ...,
+      description='If/when the job is seen in the ComfyUI /queue as running.')
+  success: Optional[datetime.datetime] = Field(
+      ...,
+      description=
+      'If/when the job is seen in the ComfyUI /history as successful.')
+  errored: Optional[datetime.datetime] = Field(
+      ...,
+      description='If/when the job has encountered an unrecoverable error.')
+  cancelled: Optional[datetime.datetime] = Field(
+      ..., description='If/when the job was cancelled.')
   errors: List[ExceptionInfo]
 
-  system_stats_check: Optional[datetime.datetime] = None
-  """Last time system stats were successfully checked (while this job is not done)."""
-  queue_check: Optional[datetime.datetime] = None
-  """Last time /queue/job_id was successfully checked for (while this job is not done)."""
+  system_stats_check: Optional[datetime.datetime] = Field(
+      None,
+      description=
+      'Last time system stats were successfully checked (while this job is not done).'
+  )
+  queue_check: Optional[datetime.datetime] = Field(
+      None,
+      description=
+      'Last time /queue/job_id was successfully checked for (while this job is not done).'
+  )
 
-  job_history: Optional[dict] = None
-  """The history of the job. This is only set when the job is done and the history is successfully retrieved."""
+  ticket: Optional[APIWorkflowTicket] = Field(
+      ..., description='The ticket returned from the ComfyUI API.')
+
+  job_history: Optional[dict] = Field(
+      None,
+      description=
+      'The history of the job. This is only set when the job is done and the history is successfully retrieved.'
+  )
 
   def IsDone(self) -> bool:
+    """Returns True if the job is no longer viable; either it finished or an error occurred etc.."""
     return (self.success is not None or self.errored is not None
             or self.cancelled is not None)
 
   def _replace(self, **kwargs):
-    return self.copy(update=kwargs)
+    return self.model_copy(update=kwargs)
 
 
 class ComfyCatapultBase(ABC):
@@ -73,24 +103,53 @@ class ComfyCatapultBase(ABC):
   async def Close(self):
     raise NotImplementedError()
 
+  @overload
   @abstractmethod
   async def Catapult(
       self,
       *,
-      job_id: str,
+      job_id: JobID,
       prepared_workflow: dict,
       important: Sequence[APINodeID],
-      job_debug_path: Optional[Path] = None,
-  ) -> dict:
+      use_future_api: Literal[True],
+      job_debug_path: Optional[Path] = None
+  ) -> Tuple[JobStatus, 'asyncio.Future[dict]']:
+    ...
+
+  @overload
+  @abstractmethod
+  async def Catapult(self,
+                     *,
+                     job_id: JobID,
+                     prepared_workflow: dict,
+                     important: Sequence[APINodeID],
+                     use_future_api: Literal[False] = False,
+                     job_debug_path: Optional[Path] = None) -> dict:
+    ...
+
+  @abstractmethod
+  async def Catapult(
+      self,
+      *,
+      job_id: JobID,
+      prepared_workflow: dict,
+      important: Sequence[APINodeID],
+      use_future_api: bool = False,
+      job_debug_path: Optional[Path] = None
+  ) -> Union[dict, Tuple[JobStatus, 'asyncio.Future[dict]']]:
     """Schedule a ComfyUI workflow job.
 
     Args:
         job_id (str): A unique identifier for the job. Note: This string must
           be unique, and must be slugified! Use python-slugify to slugify the
-          string.
+          string. Note: This is not the same string as the prompt_id returned
+          from ComfyUI API. You can find that in the JobStatus.ticket returned
+          from GetStatus().
         prepared_workflow (dict): Workflow to submit.
-        important (List[APINodeID]): List of important nodes (e.g output nodes we
-          are interested in).
+        important (List[APINodeID]): List of important nodes (e.g output nodes
+          we are interested in).
+        use_future_api (bool): Use the future API; returns a future that will
+          resolve to the job history when the job is done.
         job_debug_path (Path, optional): Path to save debug information. If
           None, will use sensible defaults.
 
@@ -98,26 +157,32 @@ class ComfyCatapultBase(ABC):
         WorkflowSubmissionError: Failed to submit workflow.
 
     Returns:
-        dict: The history of the job returned from the ComfyUI API.
+        Union[dict, Tuple[JobStatus, asyncio.Future[dict]]]: If use_future_api
+        is True, returns a tuple of the job status and a future that will
+        resolve to the job history when the job is done. Otherwise, returns the
+        job history.
     """
     raise NotImplementedError()
 
   @abstractmethod
-  async def GetStatus(self, *,
-                      job_id: str) -> 'Tuple[JobStatus, asyncio.Future[dict]]':
+  async def GetStatus(
+      self,
+      *,
+      job_id: JobID,
+      poll: bool = False) -> 'Tuple[JobStatus, asyncio.Future[dict]]':
     """Get the status of a job.
 
     Args:
         job_id (str): The job id.
+        poll (bool): If True, will poll ComfyUI for the latest status update.
 
     Returns:
         Tuple[JobStatus, asyncio.Future[dict]]: The status of the job, and a
           future that will resolve to the job history when the job is done.
     """
-    raise NotImplementedError()
 
   @abstractmethod
-  async def GetExceptions(self, *, job_id: str) -> List[Exception]:
+  async def GetExceptions(self, *, job_id: JobID) -> List[Exception]:
     """List of exceptions that occurred during the job.
 
     Args:
@@ -129,10 +194,29 @@ class ComfyCatapultBase(ABC):
     raise NotImplementedError()
 
   @abstractmethod
-  async def CancelJob(self, *, job_id: str):
+  async def CancelJob(self, *, job_id: JobID):
     """Cancel a job. No-op if the job is done. Will also try to cancel the job remotely.
+
+    Warning: Currently, ComfyUI will interrupt the currently running job, even
+    if it is not the job you are trying to cancel. This is a limitation of the
+    ComfyUI API.
 
     Args:
         job_id (str): The job id.
+    """
+    raise NotImplementedError()
+
+  @abstractmethod
+  async def Resume(self,
+                   *,
+                   job_id: JobID,
+                   prepared_workflow: dict,
+                   important: Sequence[APINodeID],
+                   status: JobStatus,
+                   poll: bool,
+                   errors: List[Exception] = [],
+                   job_debug_path: Optional[Path] = None):
+    """Resume a job. This is useful if another instance of the ComfyCatapultBase
+    is created and the job is "forgotten".
     """
     raise NotImplementedError()

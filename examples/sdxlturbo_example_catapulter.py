@@ -15,9 +15,12 @@ from dataclasses import dataclass
 from datetime import datetime
 from pprint import pprint
 from typing import List
+from urllib.parse import urlparse
 
+import yaml
 from anyio import Path
 from slugify import slugify
+from typing_extensions import Optional
 
 from comfy_catapult.api_client import ComfyAPIClient, ComfyAPIClientBase
 from comfy_catapult.catapult import ComfyCatapult
@@ -26,13 +29,11 @@ from comfy_catapult.comfy_schema import (APIHistoryEntry, APINodeID,
                                          APIObjectInfo, APIObjectInputTuple,
                                          APISystemStats, APIWorkflow,
                                          APIWorkflowInConnection)
-from comfy_catapult.comfy_utils import (DownloadPreviewImage, GetNodeByTitle,
-                                        YamlDump)
+from comfy_catapult.comfy_utils import DownloadPreviewImage, GetNodeByTitle
 from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
 from comfy_catapult.remote_file_api_comfy import ComfySchemeRemoteFileAPI
 from comfy_catapult.remote_file_api_generic import GenericRemoteFileAPI
 from comfy_catapult.remote_file_api_local import LocalRemoteFileAPI
-from comfy_catapult.url_utils import ToParseResult
 from examples.utilities.sdxlturbo_parse_args import ParseArgs
 
 
@@ -58,10 +59,10 @@ class ExampleWorkflowInfo:
 
   # When the job is complete, this will be the `/history` json/dictionary for
   # this job.
-  job_history_dict: dict | None
+  job_history_dict: Optional[dict]
 
   # These are inputs that modify this particular workflow.
-  ckpt_name: str | None
+  ckpt_name: Optional[str]
   positive_prompt: str
   negative_prompt: str
   # For this particular workflow, this will define the path to the output image.
@@ -78,8 +79,19 @@ async def RunExampleWorkflow(*, job_info: ExampleWorkflowInfo):
   important: List[APINodeID] = job_info.important
 
   # Here the magic happens, the job is submitted to the ComfyUI server.
-  job_info.job_history_dict = await job_info.catapult.Catapult(
-      job_id=job_id, prepared_workflow=workflow_dict, important=important)
+  status, future = await job_info.catapult.Catapult(
+      job_id=job_id,
+      prepared_workflow=workflow_dict,
+      important=important,
+      use_future_api=True)
+
+  # Wait for the job to complete.
+  while not future.done():
+    status, _ = await job_info.catapult.GetStatus(job_id=job_id)
+    print(f'status: {status}', file=sys.stderr)
+    await asyncio.sleep(3)
+
+  job_info.job_history_dict = await future
 
   # Now that the job is done, you have to write something that will go and get
   # the results you care about, if necessary.
@@ -108,7 +120,7 @@ async def amain():
         ComfySchemeRemoteFileAPI(comfy_api_urls=[args.comfy_api_url],
                                  overwrite=True))
     if args.comfy_install_file_url is not None:
-      scheme = ToParseResult(args.comfy_install_file_url).scheme
+      scheme = urlparse(args.comfy_install_file_url).scheme
       if scheme != 'file':
         raise ValueError(
             f'args.comfy_install_file_url must be a file:// URL, but is {args.comfy_install_file_url}'
@@ -128,7 +140,9 @@ async def amain():
     # Dump the ComfyUI server stats.
     system_stats: APISystemStats = await comfy_client.GetSystemStats()
     print('system_stats:', file=sys.stderr)
-    print(YamlDump(system_stats.model_dump()), file=sys.stderr)
+    print(yaml.dump(
+        system_stats.model_dump(mode='json', by_alias=True, round_trip=True)),
+          file=sys.stderr)
 
     async with ComfyCatapult(comfy_client=comfy_client,
                              debug_path=args.debug_path,
@@ -248,7 +262,9 @@ async def PrepareWorkflow(*, job_info: ExampleWorkflowInfo):
   job_info.important.append(preview_image_id)
   ############################################################################
   # Save our changes to the job_info workflow.
-  job_info.workflow_dict = workflow.model_dump()
+  job_info.workflow_dict = workflow.model_dump(mode='json',
+                                               by_alias=True,
+                                               round_trip=True)
 
 
 async def DownloadResults(*, job_info: ExampleWorkflowInfo):
@@ -257,7 +273,9 @@ async def DownloadResults(*, job_info: ExampleWorkflowInfo):
     raise AssertionError('job_info.job_history_dict is None')
   job_history = APIHistoryEntry.model_validate(job_info.job_history_dict)
   workflow = APIWorkflow.model_validate(job_info.workflow_dict)
-  print(YamlDump(job_history.model_dump()), file=sys.stderr)
+  print(yaml.dump(
+      job_history.model_dump(mode='json', by_alias=True, round_trip=True)),
+        file=sys.stderr)
 
   preview_image_id, _ = GetNodeByTitle(workflow=workflow, title='Preview Image')
 

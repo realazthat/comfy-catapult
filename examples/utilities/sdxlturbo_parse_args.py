@@ -6,15 +6,48 @@
 # the license text.
 
 import argparse
+import json
 import os
 import sys
 import traceback
 from typing import NamedTuple
-from urllib.parse import ParseResult, urlparse
+from urllib.parse import ParseResult, urljoin, urlparse, urlunparse
 
 from anyio import Path
+from typing_extensions import Optional
 
-from comfy_catapult.url_utils import SmartURLJoin, ValidateIsURLDirectory
+
+def SmartURLJoin(base: str, url: str) -> str:
+  """urljoin() but can handle relative paths even for custom schemes.
+
+  See: https://github.com/python/cpython/issues/63028
+
+  From: https://github.com/python/cpython/issues/63028#issuecomment-1564858715
+  """
+  base_pr = urlparse(base)
+  bscheme = base_pr.scheme
+
+  url_pr = urlparse(url)
+  scheme = url_pr.scheme or bscheme
+  if bscheme != scheme:
+    return url
+
+  base_pr = base_pr._replace(scheme='http')
+  url_pr = url_pr._replace(scheme='http')
+
+  joined = urljoin(urlunparse(base_pr), urlunparse(url_pr))
+  joined_pr = urlparse(joined)
+  joined_pr = joined_pr._replace(scheme=scheme)
+  return urlunparse(joined_pr)
+
+
+def ValidateIsURLDirectory(url: str) -> str:
+  url_pr: ParseResult = urlparse(url=url)
+  if not url_pr.path.endswith('/'):
+    raise ValueError(
+        f'URL {json.dumps(url)} is not a directory, because it does not end with a trailing slash'
+    )
+  return url
 
 
 class Args(NamedTuple):
@@ -28,14 +61,14 @@ class Args(NamedTuple):
   output_path: Path
   debug_path: Path
 
-  ckpt_name: str | None
+  ckpt_name: Optional[str]
   positive_prompt: str
   negative_prompt: str
 
 
 async def ParseArgs() -> Args:
 
-  def URL_HELP(to: str, example_url: str, default_subdir: str | None):
+  def URL_HELP(to: str, example_url: str, default_subdir: Optional[str]):
     lines = [
         f'Optional URL to ComfyUI {to} directory, e.g. {repr(example_url)}.',
         'Note, that the URL must end with a trailing slash.',
@@ -94,10 +127,10 @@ async def ParseArgs() -> Args:
 
   ##############################################################################
   try:
-    comfy_api_url_pr: ParseResult | None = args.comfy_api_url
+    comfy_api_url_pr: Optional[ParseResult] = args.comfy_api_url
     if comfy_api_url_pr is None:
       # Check if COMFY_API_URL is an environment variable.
-      env_comfy_api_url: str | None = os.environ.get('COMFY_API_URL')
+      env_comfy_api_url: Optional[str] = os.environ.get('COMFY_API_URL')
       if env_comfy_api_url is not None:
         comfy_api_url_pr = urlparse(env_comfy_api_url)
       else:
@@ -116,13 +149,13 @@ async def ParseArgs() -> Args:
   ##############################################################################
   api_workflow_json_path: Path = args.api_workflow_json_path
   ##############################################################################
-  comfy_install_file_url_pr: ParseResult | None = args.comfy_install_file_url
+  comfy_install_file_url_pr: Optional[ParseResult] = args.comfy_install_file_url
 
-  comfy_input_file_url_pr: ParseResult | None = args.comfy_input_file_url
-  comfy_output_file_url_pr: ParseResult | None = args.comfy_output_file_url
-  comfy_temp_file_url_pr: ParseResult | None = args.comfy_temp_file_url
-  if comfy_install_file_url_pr is None or comfy_install_file_url_pr.geturl(
-  ) == '':
+  comfy_input_file_url_pr: Optional[ParseResult] = args.comfy_input_file_url
+  comfy_output_file_url_pr: Optional[ParseResult] = args.comfy_output_file_url
+  comfy_temp_file_url_pr: Optional[ParseResult] = args.comfy_temp_file_url
+  if (comfy_install_file_url_pr is None
+      or comfy_install_file_url_pr.geturl() == ''):
     comfy_install_file_url_pr = urlparse(ValidateIsURLDirectory(url='file:///'))
   comfy_api_url_pr = urlparse(
       ValidateIsURLDirectory(url=comfy_install_file_url_pr.geturl()))
@@ -146,7 +179,7 @@ async def ParseArgs() -> Args:
   ##############################################################################
   output_path: Path = args.output_path
   ##############################################################################
-  debug_path: Path | None = args.debug_path
+  debug_path: Optional[Path] = args.debug_path
   if debug_path is None:
     debug_path = tmp_path / 'debug'
 

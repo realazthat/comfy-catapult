@@ -5,14 +5,15 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
+import json
 from collections import defaultdict
 from typing import Dict, List, Tuple
 
 from anyio import Path
 
+from ._internal.url_utils import IsWeaklyRelativeTo
 from .comfy_schema import ComfyUIPathTriplet
 from .remote_file_api_base import RemoteFileAPIBase
-from .url_utils import IsWeaklyRelativeTo
 
 
 class GenericRemoteFileAPI(RemoteFileAPIBase):
@@ -55,7 +56,7 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
           relevant_apis.append(api)
     if relevant_apis:
       return relevant_apis
-    raise ValueError(f'ComfyUI API server URL {repr(comfy_api_url)}:'
+    raise ValueError(f'ComfyUI API server URL {json.dumps(comfy_api_url)}:'
                      ' there is no API registered to handle this URL'
                      f'\n triplet: {triplet}'
                      f'\n convered_urls: {convered_urls}')
@@ -147,5 +148,5 @@ class GenericRemoteFileAPI(RemoteFileAPIBase):
           raise
     raise AssertionError('unreachable')
 
-  def GetBases(self) -> 'list[str]':
+  def GetBases(self) -> List[str]:
     return list(self._base_to_apis.keys())

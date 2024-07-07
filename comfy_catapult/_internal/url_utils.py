@@ -5,11 +5,12 @@
 # under the MIT license or a compatible open source license. See LICENSE.md for
 # the license text.
 
+import json
 from typing import List, Literal
 from urllib.parse import ParseResult, urljoin, urlparse, urlunparse
 
-from .errors import (BasedURLValidationError, URLDirectoryValidationError,
-                     URLValidationError)
+from ..errors import (BasedURLValidationError, URLDirectoryValidationError,
+                      URLValidationError)
 
 ComfyAPIScheme = Literal['http', 'https']
 VALID_COMFY_API_SCHEMES: List[ComfyAPIScheme] = ['http', 'https']
@@ -62,12 +63,12 @@ def ToParseResult(url: str) -> ParseResult:
   try:
     return urlparse(url)
   except ValueError as e:
-    raise URLValidationError(f'URL {repr(url)} is not valid: {e}') from e
+    raise URLValidationError(f'URL {json.dumps(url)} is not valid: {e}') from e
 
 
 def ValidateIsURL(url: str) -> str:
   if not IsValidURL(url=url):
-    raise URLValidationError(f'URL {repr(url)} is not valid')
+    raise URLValidationError(f'URL {json.dumps(url)} is not valid')
   return url
 
 
@@ -93,7 +94,7 @@ def ValidateIsBasedURL(*, url: str, any_bases: List[str]) -> str:
     if IsWeaklyRelativeTo(base=base, url=url):
       return url
   raise BasedURLValidationError(
-      f'URL {repr(url)} is not relative to any of {any_bases}')
+      f'URL {json.dumps(url)} is not relative to any of {any_bases}')
 
 
 def Relativize(*, base: str, url: str) -> str:
@@ -110,7 +111,8 @@ def Relativize(*, base: str, url: str) -> str:
   url_path = url_parsed.path
   base_path = base_parsed.path
   if not url_path.startswith(base_path):
-    raise ValueError(f'URL {repr(url)} is not relative to base {repr(base)}')
+    raise ValueError(
+        f'URL {json.dumps(url)} is not relative to base {json.dumps(base)}')
 
   return url_path[len(base_path):]
 
@@ -120,7 +122,7 @@ def ValidateIsURLDirectory(url: str) -> str:
   url_pr: ParseResult = ToParseResult(url=url)
   if not url_pr.path.endswith('/'):
     raise URLDirectoryValidationError(
-        f'URL {repr(url)} is not a directory, because it does not end with a trailing slash'
+        f'URL {json.dumps(url)} is not a directory, because it does not end with a trailing slash'
     )
   return url
 
@@ -128,10 +130,12 @@ def ValidateIsURLDirectory(url: str) -> str:
 def ValidateIsComfyAPITargetURL(url: str) -> str:
   url_pr: ParseResult = ToParseResult(url=url)
   if url_pr.scheme not in VALID_COMFY_API_SCHEMES:
-    raise ValueError(f'URL {repr(url)} is not a comfy API target URL, because'
-                     f' its scheme is not one of {VALID_COMFY_API_SCHEMES}')
+    raise ValueError(
+        f'URL {json.dumps(url)} is not a comfy API target URL, because'
+        f' its scheme is not one of {VALID_COMFY_API_SCHEMES}')
   if url_pr.hostname is None or url_pr.hostname == '':
-    raise ValueError(f'URL {repr(url)} is not a comfy API target URL, because'
-                     f' its hostname is empty')
+    raise ValueError(
+        f'URL {json.dumps(url)} is not a comfy API target URL, because'
+        f' its hostname is empty')
 
   return url

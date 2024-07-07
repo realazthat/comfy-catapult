@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "comfy_catapult"
-version = "2.2.0"
+version = "3.0.0"
 description = "Programmatically schedule ComfyUI workflows."
 authors = [{name = "AYF", email = "realazthat@gmail.com"}]
 license = {file = "LICENSE.md"}
-readme = "README.remotified.md"
+readme = ".github/README.remotified.md"
 keywords = [
   "pipeline",
   "scheduler",
@@ -20,7 +20,11 @@ classifiers = [
   "Operating System :: OS Independent",
   "License :: OSI Approved :: MIT License",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10"
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12"
 ]
 dependencies = [
   "aiofiles >=23,<24",
@@ -121,13 +125,14 @@ dev = [
   "cryptography==42.0.7",
   "defusedxml==0.7.1",
   "distlib==0.3.8",
-  "docutils==0.21.2",
+  "docutils==0.20.1",
   "exceptiongroup==1.2.0",
   "filelock==3.13.1",
   "frozenlist==1.4.1",
   "identify==2.5.33",
   "idna==3.6",
   "importlib-metadata==7.0.1",
+  "importlib-resources==6.4.0",
   "isort==5.13.2",
   "jaraco-classes==3.4.0",
   "jaraco-context==5.3.0",
@@ -139,6 +144,7 @@ dev = [
   "markdown-it-py==3.0.0",
   "markupsafe==2.1.4",
   "mdit-py-plugins==0.4.0",
+  "mdreftidy==0.3.1",
   "mdremotifier==0.3.2",
   "mdurl==0.1.2",
   "mistletoe==1.3.0",
@@ -154,7 +160,7 @@ dev = [
   "pip-tools==7.3.0",
   "pkginfo==1.10.0",
   "platformdirs==4.1.0",
-  "pre-commit==3.6.0",
+  "pre-commit==3.5.0",
   "ptyprocess==0.7.0",
   "pycparser==2.22",
   "pydantic==2.6.4",
@@ -188,7 +194,7 @@ dev = [
   "toml-sort==0.23.1",
   "tomli==2.0.1",
   "tomlkit==0.12.4",
-  "twine==5.1.0",
+  "twine==5.1.1",
   "typer==0.12.3",
   "types-aiofiles==23.2.0.20240403",
   "types-beautifulsoup4==4.12.0.20240511",
@@ -214,14 +220,12 @@ Documentation = "https://github.com/realazthat/comfy-catapult"
 Repository = "https://github.com/realazthat/comfy-catapult"
 
 [tool.comfy_catapult-project-metadata]
-last_release = "2.2.0"
-last_stable_release = "2.2.0"
+last_release = "3.0.0"
+last_stable_release = "3.0.0"
 
 [tool.setuptools.package-data]
 comfy_catapult = ["py.typed"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["comfy_catapult"]
-exclude = []
-namespaces = false
+include = ["comfy_catapult", "comfy_catapult._internal"]
