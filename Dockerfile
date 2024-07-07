@@ -17,7 +17,8 @@ RUN apt-get -y update && apt-get -y --no-install-recommends install bash && \
   chmod -R a+wrX /comfy_catapult
 
 
-COPY . /comfy_catapult
+COPY --chown=user:user . /comfy_catapult
+
 USER user
 WORKDIR /comfy_catapult
 ENV PATH=/home/user/.local/bin:$PATH
