@@ -11,9 +11,9 @@ from typing import Dict, List, Tuple
 
 from anyio import Path
 
+from ._internal.url_utils import IsWeaklyRelativeTo
 from .comfy_schema import ComfyUIPathTriplet
 from .remote_file_api_base import RemoteFileAPIBase
-from .url_utils import IsWeaklyRelativeTo
 
 
 class GenericRemoteFileAPI(RemoteFileAPIBase):

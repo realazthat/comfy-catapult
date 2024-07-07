@@ -6,16 +6,48 @@
 # the license text.
 
 import argparse
+import json
 import os
 import sys
 import traceback
 from typing import NamedTuple
-from urllib.parse import ParseResult, urlparse
+from urllib.parse import ParseResult, urljoin, urlparse, urlunparse
 
 from anyio import Path
 from typing_extensions import Optional
 
-from comfy_catapult.url_utils import SmartURLJoin, ValidateIsURLDirectory
+
+def SmartURLJoin(base: str, url: str) -> str:
+  """urljoin() but can handle relative paths even for custom schemes.
+
+  See: https://github.com/python/cpython/issues/63028
+
+  From: https://github.com/python/cpython/issues/63028#issuecomment-1564858715
+  """
+  base_pr = urlparse(base)
+  bscheme = base_pr.scheme
+
+  url_pr = urlparse(url)
+  scheme = url_pr.scheme or bscheme
+  if bscheme != scheme:
+    return url
+
+  base_pr = base_pr._replace(scheme='http')
+  url_pr = url_pr._replace(scheme='http')
+
+  joined = urljoin(urlunparse(base_pr), urlunparse(url_pr))
+  joined_pr = urlparse(joined)
+  joined_pr = joined_pr._replace(scheme=scheme)
+  return urlunparse(joined_pr)
+
+
+def ValidateIsURLDirectory(url: str) -> str:
+  url_pr: ParseResult = urlparse(url=url)
+  if not url_pr.path.endswith('/'):
+    raise ValueError(
+        f'URL {json.dumps(url)} is not a directory, because it does not end with a trailing slash'
+    )
+  return url
 
 
 class Args(NamedTuple):
@@ -147,7 +179,7 @@ async def ParseArgs() -> Args:
   ##############################################################################
   output_path: Path = args.output_path
   ##############################################################################
-  debug_path: Path | None = args.debug_path
+  debug_path: Optional[Path] = args.debug_path
   if debug_path is None:
     debug_path = tmp_path / 'debug'
 

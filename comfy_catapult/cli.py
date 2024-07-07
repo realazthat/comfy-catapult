@@ -28,12 +28,12 @@ from rich_argparse import RichHelpFormatter
 from slugify import slugify
 
 from . import _build_version
+from ._internal.utilities import DumpModelToDict, DumpModelToYAML
 from .api_client import ComfyAPIClient
 from .api_client_base import ComfyAPIClientBase
 from .catapult import ComfyCatapult
 from .catapult_base import ComfyCatapultBase, JobStatus
 from .comfy_schema import APINodeID, APISystemStats
-from .comfy_utils import YamlDump
 from .remote_file_api_comfy import ComfySchemeRemoteFileAPI
 from .remote_file_api_generic import GenericRemoteFileAPI
 
@@ -111,11 +111,11 @@ async def DumpInfo(comfy_client: ComfyAPIClientBase,
 
   status: JobStatus
   status, _ = await catapult.GetStatus(job_id=job_id)
-  console.print(status.model_dump())
+  console.print(await DumpModelToDict(status))
 
   system_stats: APISystemStats = await comfy_client.GetSystemStats()
   console.print('system_stats:', style='bold blue')
-  console.print(YamlDump(system_stats.model_dump()))
+  console.print(await DumpModelToYAML(system_stats))
 
 
 async def StatusThread(stop_event: asyncio.Event,
@@ -206,7 +206,7 @@ async def amain():
       # Dump the ComfyUI server stats.
       system_stats: APISystemStats = await comfy_client.GetSystemStats()
       console.print('system_stats:', style='bold blue')
-      console.print(YamlDump(system_stats.model_dump()))
+      console.print(await DumpModelToYAML(system_stats))
 
       async with ComfyCatapult(comfy_client=comfy_client,
                                debug_path=debug_path / 'catapult',

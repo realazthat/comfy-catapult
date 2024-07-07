@@ -228,6 +228,4 @@ comfy_catapult = ["py.typed"]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["comfy_catapult"]
-exclude = []
-namespaces = false
+include = ["comfy_catapult", "comfy_catapult._internal"]

@@ -12,12 +12,13 @@ from urllib.parse import ParseResult
 from anyio import Path
 from typing_extensions import Literal
 
+from ._internal.url_utils import (VALID_COMFY_API_SCHEMES, SmartURLJoin,
+                                  ToParseResult, ValidateIsBasedURL,
+                                  ValidateIsComfyAPITargetURL)
 from .api_client import ComfyAPIClient
 from .comfy_schema import (VALID_FOLDER_TYPES, APIUploadImageResp,
                            ComfyUIPathTriplet)
 from .remote_file_api_base import RemoteFileAPIBase
-from .url_utils import (VALID_COMFY_API_SCHEMES, SmartURLJoin, ToParseResult,
-                        ValidateIsBasedURL, ValidateIsComfyAPITargetURL)
 
 VALID_COMFY_SCHEME_SCHEMES = ['comfy+http', 'comfy+https']
 

@@ -17,11 +17,13 @@ import aiofiles
 from anyio import Path
 from websockets import connect
 
+from ._internal.utilities import (BasicAuthToHeaders, GetWebSocketURL,
+                                  TryParseAsModel)
 from .api_client import ComfyAPIClient
-from .catapult import ComfyCatapult, _BasicAuthToHeaders, _GetWebSocketURL
+from .catapult import ComfyCatapult
 from .catapult_base import JobStatus
 from .comfy_schema import APIWorkflow, WSMessage
-from .comfy_utils import GetNodeByTitle, TryParseAsModel
+from .comfy_utils import GetNodeByTitle
 
 COMFY_API_URL = os.environ.get('COMFY_API_URL')
 if COMFY_API_URL is None:
@@ -58,12 +60,11 @@ class CatapultTest(unittest.IsolatedAsyncioTestCase):
 
     client_id = str(uuid.uuid4())
     ws_url = urlparse(
-        _GetWebSocketURL(comfy_api_url=self._comfy_api_url,
-                         client_id=client_id))
+        GetWebSocketURL(comfy_api_url=self._comfy_api_url, client_id=client_id))
 
     ws_headers: Dict[str, str] = {}
     ws_url = urlparse(
-        _BasicAuthToHeaders(url=ws_url.geturl(), headers=ws_headers))
+        BasicAuthToHeaders(url=ws_url.geturl(), headers=ws_headers))
 
     print(f'ws_url: {ws_url.geturl()}')
     async with connect(ws_url.geturl(), extra_headers=ws_headers) as ws:

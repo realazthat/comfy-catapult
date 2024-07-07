@@ -6,7 +6,6 @@
 # the license text.
 
 import asyncio
-import base64
 import datetime
 import enum
 import json
@@ -20,7 +19,6 @@ from dataclasses import dataclass
 from pprint import pformat
 from typing import (Any, Dict, Generic, List, Optional, Sequence, Tuple,
                     TypeVar, Union, overload)
-from urllib.parse import unquote as paramdecode
 from urllib.parse import urlparse
 
 import aiofiles
@@ -29,6 +27,9 @@ from slugify import slugify
 from typing_extensions import Literal
 from websockets import WebSocketClientProtocol, connect
 
+from ._internal.utilities import (BasicAuthToHeaders, DumpModelToDict,
+                                  DumpModelToYAML, DumpYaml, GetWebSocketURL,
+                                  TryParseAsModel)
 from .api_client import ComfyAPIClientBase
 from .catapult_base import (ComfyCatapultBase, ExceptionInfo, JobID, JobStatus,
                             Progress)
@@ -36,48 +37,12 @@ from .comfy_schema import (APIHistory, APIHistoryEntry,
                            APIHistoryEntryStatusNote, APINodeID, APIPromptInfo,
                            APIQueueInfo, APISystemStats, APIWorkflowTicket,
                            PromptID, WSMessage)
-from .comfy_utils import TryParseAsModel, YamlDump
 from .errors import (JobFailed, JobNotFound, NodesNotExecuted,
                      WorkflowSubmissionError)
-from .url_utils import JoinToBaseURL
 
 logger = logging.getLogger(__name__)
 
 _JobQueueStatus = Literal['pending', 'running', 'not_in_queue']
-
-
-def _BasicAuthToHeaders(*, url: str, headers: Dict[str, str]) -> str:
-  """
-  websockets lib doessn't support basic auth in the url, so we have to move it
-  to the headers.
-  """
-  url_pr = urlparse(url)
-  if url_pr.username is None and url_pr.password is None:
-    return url
-
-  username = url_pr.username or ''
-  password = url_pr.password or ''
-
-  # urldecode the username and password
-  username = paramdecode(username)
-  password = paramdecode(password)
-  auth = f'{username}:{password}'
-  encoded_auth = base64.b64encode(auth.encode()).decode()
-
-  headers['Authorization'] = f'Basic {encoded_auth}'
-  new_netloc = f'{url_pr.hostname}:{url_pr.port}'
-  return url_pr._replace(netloc=new_netloc).geturl()
-
-
-def _GetWebSocketURL(*, comfy_api_url: str, client_id: str) -> str:
-  ws_url_str = JoinToBaseURL(comfy_api_url, 'ws')
-  ws_url = urlparse(ws_url_str)
-  if ws_url.scheme == 'https':
-    ws_url = ws_url._replace(scheme='wss')
-  else:
-    ws_url = ws_url._replace(scheme='ws')
-  ws_url = ws_url._replace(query=f'clientId={client_id}')
-  return ws_url.geturl()
 
 
 @dataclass
@@ -322,10 +287,13 @@ class ComfyCatapult(ComfyCatapultBase):
         has_errors = True
 
       if has_errors:
+        prepared_workflow_yaml_str = await DumpYaml(prepared_workflow)
+        ticket_yaml_str = await DumpModelToYAML(ticket)
+
         raise WorkflowSubmissionError(
             f'Errors in workflow'
-            f'\nprepared_workflow:\n{textwrap.indent(YamlDump(prepared_workflow), prefix="  ")}'
-            f'\nticket:\n{textwrap.indent(YamlDump(ticket.model_dump()), prefix="  ")}',
+            f'\nprepared_workflow:\n{textwrap.indent(prepared_workflow_yaml_str, prefix="  ")}'
+            f'\nticket:\n{textwrap.indent(ticket_yaml_str, prefix="  ")}',
             prepared_workflow=deepcopy(prepared_workflow),
             ticket=ticket)
 
@@ -433,8 +401,8 @@ class ComfyCatapult(ComfyCatapultBase):
       raise AssertionError(f'prompt_id must be str, not {type(prompt_id)}')
     job_history: APIHistoryEntry = history.root[prompt_id]
     async with self._lock:
-      job.status = job.status._replace(job_history=job_history.model_dump())
-
+      job.status = job.status._replace(
+          job_history=await DumpModelToDict(job_history))
     ##########################################################################
     # Get outputs_to_execute, outputs_with_data, extra_data
     extra_data: Optional[dict] = None
@@ -447,7 +415,7 @@ class ComfyCatapult(ComfyCatapultBase):
         extra_data = job_history.prompt.extra_data
       if job_history.prompt.outputs_to_execute is not None:
         outputs_to_execute = job_history.prompt.outputs_to_execute
-    logger.debug('extra_data: %s', YamlDump(extra_data))
+    logger.debug('extra_data: %s', await DumpYaml(extra_data))
 
     if job_history.status is not None:
       if job_history.status.completed is False:
@@ -464,13 +432,13 @@ class ComfyCatapult(ComfyCatapultBase):
                         f'\n  notes:' + '\n'.join(notes))
 
     ##########################################################################
-    logger.debug('job_history.prompt.extra_data.model_dump(): %s',
-                 YamlDump(extra_data))
-    logger.debug('job_history.prompt.outputs_to_execute.model_dump(): %s',
-                 YamlDump(outputs_to_execute))
+    logger.debug('job_history.prompt.extra_data: %s', await
+                 DumpYaml(extra_data))
+    logger.debug('job_history.prompt.outputs_to_execute: %s', await
+                 DumpYaml(outputs_to_execute))
 
-    logger.debug('outputs_to_execute: %s', YamlDump(outputs_to_execute))
-    logger.debug('outputs_that_executed: %s', YamlDump(outputs_with_data))
+    logger.debug('outputs_to_execute: %s', await DumpYaml(outputs_to_execute))
+    logger.debug('outputs_that_executed: %s', await DumpYaml(outputs_with_data))
 
     bad_dataless_outputs = [
         node_id for node_id in outputs_to_execute
@@ -487,18 +455,19 @@ class ComfyCatapult(ComfyCatapultBase):
       return titles
 
     if len(bad_dataless_outputs) > 0:
-      logger.error('bad_dataless_outputs: %s', YamlDump(bad_dataless_outputs))
-      logger.error('_GetTitles(bad_dataless_outputs): %s',
-                   YamlDump(_GetTitles(bad_dataless_outputs)))
+      logger.error('bad_dataless_outputs: %s', await
+                   DumpYaml(bad_dataless_outputs))
+      logger.error('_GetTitles(bad_dataless_outputs): %s', await
+                   DumpYaml(_GetTitles(bad_dataless_outputs)))
 
     dataless_important_outputs = [
         node_id for node_id in bad_dataless_outputs if node_id in important
     ]
     if len(dataless_important_outputs) > 0:
-      logger.error('dataless_important_outputs: %s',
-                   YamlDump(dataless_important_outputs))
-      logger.error('_GetTitles(dataless_important_outputs): %s',
-                   YamlDump(_GetTitles(dataless_important_outputs)))
+      logger.error('dataless_important_outputs: %s', await
+                   DumpYaml(dataless_important_outputs))
+      logger.error('_GetTitles(dataless_important_outputs): %s', await
+                   DumpYaml(_GetTitles(dataless_important_outputs)))
       raise NodesNotExecuted(nodes=list(dataless_important_outputs),
                              titles=_GetTitles(dataless_important_outputs))
 
@@ -509,7 +478,7 @@ class ComfyCatapult(ComfyCatapultBase):
       if job.status.success is None:
         job.status = job.status._replace(success=now)
       if not job.future.done():
-        job.future.set_result(job_history.model_dump())
+        job.future.set_result(await DumpModelToDict(job_history))
 
   async def _GetJobIDs(self) -> List[JobID]:
     async with self._lock:
@@ -575,7 +544,7 @@ class ComfyCatapult(ComfyCatapultBase):
 
   async def _PollSystemStats(self, *, job_ids: List[JobID]):
     system_stats: APISystemStats = await self._comfy_client.GetSystemStats()
-    logger.info('system_stats: %s', YamlDump(system_stats.model_dump()))
+    logger.info('system_stats: %s', await DumpModelToYAML(system_stats))
     for job_id in job_ids:
       try:
         async with _JobContext(job_id=job_id, catapult=self):
@@ -753,7 +722,7 @@ class ComfyCatapult(ComfyCatapultBase):
         if not isinstance(out, str):
           logger.debug('websocket type(out): %s', type(out))
           continue
-        logger.debug('websocket raw: %s', YamlDump(out))
+        logger.debug('websocket raw: %s', await DumpYaml(out))
         errors_dump_directory: Optional[Path] = None
         async with self._lock:
           if self._debug_path is not None:
@@ -763,7 +732,7 @@ class ComfyCatapult(ComfyCatapultBase):
             content=json.loads(out),
             model_type=WSMessage,
             errors_dump_directory=errors_dump_directory)
-        logger.debug('websocket message: %s', YamlDump(message.__dict__))
+        logger.debug('websocket message: %s', await DumpYaml(message.__dict__))
 
         if message.type == 'executing' and 'last_node_id' in message.data:
           last_node_id = message.data['last_node_id']
@@ -841,13 +810,14 @@ class ComfyCatapult(ComfyCatapultBase):
               if not job.status.IsDone():
                 now = self._Now()
 
+                message_data_yaml_str = await DumpYaml(message.data)
                 job.status = job.status._replace(
                     errored=now,
                     errors=job.status.errors + [
                         ExceptionInfo(
                             type=str(node_type),
                             message=
-                            f'Node {json.dumps(node_id)} of type {json.dumps(str(node_type))} errored:\n{textwrap.indent(YamlDump(message.data), "  ")}',
+                            f'Node {json.dumps(node_id)} of type {json.dumps(str(node_type))} errored:\n{textwrap.indent(message_data_yaml_str, "  ")}',
                             traceback='',
                             attributes={})
                     ])
@@ -891,11 +861,11 @@ class ComfyCatapult(ComfyCatapultBase):
       ws_connect_interval: float = self._ws_connect_interval
 
     ws_url = urlparse(
-        _GetWebSocketURL(comfy_api_url=comfy_api_url, client_id=client_id))
+        GetWebSocketURL(comfy_api_url=comfy_api_url, client_id=client_id))
 
     ws_headers: Dict[str, str] = {}
     ws_url = urlparse(
-        _BasicAuthToHeaders(url=ws_url.geturl(), headers=ws_headers))
+        BasicAuthToHeaders(url=ws_url.geturl(), headers=ws_headers))
 
     async def _MonitoringThreadLoopOnce():
       nonlocal ws_url
@@ -970,7 +940,7 @@ class _JobContext:
         dump_path = job_debug_path / 'watch' / f'{slugify(dt)}-{slugify(name)}.yaml'
         await dump_path.parent.mkdir(parents=True, exist_ok=True)
         async with aiofiles.open(dump_path, 'w') as f:
-          await f.write(YamlDump(value))
+          await f.write(await DumpYaml(value))
 
   async def __aenter__(self):
     return self
@@ -1019,5 +989,5 @@ class _JobContext:
         job_dump_path = job_debug_path / 'context-dumps' / f'{slugify(dt)}.dump.yaml'
         await job_dump_path.parent.mkdir(parents=True, exist_ok=True)
         async with aiofiles.open(job_dump_path, 'w') as f:
-          await f.write(YamlDump(dump))
+          await f.write(await DumpYaml(dump))
         logger.error(f'Wrote job status to {json.dumps(str(job_dump_path))}.')

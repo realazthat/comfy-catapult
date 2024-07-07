@@ -14,12 +14,12 @@ from unittest import IsolatedAsyncioTestCase
 import pydantic
 from anyio import Path
 
+from ._internal.url_utils import SmartURLJoin
 from .comfy_schema import (VALID_FOLDER_TYPES, ComfyFolderType,
                            ComfyUIPathTriplet)
 from .comfy_schema_test import VALID_SUBFOLDER_EDGES
 from .remote_file_api_comfy import (ComfySchemeRemoteFileAPI,
                                     TripletToComfySchemeURL)
-from .url_utils import SmartURLJoin
 
 COMFY_API_URL = os.environ.get('COMFY_API_URL')
 if COMFY_API_URL is None:

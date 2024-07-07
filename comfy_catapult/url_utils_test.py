@@ -7,7 +7,7 @@
 
 import unittest
 
-from .url_utils import JoinToBaseURL
+from ._internal.url_utils import JoinToBaseURL
 
 
 class TestUrlUtils(unittest.TestCase):

@@ -15,7 +15,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from pprint import pprint
 from typing import List
+from urllib.parse import urlparse
 
+import yaml
 from anyio import Path
 from slugify import slugify
 from typing_extensions import Optional
@@ -27,13 +29,11 @@ from comfy_catapult.comfy_schema import (APIHistoryEntry, APINodeID,
                                          APIObjectInfo, APIObjectInputTuple,
                                          APISystemStats, APIWorkflow,
                                          APIWorkflowInConnection)
-from comfy_catapult.comfy_utils import (DownloadPreviewImage, GetNodeByTitle,
-                                        YamlDump)
+from comfy_catapult.comfy_utils import DownloadPreviewImage, GetNodeByTitle
 from comfy_catapult.remote_file_api_base import RemoteFileAPIBase
 from comfy_catapult.remote_file_api_comfy import ComfySchemeRemoteFileAPI
 from comfy_catapult.remote_file_api_generic import GenericRemoteFileAPI
 from comfy_catapult.remote_file_api_local import LocalRemoteFileAPI
-from comfy_catapult.url_utils import ToParseResult
 from examples.utilities.sdxlturbo_parse_args import ParseArgs
 
 
@@ -120,7 +120,7 @@ async def amain():
         ComfySchemeRemoteFileAPI(comfy_api_urls=[args.comfy_api_url],
                                  overwrite=True))
     if args.comfy_install_file_url is not None:
-      scheme = ToParseResult(args.comfy_install_file_url).scheme
+      scheme = urlparse(args.comfy_install_file_url).scheme
       if scheme != 'file':
         raise ValueError(
             f'args.comfy_install_file_url must be a file:// URL, but is {args.comfy_install_file_url}'
@@ -140,7 +140,9 @@ async def amain():
     # Dump the ComfyUI server stats.
     system_stats: APISystemStats = await comfy_client.GetSystemStats()
     print('system_stats:', file=sys.stderr)
-    print(YamlDump(system_stats.model_dump()), file=sys.stderr)
+    print(yaml.dump(
+        system_stats.model_dump(mode='json', by_alias=True, round_trip=True)),
+          file=sys.stderr)
 
     async with ComfyCatapult(comfy_client=comfy_client,
                              debug_path=args.debug_path,
@@ -260,7 +262,9 @@ async def PrepareWorkflow(*, job_info: ExampleWorkflowInfo):
   job_info.important.append(preview_image_id)
   ############################################################################
   # Save our changes to the job_info workflow.
-  job_info.workflow_dict = workflow.model_dump()
+  job_info.workflow_dict = workflow.model_dump(mode='json',
+                                               by_alias=True,
+                                               round_trip=True)
 
 
 async def DownloadResults(*, job_info: ExampleWorkflowInfo):
@@ -269,7 +273,9 @@ async def DownloadResults(*, job_info: ExampleWorkflowInfo):
     raise AssertionError('job_info.job_history_dict is None')
   job_history = APIHistoryEntry.model_validate(job_info.job_history_dict)
   workflow = APIWorkflow.model_validate(job_info.workflow_dict)
-  print(YamlDump(job_history.model_dump()), file=sys.stderr)
+  print(yaml.dump(
+      job_history.model_dump(mode='json', by_alias=True, round_trip=True)),
+        file=sys.stderr)
 
   preview_image_id, _ = GetNodeByTitle(workflow=workflow, title='Preview Image')
 

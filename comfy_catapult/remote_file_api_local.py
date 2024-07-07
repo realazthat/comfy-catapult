@@ -11,9 +11,9 @@ from typing import List, Tuple
 import aioshutil
 from anyio import Path
 
+from ._internal.url_utils import ToParseResult, ValidateIsBasedURL
 from .comfy_schema import ComfyUIPathTriplet
 from .remote_file_api_base import RemoteFileAPIBase
-from .url_utils import ToParseResult, ValidateIsBasedURL
 
 
 async def _LocalFileURLToLocalPath(url: str) -> Path:
