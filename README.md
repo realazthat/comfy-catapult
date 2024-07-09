@@ -123,18 +123,19 @@ pip install git+https://github.com/realazthat/comfy-catapult.git@v3.0.0
 
 | Project                           | ComfyUI API Wrapper | Outsource Backend | Distribute Execution | Wrap Workflow | Studio |
 | --------------------------------- | ------------------- | ----------------- | -------------------- | ------------- | ------ |
-| [CushyStudio][21]                 | ?                   | ?                 | ?                    | ?             | Yes    |
-| [ComfyUI-Serving-Toolkit][22]     | X                   | ?                 | ?                    | Yes           | ?      |
-| [ComfyUI_NetDist][23]             | X                   | ?                 | Yes                  | ?             | ?      |
-| [ComfyUI script_examples][24]     | Yes                 | No                | No                   | No            | No     |
-| [comfyui-python-api][25]          | ?                   | ?                 | ?                    | Yes           | ?      |
-| [comfyui-deploy][26]              | ?                   | ?                 | ?                    | Yes           | ?      |
-| [ComfyUI-to-Python-Extension][27] | ?                   | ?                 | ?                    | Yes           | ?      |
-| [ComfyScript][28]                 | ?                   | ?                 | ?                    | Yes           | ?      |
-| [hordelib][29]                    | ?                   | Yes               | ?                    | ?             | ?      |
-| [comfyui-cloud][30]               | ?                   | Yes               | ?                    | ?             | ?      |
-| [comfy_runner][31]                | ?                   | ?                 | ?                    | ?             | ?      |
-| [ComfyUI-ComfyRun][32]            | ?                   | ?                 | ?                    | ?             | ?      |
+| [fofr/cog-comfyui][21]            | Yes                 | Replicate         | ?                    | ?             | No     |
+| [CushyStudio][22]                 | ?                   | ?                 | ?                    | ?             | Yes    |
+| [ComfyUI-Serving-Toolkit][23]     | X                   | ?                 | ?                    | Yes           | ?      |
+| [ComfyUI_NetDist][24]             | X                   | ?                 | Yes                  | ?             | ?      |
+| [ComfyUI script_examples][25]     | Yes                 | No                | No                   | No            | No     |
+| [comfyui-python-api][26]          | ?                   | ?                 | ?                    | Yes           | ?      |
+| [comfyui-deploy][27]              | ?                   | ?                 | ?                    | Yes           | ?      |
+| [ComfyUI-to-Python-Extension][28] | ?                   | ?                 | ?                    | Yes           | ?      |
+| [ComfyScript][29]                 | ?                   | ?                 | ?                    | Yes           | ?      |
+| [hordelib][30]                    | ?                   | Yes               | ?                    | ?             | ?      |
+| [comfyui-cloud][31]               | ?                   | Yes               | ?                    | ?             | ?      |
+| [comfy_runner][32]                | ?                   | ?                 | ?                    | ?             | ?      |
+| [ComfyUI-ComfyRun][33]            | ?                   | ?                 | ?                    | ?             | ?      |
 
 ## 📘 Documentation
 
@@ -465,7 +466,7 @@ python -m comfy_catapult.cli \
 
 ## 🐳 Docker Image
 
-Docker images are published to [ghcr.io/realazthat/comfy-catapult][33] at each
+Docker images are published to [ghcr.io/realazthat/comfy-catapult][34] at each
 tag.
 
 ```bash
@@ -624,18 +625,19 @@ These instructions are for maintainers of the project.
   https://github.com/realazthat/comfy-catapult/compare/v3.0.0...develop
 [20]:
   https://img.shields.io/github/last-commit/realazthat/comfy-catapult/develop?style=plastic&color=0A1E1E
-[21]: https://github.com/rvion/CushyStudio
-[22]: https://github.com/matan1905/ComfyUI-Serving-Toolkit
-[23]: https://github.com/city96/ComfyUI_NetDist
-[24]:
+[21]: https://github.com/fofr/cog-comfyui
+[22]: https://github.com/rvion/CushyStudio
+[23]: https://github.com/matan1905/ComfyUI-Serving-Toolkit
+[24]: https://github.com/city96/ComfyUI_NetDist
+[25]:
   https://github.com/comfyanonymous/ComfyUI/tree/89d0e9abeb31e44cccef46537cd10d8812130ef3/script_examples
   "Permalink"
-[25]: https://github.com/andreyryabtsev/comfyui-python-api
-[26]: https://github.com/BennyKok/comfyui-deploy
-[27]: https://github.com/pydn/ComfyUI-to-Python-Extension
-[28]: https://github.com/Chaoses-Ib/ComfyScript
-[29]: https://pypi.org/project/hordelib/
-[30]: https://github.com/nathannlu/comfyui-cloud
-[31]: https://github.com/piyushK52/comfy_runner
-[32]: https://github.com/thecooltechguy/ComfyUI-ComfyRun
-[33]: https://ghcr.io/realazthat/comfy-catapult
+[26]: https://github.com/andreyryabtsev/comfyui-python-api
+[27]: https://github.com/BennyKok/comfyui-deploy
+[28]: https://github.com/pydn/ComfyUI-to-Python-Extension
+[29]: https://github.com/Chaoses-Ib/ComfyScript
+[30]: https://pypi.org/project/hordelib/
+[31]: https://github.com/nathannlu/comfyui-cloud
+[32]: https://github.com/piyushK52/comfy_runner
+[33]: https://github.com/thecooltechguy/ComfyUI-ComfyRun
+[34]: https://ghcr.io/realazthat/comfy-catapult
